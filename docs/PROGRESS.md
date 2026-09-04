@@ -1,0 +1,74 @@
+# USM Pharmacy — Project Progress
+
+**Last updated:** 2026-09-04
+
+## Module Status
+
+| Module | Owner | Status | Notes |
+|---|---|---|---|
+| Auth / RBAC | Member 1 | Done | Spatie Permission integrated; 6 roles seeded; route middleware enforced |
+| Prescription | Member 1 | Done | Nurse/MedSec create prescriptions → route to pharmacy queue |
+| Pharmacy / POS | Member 2 | Done | FEFO dispense, OTC sales, receipt view, all behind `pharmacist` role |
+| Inventory | Member 2 | In progress | Stock decrements wired; batch-receiving UI not yet built |
+| Dual Risk Engine | Member 3 | Not started | `stock_movements` data exists; prediction algorithm not designed |
+| Patient Portal | Member 1 | Not started | Routes and views not created |
+| Mobile App | Not yet decided | Not started | No API routes exist yet |
+| AI Chatbot | Member 3 | Not started | Pending risk-engine design |
+
+## Database Schema (tables that exist)
+
+| Table | Purpose |
+|---|---|
+| `users` | Auth + profile; stores `role_id` for Spatie sync |
+| `roles` / `permissions` / pivot tables | Spatie RBAC (auto-created by Spatie migration) |
+| `patients` | Hospital patient records; linked to `users`; type: `student` or `resident` |
+| `medicines` | Medicine catalogue — name, generic name, category, unit, price, reorder level |
+| `stock_batches` | Per-batch inventory: `batch_no`, quantities received/remaining, `expiry_date`, supplier |
+| `prescriptions` | Prescription header; status: `pending` → `routed` → `dispensed` / `cancelled` |
+| `prescription_items` | Line items (medicine + quantity + dosage) for a prescription |
+| `pos_transactions` | POS receipt; links to a prescription (nullable for OTC) and cashier |
+| `pos_transaction_items` | Itemised lines for a transaction; records batch, unit price, subtotal |
+| `stock_movements` | Audit log of every inventory change; type enum: `in`, `out`, `disposal`, `adjustment` |
+
+See `database/migrations/` for full column lists.
+
+## What is Functional Right Now
+
+- Any seeded user can log in; wrong-role routes return 403 via Spatie middleware.
+- Nurses and Medical Secretaries can create a prescription with one or more medicine items. Inline patient registration is supported (creates a `users` + `patients` row in a transaction).
+- Prescriptions list view has status tabs, search, and "mine / all" scope toggle.
+- A `pending` prescription can be routed to the pharmacy queue (stock check runs first); status becomes `routed`.
+- Pharmacists see the routed queue ordered oldest-first. Processing a prescription auto-suggests FEFO batch allocations from `DispensingService::suggestFefoBatches`.
+- Pharmacists can confirm dispensing — `DispensingService::dispensePrescription` decrements `stock_batches.quantity_remaining`, creates `pos_transaction_items`, creates `stock_movements` (`type=out`), and marks the prescription `dispensed`, all inside a single `DB::transaction` with `lockForUpdate`.
+- OTC walk-in sales go through `DispensingService::processOtcSale` — same FEFO and audit logic, no prescription linked.
+- A printable receipt view renders after any completed transaction.
+- Pest feature tests cover: prescription CRUD & routing (`PrescriptionModuleTest`), POS dispense & OTC (`PharmacyPosModuleTest`), and role-based access (`RoleBasedAccessControlTest`).
+
+## What is Deliberately NOT Built Yet
+
+- Inventory receiving UI (no route/controller for adding new medicines or stock batches).
+- Risk prediction algorithm (data collection schema exists, model not designed).
+- REST API endpoints (mobile app requires these).
+- Patient portal views.
+- Partial-dispensing workflow (current system marks the whole prescription `dispensed` in one step).
+
+## Open Decisions
+
+- **Partial dispensing:** If a pharmacist adjusts quantities below what was prescribed, should a new "partially dispensed" status exist, or should the original prescription stay `routed` with a partial transaction?
+- **`medicines.is_active` column:** `PosController::otcCreate` filters on `is_active`, but the migration does not create this column. Needs a migration or the query needs updating.
+- **Risk score formula weights:** Stockout vs. expiry prediction algorithm — inputs, thresholds, and weights not yet agreed.
+- **Mobile API auth:** OAuth (Sanctum) vs. session-based — not yet decided.
+
+## Key Conventions
+
+- **Service layer:** Business logic lives in `app/Services/` (e.g., `DispensingService`). Controllers are thin — they call services and redirect.
+- **DB safety:** All multi-table writes use `DB::transaction()` + `lockForUpdate()` on stock rows.
+- **Validation:** Form Requests only — no inline `$request->validate()` in controllers.
+- **Role names (exact strings):** `nurse`, `medical_secretary`, `pharmacist`, `stock_manager`, `patient`, `admin`.
+- **FEFO:** Always sort batches `orderBy('expiry_date', 'asc')` and filter `expiry_date >= today` and `quantity_remaining > 0`. Use `StockBatch::scopeActive()` and `scopeFefo()`.
+- **Table naming:** snake_case plural (`pos_transactions`, not `posTransactions`).
+- **Tests:** Pest feature tests in `tests/Feature/`; use factories + role assignment; no test should rely on seeded DB data.
+
+---
+*Update this file at the end of every work session before opening a PR.*
+
