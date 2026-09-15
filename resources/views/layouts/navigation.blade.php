@@ -16,6 +16,15 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    @role('patient')
+                        <x-nav-link :href="route('patient.prescriptions')" :active="request()->routeIs('patient.prescriptions*')">
+                            {{ __('My Prescriptions') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('patient.profile')" :active="request()->routeIs('patient.profile')">
+                            {{ __('My Profile') }}
+                        </x-nav-link>
+                    @endrole
+
                     @hasanyrole('nurse|medical_secretary|admin')
                         <x-nav-link :href="route('prescriptions.index')" :active="request()->routeIs('prescriptions.*')">
                             {{ __('Prescriptions') }}

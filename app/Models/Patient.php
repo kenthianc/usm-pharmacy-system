@@ -21,6 +21,8 @@ class Patient extends Model
         'patient_type',
         'id_number',
         'contact_number',
+        'allergies',
+        'medical_notes',
     ];
 
     /**
