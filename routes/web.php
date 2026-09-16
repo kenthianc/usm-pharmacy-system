@@ -1,15 +1,20 @@
 <?php
 
+use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
+Route::get('/medicines', [WelcomeController::class, 'medicines'])->name('medicines');
 
 Route::get('/dashboard', function () {
+    if (auth()->user()->hasRole('patient')) {
+        return redirect()->route('patient.dashboard');
+    }
+
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -17,6 +22,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Patient Portal (patients only)
+Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')->group(function () {
+    Route::get('/dashboard', [PatientPortalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/prescriptions', [PatientPortalController::class, 'prescriptions'])->name('prescriptions');
+    Route::get('/prescriptions/{prescription}', [PatientPortalController::class, 'showPrescription'])->name('prescriptions.show');
+    Route::get('/profile', [PatientPortalController::class, 'profile'])->name('profile');
+    Route::patch('/profile', [PatientPortalController::class, 'updateProfile'])->name('profile.update');
 });
 
 // Prescription Module (nurse, medical_secretary, admin)

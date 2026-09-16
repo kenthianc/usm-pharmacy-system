@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,13 @@ class RegisteredUserController extends Controller
         ]);
 
         $user->assignRole($patientRole);
+
+        Patient::create([
+            'user_id' => $user->id,
+            'patient_type' => 'student',
+            'id_number' => 'PT-'.str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
+            'contact_number' => null,
+        ]);
 
         event(new Registered($user));
 
