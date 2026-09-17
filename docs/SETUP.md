@@ -102,7 +102,6 @@ All passwords are `password`.
 | `admin` | `admin@usm.edu.ph` | All routes |
 | `pharmacist` | `pharmacist@usm.edu.ph` | POS queue, dispense, OTC sales |
 | `nurse` | `nurse@usm.edu.ph` | Create & route prescriptions |
-| `medical_secretary` | `medsec@usm.edu.ph` | Create & route prescriptions |
 | `stock_manager` | `stockmanager@usm.edu.ph` | Inventory management (module in progress) |
 | `patient` | `patient@usm.edu.ph` | Patient portal (not yet built) |
 

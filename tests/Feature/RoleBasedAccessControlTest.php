@@ -29,20 +29,15 @@ test('nurse can access prescription module but cannot access pos module', functi
         ->assertForbidden();
 });
 
-test('medical secretary can access prescription module but cannot access pos module', function () {
-    $secretary = User::factory()->create();
-    $secRole = Role::findByName('medical_secretary');
-    $secretary->update(['role_id' => $secRole->id]);
-    $secretary->assignRole($secRole);
-
-    $this->actingAs($secretary)
-        ->get('/prescriptions')
-        ->assertOk()
-        ->assertSee('Prescription Module');
-
-    $this->actingAs($secretary)
-        ->get('/pos')
-        ->assertForbidden();
+test('medical secretary role does not exist and only nurse and admin access prescription module', function () {
+    expect(Role::where('name', 'medical_secretary')->exists())->toBeFalse()
+        ->and(Role::pluck('name')->all())->toEqualCanonicalizing([
+            'nurse',
+            'pharmacist',
+            'stock_manager',
+            'patient',
+            'admin',
+        ]);
 });
 
 test('pharmacist can access pos module but cannot access prescription module', function () {

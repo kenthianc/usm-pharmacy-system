@@ -12,7 +12,7 @@ class PrescriptionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'pharmacist', 'admin']);
+        return $user->hasAnyRole(['nurse', 'pharmacist', 'admin']);
     }
 
     /**
@@ -20,7 +20,7 @@ class PrescriptionPolicy
      */
     public function view(User $user, Prescription $prescription): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'pharmacist', 'admin']);
+        return $user->hasAnyRole(['nurse', 'pharmacist', 'admin']);
     }
 
     /**
@@ -28,7 +28,7 @@ class PrescriptionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'admin']);
+        return $user->hasAnyRole(['nurse', 'admin']);
     }
 
     /**
@@ -36,7 +36,7 @@ class PrescriptionPolicy
      */
     public function update(User $user, Prescription $prescription): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'admin'])
+        return $user->hasAnyRole(['nurse', 'admin'])
             && $prescription->status === 'pending';
     }
 
@@ -45,7 +45,7 @@ class PrescriptionPolicy
      */
     public function route(User $user, Prescription $prescription): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'admin'])
+        return $user->hasAnyRole(['nurse', 'admin'])
             && $prescription->status === 'pending';
     }
 
@@ -54,7 +54,7 @@ class PrescriptionPolicy
      */
     public function cancel(User $user, Prescription $prescription): bool
     {
-        return $user->hasAnyRole(['nurse', 'medical_secretary', 'admin'])
+        return $user->hasAnyRole(['nurse', 'admin'])
             && $prescription->status === 'pending';
     }
 }

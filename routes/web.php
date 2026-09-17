@@ -33,8 +33,8 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     Route::patch('/profile', [PatientPortalController::class, 'updateProfile'])->name('profile.update');
 });
 
-// Prescription Module (nurse, medical_secretary, admin)
-Route::middleware(['auth', 'role:nurse|medical_secretary'])->prefix('prescriptions')->name('prescriptions.')->group(function () {
+// Prescription Module (nurse, admin)
+Route::middleware(['auth', 'role:nurse'])->prefix('prescriptions')->name('prescriptions.')->group(function () {
     Route::get('/', [PrescriptionController::class, 'index'])->name('index');
     Route::get('/create', [PrescriptionController::class, 'create'])->name('create');
     Route::post('/', [PrescriptionController::class, 'store'])->name('store');

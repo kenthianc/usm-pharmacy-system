@@ -13,7 +13,6 @@ beforeEach(function () {
 
     // Setup helper roles
     $this->nurseRole = Role::findByName('nurse');
-    $this->medsecRole = Role::findByName('medical_secretary');
     $this->pharmacistRole = Role::findByName('pharmacist');
     $this->adminRole = Role::findByName('admin');
 

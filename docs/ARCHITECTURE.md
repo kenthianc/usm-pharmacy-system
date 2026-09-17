@@ -59,7 +59,7 @@ Manages authentication and role-based access control.
 | `app/Models/User.php` | User model with Spatie `HasRoles` |
 | `routes/auth.php` | Breeze auth routes (login, register, password reset) |
 
-**Roles:** `nurse`, `medical_secretary`, `pharmacist`, `stock_manager`, `patient`, `admin`
+**Roles:** `nurse`, `pharmacist`, `stock_manager`, `patient`, `admin`
 
 ---
 
@@ -75,7 +75,7 @@ Handles prescription creation, editing, and routing to the pharmacy.
 | `app/Models/PrescriptionItem.php` | Line-item model |
 | `app/Models/Patient.php` | Patient model; inline registration supported from prescription create form |
 | `app/Policies/PrescriptionPolicy.php` | Gate rules: who can create, view, route, cancel |
-| `routes/web.php` (prefix `/prescriptions`) | Prescription routes; guarded by `role:nurse|medical_secretary` |
+| `routes/web.php` (prefix `/prescriptions`) | Prescription routes; guarded by `role:nurse` |
 
 **Status lifecycle:** `pending` → `routed` (via `routeToPharmacy`) → `dispensed` or `cancelled`
 

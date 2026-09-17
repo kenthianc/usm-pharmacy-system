@@ -33,11 +33,6 @@ class DatabaseSeeder extends Seeder
                 'role' => 'nurse',
             ],
             [
-                'name' => 'Medical Secretary User',
-                'email' => 'medsec@usm.edu.ph',
-                'role' => 'medical_secretary',
-            ],
-            [
                 'name' => 'Stock Manager User',
                 'email' => 'stockmanager@usm.edu.ph',
                 'role' => 'stock_manager',

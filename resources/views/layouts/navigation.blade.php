@@ -25,7 +25,7 @@
                         </x-nav-link>
                     @endrole
 
-                    @hasanyrole('nurse|medical_secretary|admin')
+                    @hasanyrole('nurse|admin')
                         <x-nav-link :href="route('prescriptions.index')" :active="request()->routeIs('prescriptions.*')">
                             {{ __('Prescriptions') }}
                         </x-nav-link>
@@ -97,7 +97,7 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            @hasanyrole('nurse|medical_secretary|admin')
+            @hasanyrole('nurse|admin')
                 <x-responsive-nav-link :href="route('prescriptions.index')" :active="request()->routeIs('prescriptions.*')">
                     {{ __('Prescriptions') }}
                 </x-responsive-nav-link>

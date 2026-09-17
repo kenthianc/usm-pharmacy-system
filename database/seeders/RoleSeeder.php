@@ -14,7 +14,6 @@ class RoleSeeder extends Seeder
     {
         $roles = [
             'nurse',
-            'medical_secretary',
             'pharmacist',
             'stock_manager',
             'patient',

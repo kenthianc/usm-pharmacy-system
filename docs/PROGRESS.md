@@ -89,3 +89,39 @@ See `database/migrations/` for full column lists.
 ---
 *Update this file at the end of every work session before opening a PR.*
 
+---
+
+## Session Progress — 2026-09-17: Removal of Medical Secretary & Nurse Prescription Workflow
+
+### Summary of Changes
+
+- **Removal of Medical Secretary Role & User:**
+  - Completely removed the `medical_secretary` role from `RoleSeeder` and the system's role definitions. Valid roles are now: `nurse`, `pharmacist`, `stock_manager`, `patient`, and `admin`.
+  - Removed the `Medical Secretary User` demo account (`medsec@usm.edu.ph`) from `DatabaseSeeder` and `docs/SETUP.md`.
+  - Added database migration `2026_09_17_101706_remove_medical_secretary_role.php` to clean up the `medical_secretary` role from Spatie tables (`roles`, `model_has_roles`, `role_has_permissions`), clear user `role_id` references, delete the `medsec@usm.edu.ph` user, and purge Spatie's permission cache.
+
+- **Nurse-Only Prescription Creation & Routing:**
+  - Transitioned the prescription workflow exclusively to the Nurse role: **Nurse → Create Prescription → Route Prescription**.
+  - Updated `routes/web.php` route middleware on `/prescriptions` group from `role:nurse|medical_secretary` to `role:nurse` (with system `admin` access preserved via `RoleMiddleware`).
+  - Updated `App\Policies\PrescriptionPolicy`:
+    - `viewAny()`: `['nurse', 'pharmacist', 'admin']` (pharmacists retain read access to view prescriptions during POS fulfillment).
+    - `view()`: `['nurse', 'pharmacist', 'admin']`.
+    - `create()`: `['nurse', 'admin']`.
+    - `update()`: `['nurse', 'admin']` (when status is `pending`).
+    - `route()`: `['nurse', 'admin']` (when status is `pending`).
+    - `cancel()`: `['nurse', 'admin']` (when status is `pending`).
+  - Updated `resources/views/layouts/navigation.blade.php`:
+    - Updated desktop navigation from `@hasanyrole('nurse|medical_secretary|admin')` to `@hasanyrole('nurse|admin')`.
+    - Updated responsive mobile navigation from `@hasanyrole('nurse|medical_secretary|admin')` to `@hasanyrole('nurse|admin')`.
+
+- **Documentation & Architecture Updates:**
+  - Updated `docs/ARCHITECTURE.md` to reflect the 5 active roles and the `role:nurse` guard on prescription routes.
+  - Updated `docs/SETUP.md` demo accounts reference table.
+
+- **Verification & Testing Performed:**
+  - Executed migration `2026_09_17_101706_remove_medical_secretary_role` successfully.
+  - Updated `tests/Feature/RoleBasedAccessControlTest.php` to assert that `medical_secretary` is not present in seeded roles, only `nurse` and `admin` can access `/prescriptions`, and non-nurse staff/patients are forbidden.
+  - Cleaned up `tests/Feature/PrescriptionModuleTest.php` helper roles.
+  - Ran full Pest test suite (`php artisan test`): 47 tests passed (157 assertions).
+  - Executed code formatter: `vendor/bin/pint --format agent` passed.
+
