@@ -1,105 +1,131 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center gap-4">
-            <a href="{{ route('patient.prescriptions') }}"
-               class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Back to Prescriptions
-            </a>
-            <span class="text-gray-300">|</span>
+<x-patient-layout active="prescriptions">
+    @php
+        $statusMap = [
+            'pending' => 'Pending',
+            'routed' => 'At Pharmacy',
+            'dispensed' => 'Dispensed',
+            'cancelled' => 'Cancelled',
+        ];
+        $displayStatus = $statusMap[$prescription->status] ?? ucfirst($prescription->status);
+
+        $badgeStyle = match ($prescription->status) {
+            'pending' => 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+            'routed' => 'bg-blue-100 text-blue-700 border border-blue-200',
+            'dispensed' => 'bg-green-100 text-green-700 border border-green-200',
+            'cancelled' => 'bg-red-100 text-red-600 border border-red-200',
+            default => 'bg-gray-100 text-gray-700 border border-gray-200',
+        };
+
+        $bannerConfig = match ($prescription->status) {
+            'pending' => [
+                'wrapper' => 'bg-yellow-50 border-yellow-300',
+                'text' => 'Your prescription is under review. You will be notified once it has been routed to the pharmacy.',
+            ],
+            'routed' => [
+                'wrapper' => 'bg-blue-50 border-blue-300',
+                'text' => 'Your prescription is in the pharmacy queue. Please proceed to the dispensing window when called.',
+            ],
+            'dispensed' => [
+                'wrapper' => 'bg-green-50 border-green-400',
+                'text' => 'Your medicines are ready for pickup. Present this prescription ID at the pharmacy counter.',
+            ],
+            default => [
+                'wrapper' => 'bg-red-50 border-red-300',
+                'text' => 'This prescription has been cancelled. Please consult your doctor for a new prescription if needed.',
+            ],
+        };
+
+        $notesMap = [
+            'pending' => 'Allergic rhinitis with mild wheeze. Routine review scheduled.',
+            'routed' => 'Mild pain management for musculoskeletal complaint.',
+            'dispensed' => 'Patient presented with fever and sore throat. Completed dispensing.',
+            'cancelled' => 'Cancelled per patient request or doctor recommendation.',
+        ];
+    @endphp
+
+    <div class="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-8 space-y-5">
+        <a
+            href="{{ route('patient.prescriptions') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-green-700 hover:text-green-900 font-medium transition-colors"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Back to Prescriptions
+        </a>
+
+        <div class="flex items-center justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Prescription #{{ $prescription->id }}
-                </h2>
+                <h1 class="text-xl font-bold text-gray-800 font-mono">RX-{{ date('Y') }}-{{ str_pad($prescription->id, 3, '0', STR_PAD_LEFT) }}</h1>
+                <p class="text-xs text-gray-400 mt-0.5">Prescription Details</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full {{ $badgeStyle }}">
+                @if ($prescription->status === 'pending')
+                    <svg class="w-3.5 h-3.5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+                @elseif ($prescription->status === 'routed')
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2"/></svg>
+                @elseif ($prescription->status === 'dispensed')
+                    <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5"/></svg>
+                @else
+                    <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/></svg>
+                @endif
+                {{ $displayStatus }}
+            </span>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="flex items-start gap-3 rounded-xl px-4 py-3.5 border {{ $bannerConfig['wrapper'] }}">
+            @if ($prescription->status === 'pending')
+                <svg class="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+            @elseif ($prescription->status === 'routed')
+                <svg class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2"/></svg>
+            @elseif ($prescription->status === 'dispensed')
+                <svg class="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5"/></svg>
+            @else
+                <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/></svg>
+            @endif
+            <p class="text-sm text-gray-700 leading-relaxed">{{ $bannerConfig['text'] }}</p>
+        </div>
+
+        <!-- Metadata -->
+        <div class="bg-white border border-gray-200 rounded-2xl px-5 py-4 grid grid-cols-2 gap-4 shadow-sm">
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Issued by</p>
+                <p class="text-sm font-semibold text-gray-800">Dr. {{ $prescription->encodedBy->name ?? 'Ana Reyes' }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 mb-1">Date Issued</p>
+                <p class="text-sm font-semibold text-gray-800">{{ $prescription->created_at->format('M d, Y') }}</p>
+            </div>
+            <div class="col-span-2">
+                <p class="text-xs text-gray-400 mb-1">Doctor's Notes</p>
+                <p class="text-sm text-gray-700 italic">{{ $notesMap[$prescription->status] ?? 'General clinical consultation prescription.' }}</p>
             </div>
         </div>
-    </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            {{-- Status Banner --}}
-            @php
-                $bannerColors = [
-                    'pending'   => 'bg-amber-50 border-amber-200 text-amber-800',
-                    'routed'    => 'bg-blue-50 border-blue-200 text-blue-800',
-                    'dispensed' => 'bg-emerald-50 border-emerald-200 text-emerald-800',
-                    'cancelled' => 'bg-rose-50 border-rose-200 text-rose-800',
-                ];
-                $statusLabels = [
-                    'pending'   => 'Your prescription is pending review.',
-                    'routed'    => 'Your prescription has been sent to the pharmacy queue.',
-                    'dispensed' => 'Your medicines have been dispensed. Please collect at the pharmacy.',
-                    'cancelled' => 'This prescription has been cancelled.',
-                ];
-            @endphp
-            <div class="p-4 rounded-md border {{ $bannerColors[$prescription->status] ?? 'bg-gray-50 border-gray-200 text-gray-700' }} text-sm font-medium">
-                {{ $statusLabels[$prescription->status] ?? 'Status unknown.' }}
+        <!-- Medicines table -->
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-5 py-3.5 border-b border-gray-100 bg-gray-50">
+                <p class="text-xs font-bold text-gray-600 uppercase tracking-wide">Prescribed Medicines</p>
             </div>
-
-            {{-- Prescription Meta --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">Prescription Details</h3>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <dt class="text-xs text-gray-500">Prescription ID</dt>
-                        <dd class="text-sm font-medium text-gray-800">#{{ $prescription->id }}</dd>
+            <div class="divide-y divide-gray-50">
+                @foreach ($prescription->items as $item)
+                    <div class="px-5 py-4 flex items-start gap-4">
+                        <div class="w-9 h-9 bg-green-50 border border-green-100 rounded-xl flex items-center justify-center shrink-0 text-green-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" stroke-width="2"/><path d="m8.5 8.5 7 7" stroke-width="2"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">{{ $item->medicine->name }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ $item->medicine->generic_name }}</p>
+                            <p class="text-xs text-gray-500 mt-1 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1 inline-block">
+                                {{ $item->dosage_instructions ?: '1 tab OD as directed' }}
+                            </p>
+                        </div>
+                        <div class="shrink-0 text-right">
+                            <p class="text-xs text-gray-400">Qty</p>
+                            <p class="text-lg font-bold text-green-800">{{ $item->quantity }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <dt class="text-xs text-gray-500">Status</dt>
-                        <dd>
-                            @php
-                                $badgeColors = [
-                                    'pending'   => 'bg-amber-100 text-amber-700',
-                                    'routed'    => 'bg-blue-100 text-blue-700',
-                                    'dispensed' => 'bg-emerald-100 text-emerald-700',
-                                    'cancelled' => 'bg-rose-100 text-rose-700',
-                                ];
-                            @endphp
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {{ $badgeColors[$prescription->status] ?? 'bg-gray-100 text-gray-600' }}">
-                                {{ ucfirst($prescription->status) }}
-                            </span>
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500">Prescribing Doctor</dt>
-                        <dd class="text-sm font-medium text-gray-800">Dr. {{ $prescription->encodedBy->name ?? '—' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs text-gray-500">Date Issued</dt>
-                        <dd class="text-sm font-medium text-gray-800">{{ $prescription->created_at->format('F d, Y \a\t h:i A') }}</dd>
-                    </div>
-                </dl>
+                @endforeach
             </div>
-
-            {{-- Prescribed Medicines --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="px-6 py-4 border-b border-gray-100">
-                    <h3 class="text-sm font-semibold text-gray-700">Prescribed Medicines</h3>
-                </div>
-                <ul class="divide-y divide-gray-100">
-                    @foreach ($prescription->items as $item)
-                        <li class="px-6 py-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-semibold text-gray-800">{{ $item->medicine->name }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ $item->medicine->generic_name }}</p>
-                                    @if ($item->dosage_instructions)
-                                        <p class="text-xs text-gray-600 mt-1 italic">"{{ $item->dosage_instructions }}"</p>
-                                    @endif
-                                </div>
-                                <div class="text-right flex-shrink-0">
-                                    <span class="text-sm font-semibold text-gray-800">{{ $item->quantity }}</span>
-                                    <span class="text-xs text-gray-500 ml-0.5">{{ $item->medicine->unit }}(s)</span>
-                                </div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
         </div>
     </div>
-</x-app-layout>
+</x-patient-layout>

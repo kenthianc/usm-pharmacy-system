@@ -35,7 +35,9 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', Rules\Password::defaults()],
+            'patient_type' => ['nullable', 'string', 'in:student,faculty,community,walkin,resident'],
+            'contact_number' => ['nullable', 'string', 'max:25'],
         ]);
 
         $patientRole = Role::firstOrCreate([
@@ -54,9 +56,9 @@ class RegisteredUserController extends Controller
 
         Patient::create([
             'user_id' => $user->id,
-            'patient_type' => 'student',
+            'patient_type' => $request->input('patient_type', 'student'),
             'id_number' => 'PT-'.str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
-            'contact_number' => null,
+            'contact_number' => $request->input('contact_number'),
         ]);
 
         event(new Registered($user));
