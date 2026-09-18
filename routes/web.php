@@ -5,6 +5,8 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WelcomeController;
+use App\Models\Medicine;
+use App\Models\Prescription;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
@@ -15,7 +17,22 @@ Route::get('/dashboard', function () {
         return redirect()->route('patient.dashboard');
     }
 
-    return view('dashboard');
+    $counts = [
+        'all' => Prescription::count(),
+        'pending' => Prescription::pending()->count(),
+        'routed' => Prescription::routed()->count(),
+        'dispensed' => Prescription::dispensed()->count(),
+        'cancelled' => Prescription::cancelled()->count(),
+    ];
+
+    $recentPrescriptions = Prescription::with(['patient.user', 'encodedBy', 'items.medicine'])
+        ->latest()
+        ->take(5)
+        ->get();
+
+    $inventory = Medicine::with('stockBatches')->get()->take(8);
+
+    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -36,6 +53,8 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
 // Prescription Module (nurse, admin)
 Route::middleware(['auth', 'role:nurse'])->prefix('prescriptions')->name('prescriptions.')->group(function () {
     Route::get('/', [PrescriptionController::class, 'index'])->name('index');
+    Route::get('/inventory', [PrescriptionController::class, 'inventory'])->name('inventory');
+    Route::get('/patients', [PrescriptionController::class, 'patients'])->name('patients');
     Route::get('/create', [PrescriptionController::class, 'create'])->name('create');
     Route::post('/', [PrescriptionController::class, 'store'])->name('store');
     Route::get('/{prescription}', [PrescriptionController::class, 'show'])->name('show');

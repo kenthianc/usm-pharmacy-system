@@ -256,3 +256,16 @@ test('nurse can register a new patient inline during prescription creation', fun
     expect($prescription)->not->toBeNull()
         ->and($prescription->status)->toBe('pending');
 });
+
+test('nurse can access dedicated inventory check view and see clinical stock details', function () {
+    $response = $this->actingAs($this->nurse)
+        ->get(route('prescriptions.inventory'));
+
+    $response->assertOk()
+        ->assertSee('Inventory Check')
+        ->assertSee('Dispensary Medicine Catalog')
+        ->assertSee($this->medicine->name)
+        ->assertSee($this->medicine->generic_name)
+        ->assertSee('50')
+        ->assertSee('In Stock');
+});
