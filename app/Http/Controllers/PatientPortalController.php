@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,19 +19,23 @@ class PatientPortalController extends Controller
             'prescriptions.encodedBy',
         ])->firstOrFail();
 
-        $recentPrescriptions = $patient->prescriptions()
+        $allPrescriptions = $patient->prescriptions()
             ->with(['items.medicine', 'encodedBy'])
             ->latest()
-            ->take(5)
             ->get();
 
+        $recentPrescriptions = $allPrescriptions->take(5);
+
         $counts = [
-            'total' => $patient->prescriptions()->count(),
-            'pending' => $patient->prescriptions()->where('status', 'pending')->count(),
-            'dispensed' => $patient->prescriptions()->where('status', 'dispensed')->count(),
+            'total' => $allPrescriptions->count(),
+            'all' => $allPrescriptions->count(),
+            'pending' => $allPrescriptions->where('status', 'pending')->count(),
+            'routed' => $allPrescriptions->where('status', 'routed')->count(),
+            'dispensed' => $allPrescriptions->where('status', 'dispensed')->count(),
+            'cancelled' => $allPrescriptions->where('status', 'cancelled')->count(),
         ];
 
-        return view('patient.dashboard', compact('patient', 'recentPrescriptions', 'counts'));
+        return view('patient.dashboard', compact('patient', 'recentPrescriptions', 'allPrescriptions', 'counts'));
     }
 
     /**
@@ -90,7 +95,7 @@ class PatientPortalController extends Controller
     /**
      * Update the patient's medical profile (allergies, contact, medical notes).
      */
-    public function updateProfile(Request $request): RedirectResponse
+    public function updateProfile(Request $request): RedirectResponse|JsonResponse
     {
         $patient = $request->user()->patient()->firstOrFail();
 
@@ -101,6 +106,10 @@ class PatientPortalController extends Controller
         ]);
 
         $patient->update($validated);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Changes saved']);
+        }
 
         return back()->with('status', 'Profile updated successfully.');
     }

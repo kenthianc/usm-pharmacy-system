@@ -63,7 +63,19 @@ class PrescriptionController extends Controller
             'cancelled' => Prescription::cancelled()->count(),
         ];
 
-        return view('prescriptions.index', compact('prescriptions', 'status', 'search', 'scope', 'counts'));
+        $patients = Patient::with('user')->get()->sortBy('name');
+        $medicines = Medicine::with('stockBatches')->get()->map(function ($medicine) {
+            return [
+                'id' => $medicine->id,
+                'name' => $medicine->name,
+                'generic_name' => $medicine->generic_name,
+                'unit' => $medicine->unit,
+                'unit_price' => (float) $medicine->unit_price,
+                'available_stock' => $medicine->available_stock,
+            ];
+        });
+
+        return view('prescriptions.index', compact('prescriptions', 'status', 'search', 'scope', 'counts', 'patients', 'medicines'));
     }
 
     /**
@@ -198,5 +210,113 @@ class PrescriptionController extends Controller
 
         return redirect()->route('prescriptions.show', $prescription)
             ->with('status', "Prescription #{$prescription->id} has been cancelled.");
+    }
+
+    /**
+     * Display a straightforward clinical inventory check view for nurses.
+     */
+    public function inventory(Request $request): View
+    {
+        Gate::authorize('viewAny', Prescription::class);
+
+        $search = $request->query('search');
+        $category = $request->query('category');
+        $stockStatus = $request->query('stock_status', 'all');
+
+        $query = Medicine::with(['stockBatches' => function ($q) {
+            $q->where('expiry_date', '>=', now()->toDateString())
+                ->where('quantity_remaining', '>', 0)
+                ->orderBy('expiry_date', 'asc');
+        }]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('generic_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($category) {
+            $query->where('category', $category);
+        }
+
+        $allMedicines = $query->orderBy('name')->get();
+
+        $categories = Medicine::distinct()->pluck('category')->filter()->sort()->values();
+
+        $allWithStock = Medicine::with('stockBatches')->get();
+        $totalItems = $allWithStock->count();
+        $inStockCount = $allWithStock->filter(fn ($m) => $m->available_stock > 20)->count();
+        $lowStockCount = $allWithStock->filter(fn ($m) => $m->available_stock > 0 && $m->available_stock <= 20)->count();
+        $outOfStockCount = $allWithStock->filter(fn ($m) => $m->available_stock === 0)->count();
+
+        $medicines = $allMedicines->filter(function ($medicine) use ($stockStatus) {
+            $stock = $medicine->available_stock;
+            if ($stockStatus === 'in_stock') {
+                return $stock > 20;
+            }
+            if ($stockStatus === 'low_stock') {
+                return $stock > 0 && $stock <= 20;
+            }
+            if ($stockStatus === 'out_of_stock') {
+                return $stock === 0;
+            }
+
+            return true;
+        });
+
+        return view('prescriptions.inventory', compact(
+            'medicines',
+            'categories',
+            'search',
+            'category',
+            'stockStatus',
+            'totalItems',
+            'inStockCount',
+            'lowStockCount',
+            'outOfStockCount'
+        ));
+    }
+
+    /**
+     * Display a directory of registered patients for clinical staff.
+     */
+    public function patients(Request $request): View
+    {
+        Gate::authorize('viewAny', Prescription::class);
+
+        $search = $request->query('search');
+        $type = $request->query('type');
+
+        $query = Patient::with(['user', 'prescriptions'])->latest();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id_number', 'like', "%{$search}%")
+                    ->orWhere('contact_number', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($type && in_array($type, ['student', 'resident', 'faculty'], true)) {
+            $query->where('patient_type', $type);
+        }
+
+        $patients = $query->paginate(10)->withQueryString();
+        $totalPatients = Patient::count();
+        $studentCount = Patient::where('patient_type', 'student')->count();
+        $residentCount = Patient::whereIn('patient_type', ['resident', 'faculty'])->count();
+
+        return view('prescriptions.patients', compact(
+            'patients',
+            'search',
+            'type',
+            'totalPatients',
+            'studentCount',
+            'residentCount'
+        ));
     }
 }

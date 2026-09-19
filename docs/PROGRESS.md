@@ -1,15 +1,16 @@
 # USM Pharmacy — Project Progress
 
-**Last updated:** 2026-09-17
+**Last updated:** 2026-09-19
 
 ## Module Status
 
 | Module | Owner | Status | Notes |
 |---|---|---|---|
-| Auth / RBAC | Member 1 | Done | Spatie Permission integrated; 6 roles seeded; Figma-styled login page with demo autofill & patient registration modal |
-| Prescription | Member 1 | Done | Nurse/MedSec create prescriptions → route to pharmacy queue |
+| Auth / RBAC | Member 1 | Done | Spatie Permission integrated; 5 roles active (`nurse`, `pharmacist`, `stock_manager`, `patient`, `admin`); `medical_secretary` role removed; Figma-styled login page with demo autofill & patient registration modal |
+| Prescription | Member 1 | Done | Nurse-only creation & routing to pharmacy queue; modal-based prescription encoder; inventory verification & patient directory integrated |
+| Nurse Portal | Member 1 | Done | Dedicated clinical workstation layout (`<x-nurse-layout>`), clinical KPI widgets, triage queue, live inventory check, and patient directory |
 | Pharmacy / POS | Member 2 | Done | FEFO dispense, OTC sales, receipt view, all behind `pharmacist` role |
-| Inventory | Member 2 | In progress | Stock decrements wired; batch-receiving UI not yet built |
+| Inventory | Member 2 | In progress | Stock decrements wired; nurse live inventory check view complete; batch-receiving UI not yet built |
 | Dual Risk Engine | Member 3 | Not started | `stock_movements` data exists; prediction algorithm not designed |
 | Patient Portal & Landing Page | Member 1 | Done | USM branded landing page with AI health assistant, features, stats band, and CTA |
 | Pharmacy Storefront | Member 1 | Done | Full hospital catalog with category sidebar, live search, 35 Figma products, stock badges, and inquiry modal |
@@ -51,16 +52,22 @@ See `database/migrations/` for full column lists.
   - Interactive 2x2 demo accounts autofill grid for Nurse, Pharmacist, Stock Keeper, and Patient.
   - All 4 demo accounts seeded in database with passwords ready for testing.
   - Patient registration modal supporting full name, patient type, email, contact, and password.
+- **Nurse Clinical Workstation & Portal (`/dashboard`, `/prescriptions`):**
+  - **Dedicated Layout (`<x-nurse-layout>`):** High-productivity clinical interface with green USM institutional accents, persistent sidebar navigation (Dashboard, Prescriptions, Live Inventory, Patient Directory), user menu, and responsive mobile drawer.
+  - **Nurse Dashboard:** Role-specific clinical dashboard with real-time summary cards (total prescriptions, routed, pending, low stock items), quick-action buttons (Launch New Prescription modal, view stock, browse patients), and a live routed prescription triage queue.
+  - **Floating Modal Prescription Creator (`partials/modal-create.blade.php`):** Accessible from anywhere in the nurse portal to rapidly encode multi-item prescriptions without navigating away or losing context. Includes inline patient registration, dynamic medicine line items with real-time unit indicators, dosage instructions, and doctor name assignment.
+  - **Live Inventory Check (`/prescriptions/inventory`):** Dedicated nurse view displaying the hospital formulary, live batch stock counts, stock status badges (`In Stock`, `Low Stock`, `Out of Stock`), and reorder levels to prevent prescribing unavailable drugs.
+  - **Patient Directory (`/prescriptions/patients`):** Searchable patient register showing patient classification (student, faculty, resident, community), contact details, identification numbers, and prescription history links.
 - **Prescription & POS Workflows:**
   - Any seeded user can log in; wrong-role routes return 403 via Spatie middleware.
-  - Nurses and Medical Secretaries can create a prescription with one or more medicine items. Inline patient registration is supported (creates a `users` + `patients` row in a transaction).
-  - Prescriptions list view has status tabs, search, and "mine / all" scope toggle.
+  - Nurses can create a prescription with one or more medicine items. Inline patient registration is supported (creates a `users` + `patients` row in a transaction).
+  - Prescriptions list view has status tabs (`All`, `Pending`, `Routed`, `Dispensed`, `Cancelled`), search, and "mine / all" scope toggle.
   - A `pending` prescription can be routed to the pharmacy queue (stock check runs first); status becomes `routed`.
   - Pharmacists see the routed queue ordered oldest-first. Processing a prescription auto-suggests FEFO batch allocations from `DispensingService::suggestFefoBatches`.
   - Pharmacists can confirm dispensing — `DispensingService::dispensePrescription` decrements `stock_batches.quantity_remaining`, creates `pos_transaction_items`, creates `stock_movements` (`type=out`), and marks the prescription `dispensed`, all inside a single `DB::transaction` with `lockForUpdate`.
   - OTC walk-in sales go through `DispensingService::processOtcSale` — same FEFO and audit logic, no prescription linked.
   - A printable receipt view renders after any completed transaction.
-  - Pest feature tests cover: storefront and landing page (`StorefrontTest`), authentication (`AuthenticationTest`), registration (`RegistrationTest`), prescription CRUD & routing (`PrescriptionModuleTest`), POS dispense & OTC (`PharmacyPosModuleTest`), and role-based access (`RoleBasedAccessControlTest`).
+  - Pest feature tests cover: storefront and landing page (`StorefrontTest`), authentication (`AuthenticationTest`), registration (`RegistrationTest`), prescription CRUD, routing, inventory lookup & patients (`PrescriptionModuleTest`), POS dispense & OTC (`PharmacyPosModuleTest`), and role-based access (`RoleBasedAccessControlTest`).
 
 ## What is Deliberately NOT Built Yet
 
@@ -81,7 +88,7 @@ See `database/migrations/` for full column lists.
 - **Service layer:** Business logic lives in `app/Services/` (e.g., `DispensingService`). Controllers are thin — they call services and redirect.
 - **DB safety:** All multi-table writes use `DB::transaction()` + `lockForUpdate()` on stock rows.
 - **Validation:** Form Requests only — no inline `$request->validate()` in controllers.
-- **Role names (exact strings):** `nurse`, `medical_secretary`, `pharmacist`, `stock_manager`, `patient`, `admin`.
+- **Role names (exact strings):** `nurse`, `pharmacist`, `stock_manager`, `patient`, `admin`.
 - **FEFO:** Always sort batches `orderBy('expiry_date', 'asc')` and filter `expiry_date >= today` and `quantity_remaining > 0`. Use `StockBatch::scopeActive()` and `scopeFefo()`.
 - **Table naming:** snake_case plural (`pos_transactions`, not `posTransactions`).
 - **Tests:** Pest feature tests in `tests/Feature/`; use factories + role assignment; no test should rely on seeded DB data.
@@ -124,4 +131,43 @@ See `database/migrations/` for full column lists.
   - Cleaned up `tests/Feature/PrescriptionModuleTest.php` helper roles.
   - Ran full Pest test suite (`php artisan test`): 47 tests passed (157 assertions).
   - Executed code formatter: `vendor/bin/pint --format agent` passed.
+
+---
+
+## Session Progress — 2026-09-18: Nurse Portal UI/UX Redesign, Floating Prescription Modal, Live Inventory Verification & Patient Directory
+
+### Summary of Changes
+
+- **Dedicated Nurse Clinical Layout (`<x-nurse-layout>`):**
+  - Created `NurseLayout` component (`app/View/Components/NurseLayout.php` and `resources/views/components/nurse-layout.blade.php`) tailored specifically for clinical nursing staff.
+  - Features high-contrast USM emerald-and-gold styling, a persistent desktop sidebar with status badges, quick navigation links (Dashboard, Prescriptions, Live Inventory, Patient Directory), account profile controls, and a responsive mobile slide-out drawer.
+
+- **Nurse Dashboard Overhaul (`dashboard.blade.php`):**
+  - Integrated role-aware dashboard rendering so Nurses see a clinical workstation dashboard while maintaining default views for other roles.
+  - Clinical KPI cards highlighting Total Prescriptions, Pending Prescriptions, Routed Queue, and Formulary Stock alerts.
+  - Quick Action triggers to open the floating prescription modal, jump into the live inventory check, or browse patient records.
+  - Integrated active triage queue directly on the dashboard with one-click routing to the pharmacy.
+
+- **Floating Prescription Creator Modal (`partials/modal-create.blade.php`):**
+  - Developed a standalone, Alpine.js-powered modal for creating prescriptions on-the-fly without leaving the current view or dashboard.
+  - Supports inline patient search or new patient registration on the fly, multiple medicine line item additions, real-time dosage instructions, doctor name attribution, and immediate submission.
+  - Preserved standard full-page prescription creation (`prescriptions/create.blade.php`) wrapped with `<x-nurse-layout>` for fallback and direct navigation.
+
+- **Live Inventory Verification View (`/prescriptions/inventory`):**
+  - Created `PrescriptionController::inventory` and view `resources/views/prescriptions/inventory.blade.php`.
+  - Enables nurses to cross-reference available medicine batches, remaining stock numbers, and stock status flags (`In Stock`, `Low Stock`, `Out of Stock`) before prescribing, preventing pharmacy routing rejections due to stock depletion.
+
+- **Patient Directory View (`/prescriptions/patients`):**
+  - Created `PrescriptionController::patients` and view `resources/views/prescriptions/patients.blade.php`.
+  - Provides a streamlined directory for nurses to search and view registered patients, their institutional classification (Student, Faculty, Resident, Community), identification number, and prescription history.
+
+- **Prescriptions Management & Display Refresh (`prescriptions/index.blade.php`, `prescriptions/show.blade.php`):**
+  - Restyled prescription list into responsive status tabs with status badges, doctor/patient summaries, and quick routing action triggers.
+  - Enhanced prescription detail view (`show.blade.php`) with modern clinical cards, batch allocation previews, and print-ready format.
+
+- **Test Suite Verification & Coverage:**
+  - Added Pest test coverage in `tests/Feature/PrescriptionModuleTest.php` to verify nurse access to the dedicated inventory check (`prescriptions.inventory`) and catalog details.
+  - Ran full Pest test suite (`php artisan test`): **51 tests passed (181 assertions)** with 0 failures.
+  - Ran code style fixer (`vendor/bin/pint --format agent`).
+
 

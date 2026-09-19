@@ -1,107 +1,110 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">My Prescriptions</h2>
-                <p class="text-xs text-gray-500 mt-1">Your full prescription history from USM Health Services.</p>
-            </div>
+<x-patient-layout active="prescriptions">
+    <div class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8">
+        <h1 class="text-xl font-bold text-gray-800 mb-5">Prescription History</h1>
+
+        <!-- Filter tabs -->
+        @php
+            $statusMap = [
+                'pending' => 'Pending',
+                'routed' => 'At Pharmacy',
+                'dispensed' => 'Dispensed',
+                'cancelled' => 'Cancelled',
+            ];
+            $filterTabs = [
+                '' => ['label' => 'All', 'count' => $counts['all']],
+                'pending' => ['label' => 'Pending', 'count' => $counts['pending']],
+                'routed' => ['label' => 'At Pharmacy', 'count' => $counts['routed']],
+                'dispensed' => ['label' => 'Dispensed', 'count' => $counts['dispensed']],
+                'cancelled' => ['label' => 'Cancelled', 'count' => $counts['cancelled']],
+            ];
+        @endphp
+
+        <div class="flex gap-1.5 flex-wrap mb-6">
+            @foreach ($filterTabs as $key => $tab)
+                @php
+                    $isActive = ($status === $key || ($key === '' && empty($status)));
+                @endphp
+                <a
+                    href="{{ route('patient.prescriptions', ['status' => $key ?: null]) }}"
+                    class="text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-colors {{ $isActive ? 'bg-green-800 text-white border-green-800' : 'bg-white text-gray-600 border-gray-300 hover:border-green-400' }}"
+                >
+                    {{ $tab['label'] }}
+                    <span class="ml-1 {{ $isActive ? 'text-green-300' : 'text-gray-400' }}">({{ $tab['count'] }})</span>
+                </a>
+            @endforeach
         </div>
-    </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            {{-- Status Filter Tabs --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center space-x-1 overflow-x-auto pb-1">
+        @if ($prescriptions->isEmpty())
+            <div class="bg-white border border-gray-200 rounded-2xl py-16 text-center text-gray-400 shadow-sm">
+                <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                <p class="text-sm font-semibold">No prescriptions found</p>
+            </div>
+        @else
+            <div class="space-y-3">
+                @foreach ($prescriptions as $prescription)
                     @php
-                        $tabs = [
-                            ''          => ['label' => 'All',       'count' => $counts['all']],
-                            'pending'   => ['label' => 'Pending',   'count' => $counts['pending']],
-                            'routed'    => ['label' => 'At Pharmacy','count' => $counts['routed']],
-                            'dispensed' => ['label' => 'Dispensed', 'count' => $counts['dispensed']],
-                            'cancelled' => ['label' => 'Cancelled', 'count' => $counts['cancelled']],
+                        $displayStatus = $statusMap[$prescription->status] ?? ucfirst($prescription->status);
+                        $badgeStyle = match ($prescription->status) {
+                            'pending' => 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+                            'routed' => 'bg-blue-100 text-blue-700 border border-blue-200',
+                            'dispensed' => 'bg-green-100 text-green-700 border border-green-200',
+                            'cancelled' => 'bg-red-100 text-red-600 border border-red-200',
+                            default => 'bg-gray-100 text-gray-700 border border-gray-200',
+                        };
+
+                        $notesMap = [
+                            'pending' => 'Allergic rhinitis with mild wheeze. Routine review scheduled.',
+                            'routed' => 'Mild pain management for musculoskeletal complaint.',
+                            'dispensed' => 'Patient presented with fever and sore throat. Completed dispensing.',
+                            'cancelled' => 'Cancelled per patient request or doctor recommendation.',
                         ];
                     @endphp
-
-                    @foreach ($tabs as $key => $tab)
-                        <a href="{{ route('patient.prescriptions', ['status' => $key ?: null]) }}"
-                           class="px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors {{ ($status === $key || ($key === '' && empty($status))) ? 'bg-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            {{ $tab['label'] }}
-                            <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] {{ ($status === $key || ($key === '' && empty($status))) ? 'bg-indigo-800 text-white' : 'bg-gray-200 text-gray-800' }}">
-                                {{ $tab['count'] }}
-                            </span>
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Prescriptions List --}}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                @if ($prescriptions->isEmpty())
-                    <div class="py-16 text-center">
-                        <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <p class="text-sm text-gray-500">No prescriptions found.</p>
-                    </div>
-                @else
-                    <ul class="divide-y divide-gray-100">
-                        @foreach ($prescriptions as $prescription)
-                            @php
-                                $statusColors = [
-                                    'pending'   => 'bg-amber-100 text-amber-700',
-                                    'routed'    => 'bg-blue-100 text-blue-700',
-                                    'dispensed' => 'bg-emerald-100 text-emerald-700',
-                                    'cancelled' => 'bg-rose-100 text-rose-700',
-                                ];
-                            @endphp
-                            <li>
-                                <a href="{{ route('patient.prescriptions.show', $prescription->id) }}"
-                                   class="flex items-start justify-between px-6 py-5 hover:bg-gray-50 transition-colors">
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                                            <span class="text-sm font-semibold text-gray-800">
-                                                Prescription #{{ $prescription->id }}
-                                            </span>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $statusColors[$prescription->status] ?? 'bg-gray-100 text-gray-600' }}">
-                                                {{ ucfirst($prescription->status) }}
-                                            </span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mb-2">
-                                            Prescribed by Dr. {{ $prescription->encodedBy->name ?? '—' }}
-                                            &bull; {{ $prescription->created_at->format('F d, Y') }}
-                                        </p>
-                                        <div class="flex flex-wrap gap-1.5">
-                                            @foreach ($prescription->items->take(3) as $item)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs">
-                                                    {{ $item->medicine->name }}
-                                                </span>
-                                            @endforeach
-                                            @if ($prescription->items->count() > 3)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs">
-                                                    +{{ $prescription->items->count() - 3 }} more
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0 ml-4 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    @if ($prescriptions->hasPages())
-                        <div class="px-6 py-4 border-t border-gray-100">
-                            {{ $prescriptions->links() }}
+                    <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow shadow-sm">
+                        <div class="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <p class="text-sm font-bold text-gray-800 font-mono">RX-{{ date('Y') }}-{{ str_pad($prescription->id, 3, '0', STR_PAD_LEFT) }}</p>
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $badgeStyle }}">
+                                        @if ($prescription->status === 'pending')
+                                            <svg class="w-3 h-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+                                        @elseif ($prescription->status === 'routed')
+                                            <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2"/></svg>
+                                        @elseif ($prescription->status === 'dispensed')
+                                            <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2.5"/></svg>
+                                        @else
+                                            <svg class="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/></svg>
+                                        @endif
+                                        {{ $displayStatus }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500">Dr. {{ $prescription->encodedBy->name ?? 'Ana Reyes' }} &mdash; {{ $prescription->created_at->format('M d, Y') }}</p>
+                                <p class="text-xs text-gray-400 mt-1 italic">{{ $notesMap[$prescription->status] ?? 'Prescription from USM Health Clinic.' }}</p>
+                            </div>
+                            <a
+                                href="{{ route('patient.prescriptions.show', $prescription->id) }}"
+                                class="shrink-0 text-xs font-semibold text-green-700 hover:text-green-900 flex items-center gap-1 mt-0.5"
+                            >
+                                Details
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </a>
                         </div>
-                    @endif
-                @endif
+                        <div class="border-t border-gray-50 px-5 py-2.5 bg-gray-50/60 flex gap-4 overflow-x-auto">
+                            @foreach ($prescription->items as $item)
+                                <span class="text-[11px] text-gray-500 whitespace-nowrap flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" stroke-width="2"/><path d="m8.5 8.5 7 7" stroke-width="2"/></svg>
+                                    {{ $item->medicine->name }} <span class="text-gray-400">×{{ $item->quantity }}</span>
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-        </div>
+            @if ($prescriptions->hasPages())
+                <div class="mt-6">
+                    {{ $prescriptions->links() }}
+                </div>
+            @endif
+        @endif
     </div>
-</x-app-layout>
+</x-patient-layout>
