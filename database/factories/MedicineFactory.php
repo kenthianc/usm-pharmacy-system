@@ -24,6 +24,15 @@ class MedicineFactory extends Factory
             'unit' => 'Tablet',
             'unit_price' => fake()->randomFloat(2, 1, 100),
             'reorder_level' => 10,
+            'is_active' => true,
         ];
+    }
+
+    /**
+     * Mark the medicine as inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(['is_active' => false]);
     }
 }
