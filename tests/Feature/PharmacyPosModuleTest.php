@@ -151,6 +151,88 @@ it('aborts dispensing if stock becomes insufficient', function () {
     expect(PosTransaction::count())->toBe(0);
 });
 
+it('dispenses prescription via JSON for in-page receipt rendering without page reload', function () {
+    $prescription = Prescription::factory()->create(['status' => 'routed', 'patient_id' => $this->patient->id]);
+    $prescription->items()->create([
+        'medicine_id' => $this->medicine->id,
+        'quantity' => 2,
+        'dosage_instructions' => 'Take 1 twice daily',
+    ]);
+
+    $batch = StockBatch::factory()->create([
+        'medicine_id' => $this->medicine->id,
+        'quantity_remaining' => 10,
+        'expiry_date' => now()->addDays(90),
+    ]);
+
+    $response = actingAs($this->pharmacist)
+        ->postJson(route('pos.dispense', $prescription), [
+            'payment_method' => 'cash',
+            'allocations' => [
+                $this->medicine->id => [
+                    $batch->id => 2,
+                ],
+            ],
+        ]);
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+            'message' => 'Prescription dispensed successfully.',
+        ])
+        ->assertJsonStructure([
+            'success',
+            'message',
+            'transaction' => [
+                'id',
+                'raw_id',
+                'rxId',
+                'patient',
+                'cashier',
+                'total',
+                'method',
+                'datetime',
+                'items',
+            ],
+        ]);
+
+    expect($response->json('transaction.id'))->toMatch('/^#\d{8}$/');
+});
+
+it('processes OTC sale via JSON for immediate in-page receipt display', function () {
+    $batch = StockBatch::factory()->create([
+        'medicine_id' => $this->medicine->id,
+        'quantity_remaining' => 20,
+        'expiry_date' => now()->addDays(90),
+    ]);
+
+    $response = actingAs($this->pharmacist)
+        ->postJson(route('pos.otc.store'), [
+            'payment_method' => 'cash',
+            'items' => [
+                [
+                    'medicine_id' => $this->medicine->id,
+                    'quantity' => 3,
+                ],
+            ],
+        ]);
+
+    $response->assertStatus(200)
+        ->assertJson([
+            'success' => true,
+            'message' => 'OTC Sale completed successfully.',
+        ])
+        ->assertJsonStructure([
+            'transaction' => [
+                'id',
+                'total',
+                'items',
+            ],
+        ]);
+
+    expect($response->json('transaction.id'))->toMatch('/^#\d{8}$/');
+});
+
 it('forbids unauthorized access', function () {
     actingAs($this->nurse)
         ->get(route('pos.index'))

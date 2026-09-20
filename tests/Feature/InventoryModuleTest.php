@@ -328,3 +328,26 @@ test('unauthorized roles cannot export inventory pdf report', function () {
         ->get(route('inventory.export-pdf'))
         ->assertOk();
 });
+
+test('inventory show view displays enterprise 4-column key metric grid and medicine code', function () {
+    $medicine = Medicine::factory()->create([
+        'code' => 'PAR-500-TAB',
+        'barcode' => '4800016612345',
+        'name' => 'Paracetamol 500mg (Out of Stock Demo)',
+        'category' => 'Analgesic',
+        'reorder_level' => 150,
+        'unit' => 'tablet',
+    ]);
+
+    actingAs($this->stockManager)
+        ->get(route('inventory.medicines.show', $medicine))
+        ->assertOk()
+        ->assertSee('PAR-500-TAB')
+        ->assertSee('4800016612345')
+        ->assertSee('Paracetamol 500mg')
+        ->assertDontSee('(Out of Stock Demo)')
+        ->assertSee('On-Hand Stock')
+        ->assertSee('Avg. Burn Rate (per day)')
+        ->assertSee('Reorder Level')
+        ->assertSee('Lead Time');
+});

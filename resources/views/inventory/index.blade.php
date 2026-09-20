@@ -68,8 +68,8 @@
                 </div>
             @endif
 
-            <!-- 5 Overview KPI Cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- 6 Overview KPI Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 <!-- Total Formulations -->
                 <a href="{{ route('inventory.index') }}" class="bg-white p-4 rounded-xl border border-gray-200 shadow-xs hover:border-gray-300 transition">
                     <div class="flex items-center justify-between text-gray-500">
@@ -108,7 +108,7 @@
                     </div>
                     <div class="mt-3">
                         <div class="text-2xl font-extrabold text-amber-700">{{ $lowStockCount }}</div>
-                        <p class="text-[11px] text-amber-600 mt-0.5">At or below reorder limit</p>
+                        <p class="text-[11px] text-amber-600 mt-0.5">At/below reorder limit</p>
                     </div>
                 </a>
 
@@ -139,6 +139,20 @@
                         <p class="text-[11px] text-purple-600 mt-0.5">Active batches expiring</p>
                     </div>
                 </div>
+
+                <!-- High Stockout Risk (Dual Risk Engine) -->
+                <a href="{{ route('inventory.index', ['stock_status' => 'high_risk']) }}" class="bg-white p-4 rounded-xl border {{ $stockStatus === 'high_risk' ? 'border-red-500 ring-2 ring-red-500/20' : 'border-red-200/80' }} shadow-xs hover:border-red-400 transition">
+                    <div class="flex items-center justify-between text-red-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider">High Risk ($S_r$)</span>
+                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                            ⚡
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-red-700">{{ $highRiskCount }}</div>
+                        <p class="text-[11px] text-red-600 mt-0.5">Predicted stockouts</p>
+                    </div>
+                </a>
             </div>
 
             <!-- 3 Valuation & Profit Summary Cards -->
@@ -201,7 +215,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </span>
-                            <input type="text" name="search" value="{{ $search }}" placeholder="Search brand name, generic..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-emerald-500 focus:border-emerald-500">
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Search item code (e.g. PAR-500-TAB), generic, brand..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-emerald-500 focus:border-emerald-500">
                         </div>
 
                         <select name="category" onchange="this.form.submit()" class="py-2 pl-3 pr-8 bg-white border border-gray-300 rounded-lg text-xs focus:ring-emerald-500 focus:border-emerald-500">
@@ -232,12 +246,14 @@
                     <table class="min-w-full divide-y divide-gray-200 text-left">
                         <thead class="bg-gray-50 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                             <tr>
+                                <th class="px-6 py-3.5">Item Code</th>
                                 <th class="px-6 py-3.5">Medicine</th>
                                 <th class="px-6 py-3.5">Category & Unit</th>
                                 <th class="px-6 py-3.5">Unit Price</th>
                                 <th class="px-6 py-3.5">Reorder Limit</th>
                                 <th class="px-6 py-3.5">Current Stock</th>
                                 <th class="px-6 py-3.5">Status</th>
+                                <th class="px-6 py-3.5">Stockout Risk (S<sub>r</sub>)</th>
                                 <th class="px-6 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -248,9 +264,24 @@
                                     $batchesCount = $med->stockBatches->where('expiry_date', '>=', now()->toDateString())->where('quantity_remaining', '>', 0)->count();
                                 @endphp
                                 <tr class="hover:bg-gray-50/80 transition">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="{{ route('inventory.medicines.show', $med) }}" class="font-mono text-xs font-bold text-gray-800 hover:text-emerald-700 bg-gray-100/90 hover:bg-gray-200 px-2.5 py-1 rounded-md border border-gray-200 shadow-2xs transition inline-block">
+                                            {{ $med->item_code }}
+                                        </a>
+                                        @if ($med->barcode)
+                                            <div class="font-mono text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                <svg class="w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                                </svg>
+                                                <span>{{ $med->barcode }}</span>
+                                            </div>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4">
-                                        <div class="font-bold text-gray-900">{{ $med->name }}</div>
-                                        <div class="text-[11px] text-gray-500 font-medium">{{ $med->generic_name }}</div>
+                                        <a href="{{ route('inventory.medicines.show', $med) }}" class="font-bold text-gray-900 hover:text-emerald-700 transition">
+                                            {{ trim(str_replace('(Out of Stock Demo)', '', $med->name)) }}
+                                        </a>
+                                        <div class="text-[11px] text-gray-500 font-medium mt-0.5">{{ $med->generic_name }}</div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 text-gray-700">
@@ -287,6 +318,22 @@
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                                                 In Stock
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if ($med->stockout_risk_score !== null)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold {{ $med->stockout_risk_badge_class }}">
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $med->stockout_risk_category === 'high' ? 'bg-rose-500 animate-pulse' : ($med->stockout_risk_category === 'moderate' ? 'bg-amber-500' : 'bg-emerald-500') }}"></span>
+                                                <span class="font-mono">{{ number_format($med->stockout_risk_score, 1) }}%</span>
+                                                <span>{{ $med->stockout_risk_label }}</span>
+                                            </span>
+                                            <div class="text-[10px] text-gray-400 mt-0.5">
+                                                Burn: {{ number_format($med->daily_consumption_rate, 1) }} /day
+                                            </div>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-500 italic">
+                                                Calc pending
                                             </span>
                                         @endif
                                     </td>

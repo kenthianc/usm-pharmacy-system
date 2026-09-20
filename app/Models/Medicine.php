@@ -17,6 +17,9 @@ class Medicine extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'code',
+        'sku',
+        'barcode',
         'name',
         'generic_name',
         'category',
@@ -24,8 +27,50 @@ class Medicine extends Model
         'unit_price',
         'purchase_price',
         'reorder_level',
+        'stockout_risk_score',
+        'stockout_risk_category',
+        'daily_consumption_rate',
         'is_active',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Medicine $medicine) {
+            if (empty($medicine->code)) {
+                $uniqueCode = static::generateUniqueProductCode($medicine->category, $medicine->id);
+                $medicine->updateQuietly([
+                    'code' => $uniqueCode,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Generate a guaranteed unique product code based on category prefix and medicine ID.
+     */
+    public static function generateUniqueProductCode(?string $category, int|string $id): string
+    {
+        $clean = preg_replace('/[^A-Za-z0-9]/', '', (string) ($category ?: 'MED'));
+        $prefix = strtoupper(substr($clean ?: 'MED', 0, 3));
+        if (strlen($prefix) < 3) {
+            $prefix = str_pad($prefix, 3, 'X');
+        }
+
+        $baseCode = $prefix.'-'.str_pad((string) $id, 4, '0', STR_PAD_LEFT);
+        $candidate = $baseCode;
+        $counter = 1;
+
+        // Ensure uniqueness across the medicines table
+        while (static::where('code', $candidate)->where('id', '!=', $id)->exists()) {
+            $candidate = $baseCode.'-'.$counter;
+            $counter++;
+        }
+
+        return $candidate;
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -38,6 +83,8 @@ class Medicine extends Model
             'unit_price' => 'decimal:2',
             'purchase_price' => 'decimal:2',
             'reorder_level' => 'integer',
+            'stockout_risk_score' => 'float',
+            'daily_consumption_rate' => 'float',
             'is_active' => 'boolean',
         ];
     }
@@ -151,5 +198,72 @@ class Medicine extends Model
     public function getExpectedProfitAttribute(): float
     {
         return round($this->sale_value - $this->stock_value, 2);
+    }
+
+    /**
+     * Get human-readable label for stockout risk category.
+     */
+    public function getStockoutRiskLabelAttribute(): string
+    {
+        return match ($this->stockout_risk_category) {
+            'high' => 'High Risk',
+            'moderate' => 'Moderate Risk',
+            'low' => 'Low Risk',
+            default => 'Not Calculated',
+        };
+    }
+
+    /**
+     * Get Tailwind badge classes for stockout risk category.
+     */
+    public function getStockoutRiskBadgeClassAttribute(): string
+    {
+        return match ($this->stockout_risk_category) {
+            'high' => 'bg-rose-100 text-rose-800 border border-rose-300',
+            'moderate' => 'bg-amber-100 text-amber-900 border border-amber-300',
+            'low' => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+            default => 'bg-gray-100 text-gray-600 border border-gray-200',
+        };
+    }
+
+    /**
+     * Get clinical action recommendation for stockout risk category.
+     */
+    public function getStockoutRiskActionAttribute(): string
+    {
+        return match ($this->stockout_risk_category) {
+            'high' => 'Urgent restock PO trigger or batch return/disposal action',
+            'moderate' => 'Monitor, plan PO restock or flag near-expiry batches',
+            'low' => 'Normal FEFO rotation',
+            default => 'Pending risk calculation',
+        };
+    }
+
+    /**
+     * Get SKU alias for code attribute.
+     */
+    public function getSkuAttribute(): ?string
+    {
+        return $this->code;
+    }
+
+    /**
+     * Set SKU alias for code attribute.
+     */
+    public function setSkuAttribute(?string $value): void
+    {
+        $this->attributes['code'] = $value;
+    }
+
+    /**
+     * Get system item code with fallback.
+     */
+    public function getItemCodeAttribute(): string
+    {
+        if (! empty($this->code)) {
+            return $this->code;
+        }
+
+        return static::generateUniqueProductCode($this->category, $this->id ?? 0);
     }
 }

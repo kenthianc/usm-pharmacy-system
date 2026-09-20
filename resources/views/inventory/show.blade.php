@@ -2,28 +2,46 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2">
+                <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2.5 flex-wrap">
                     <a href="{{ route('inventory.index') }}" class="text-gray-400 hover:text-gray-600 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
                     </a>
-                    <span>{{ $medicine->name }}</span>
+                    <span>{{ trim(str_replace('(Out of Stock Demo)', '', $medicine->name)) }}</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                        {{ $medicine->category }}
+                    </span>
                 </h2>
-                <p class="text-xs text-gray-500 mt-0.5">{{ $medicine->generic_name }} • {{ $medicine->category }}</p>
+                <div class="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                    <span class="font-mono text-xs font-semibold text-gray-600 tracking-wider bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                        {{ $medicine->item_code }}
+                    </span>
+                    <span class="text-gray-300">•</span>
+                    <span class="text-xs text-gray-500 font-medium">{{ $medicine->generic_name }}</span>
+                    @if ($medicine->barcode)
+                        <span class="text-gray-300">•</span>
+                        <span class="text-xs font-mono text-gray-500 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                            </svg>
+                            {{ $medicine->barcode }}
+                        </span>
+                    @endif
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 @can('receiveBatch', $medicine)
                     <a href="{{ route('inventory.deliveries.create', ['medicine_id' => $medicine->id]) }}"
-                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
+                       class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        <span>+ Request Restock</span>
+                        <span>+ Restock</span>
                     </a>
                 @endcan
                 @can('update', $medicine)
-                    <a href="{{ route('inventory.medicines.edit', $medicine) }}" class="inline-flex items-center gap-1 px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-xs transition">
+                    <a href="{{ route('inventory.medicines.edit', $medicine) }}" class="inline-flex items-center gap-1 px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-xs transition">
                         <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
@@ -98,53 +116,198 @@
                 </div>
             @endif
 
-            <!-- Medicine Details Card -->
-            <div class="bg-white rounded-xl border border-gray-200 shadow-xs p-6">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <!-- Medicine Details & Enterprise Key Metrics Card -->
+            <div class="bg-white rounded-2xl border border-gray-200/90 shadow-sm p-6 sm:p-8">
+                <!-- Card Header with Medicine Identity, Code, and Action -->
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 pb-6 border-b border-gray-100">
                     <div>
-                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Formulary Status</div>
-                        <div class="mt-1">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+                                {{ trim(str_replace('(Out of Stock Demo)', '', $medicine->name)) }}
+                            </h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                {{ $medicine->category }}
+                            </span>
                             @if ($medicine->is_active)
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Active
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active Formulary
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Inactive
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inactive
                                 </span>
                             @endif
                         </div>
-                    </div>
 
-                    <div>
-                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Unit Price</div>
-                        <div class="mt-1 text-lg font-extrabold text-gray-900">
-                            ₱{{ number_format($medicine->unit_price, 2) }}
-                            <span class="text-xs font-normal text-gray-400">/ {{ $medicine->unit }}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Reorder Limit</div>
-                        <div class="mt-1 text-lg font-extrabold text-gray-900">
-                            {{ $medicine->reorder_level }}
-                            <span class="text-xs font-normal text-gray-400">{{ $medicine->unit }}</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Current Usable Stock</div>
-                        <div class="mt-1 flex items-baseline gap-2">
-                            <span class="text-lg font-extrabold {{ $medicine->available_stock > $medicine->reorder_level ? 'text-emerald-700' : ($medicine->available_stock > 0 ? 'text-amber-600' : 'text-rose-600') }}">
-                                {{ number_format($medicine->available_stock) }}
+                        <!-- Prominent Medicine Code & Clinical Identifiers -->
+                        <div class="flex items-center gap-3 mt-2 flex-wrap text-xs">
+                            <span class="font-mono font-semibold text-gray-700 tracking-wider bg-gray-100/90 px-2.5 py-1 rounded-md border border-gray-200">
+                                {{ $medicine->item_code }}
                             </span>
-                            <span class="text-xs font-normal text-gray-400">{{ $medicine->unit }}</span>
-                            @if ($medicine->pending_delivery_stock > 0)
-                                <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                                    +{{ number_format($medicine->pending_delivery_stock) }} pending
+                            <span class="text-gray-300">•</span>
+                            <span class="text-gray-600 font-medium">{{ $medicine->generic_name }}</span>
+                            @if ($medicine->barcode)
+                                <span class="text-gray-300">•</span>
+                                <span class="font-mono text-gray-500 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                    {{ $medicine->barcode }}
                                 </span>
                             @endif
                         </div>
+                    </div>
+
+                    <!-- Action Area -->
+                    <div class="flex items-center gap-4 shrink-0">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Unit Price</div>
+                            <div class="text-lg font-extrabold text-gray-900">
+                                ₱{{ number_format($medicine->unit_price, 2) }}
+                                <span class="text-xs font-normal text-gray-500">/ {{ $medicine->unit }}</span>
+                            </div>
+                        </div>
+
+                        @can('receiveBatch', $medicine)
+                            <a href="{{ route('inventory.deliveries.create', ['medicine_id' => $medicine->id]) }}"
+                               class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>+ Restock</span>
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+
+                <!-- 4-Column Distinct Key Metric Cards Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                    <!-- 1. On-Hand Stock -->
+                    <div class="bg-gray-50/90 rounded-xl border border-gray-200/80 p-4 sm:p-5 flex flex-col justify-between hover:border-gray-300 transition shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">On-Hand Stock</span>
+                            <span class="w-2.5 h-2.5 rounded-full {{ $medicine->available_stock > $medicine->reorder_level ? 'bg-emerald-500' : ($medicine->available_stock > 0 ? 'bg-amber-500' : 'bg-rose-500') }}"></span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl sm:text-4xl font-extrabold tracking-tight {{ $medicine->available_stock > $medicine->reorder_level ? 'text-emerald-700' : ($medicine->available_stock > 0 ? 'text-amber-600' : 'text-rose-600') }}">
+                                {{ number_format($medicine->available_stock) }}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500 mt-1.5">
+                                {{ Str::plural($medicine->unit, $medicine->available_stock) }}
+                                @if ($medicine->pending_delivery_stock > 0)
+                                    <span class="block text-[11px] font-semibold text-amber-700 mt-1">
+                                        +{{ number_format($medicine->pending_delivery_stock) }} pending inspection
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Avg. Burn Rate (per day) -->
+                    <div class="bg-gray-50/90 rounded-xl border border-gray-200/80 p-4 sm:p-5 flex flex-col justify-between hover:border-gray-300 transition shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg. Burn Rate (per day)</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Velocity</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+                                {{ number_format($stockoutRisk['daily_consumption'], 2) }}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500 mt-1.5">
+                                {{ Str::plural($medicine->unit, 2) }} / day
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Reorder Level (B_s) -->
+                    <div class="bg-gray-50/90 rounded-xl border border-gray-200/80 p-4 sm:p-5 flex flex-col justify-between hover:border-gray-300 transition shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Reorder Level (B<sub>s</sub>)</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Buffer</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+                                {{ number_format($medicine->reorder_level) }}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500 mt-1.5">
+                                {{ Str::plural($medicine->unit, $medicine->reorder_level) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Lead Time (L_t) -->
+                    <div class="bg-gray-50/90 rounded-xl border border-gray-200/80 p-4 sm:p-5 flex flex-col justify-between hover:border-gray-300 transition shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lead Time (L<sub>t</sub>)</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">Supplier</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+                                {{ $stockoutRisk['lead_time_days'] }}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500 mt-1.5">
+                                days
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dual Risk Prediction Engine Card -->
+            <div class="bg-gradient-to-r from-gray-900 via-emerald-950 to-gray-900 rounded-xl border border-emerald-800/60 shadow-md p-6 text-white">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-800/40 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 font-extrabold text-lg">
+                            ⚡
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-black text-sm uppercase tracking-wider text-emerald-300">Dual-Risk Prediction Engine</h3>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                                    AI Health Core
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-300 mt-0.5">Real-time predictive forecasting for stockout burn rate and batch expiry vulnerabilities.</p>
+                        </div>
+                    </div>
+
+                    <!-- Stockout Score Pill -->
+                    <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                        <div>
+                            <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Stockout Risk (S<sub>r</sub>)</div>
+                            <div class="text-xl font-black text-white flex items-center gap-2">
+                                <span>{{ number_format($stockoutRisk['score'], 1) }}%</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-md {{ $stockoutRisk['badge_class'] }}">
+                                    {{ $stockoutRisk['label'] }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mathematical Breakdown Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 text-xs">
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-400 uppercase font-semibold">Available Stock (I<sub>c</sub>)</div>
+                        <div class="text-base font-bold text-emerald-300 mt-1">{{ number_format($stockoutRisk['current_stock']) }} {{ $medicine->unit }}</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5">Unexpired active stock</div>
+                    </div>
+
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-400 uppercase font-semibold">Daily Consumption (D<sub>c</sub>)</div>
+                        <div class="text-base font-bold text-amber-300 mt-1">{{ number_format($stockoutRisk['daily_consumption'], 2) }} /day</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5">30-day velocity window</div>
+                    </div>
+
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-400 uppercase font-semibold">Lead Time (L<sub>t</sub>) & Buffer (B<sub>s</sub>)</div>
+                        <div class="text-base font-bold text-white mt-1">{{ $stockoutRisk['lead_time_days'] }}d lead · {{ $stockoutRisk['buffer_stock'] }} min</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5">Safety threshold: {{ number_format($stockoutRisk['reorder_point'], 1) }}</div>
+                    </div>
+
+                    <div class="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-400 uppercase font-semibold">Triage Action</div>
+                        <div class="text-xs font-bold text-emerald-200 mt-1 leading-snug">{{ $stockoutRisk['action'] }}</div>
                     </div>
                 </div>
             </div>
@@ -172,6 +335,7 @@
                                 <th class="px-6 py-3.5">Delivered Qty</th>
                                 <th class="px-6 py-3.5">Usable Qty</th>
                                 <th class="px-6 py-3.5">Status</th>
+                                <th class="px-6 py-3.5">Expiry Risk (E<sub>r</sub>)</th>
                                 <th class="px-6 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -239,6 +403,26 @@
                                                 Active on Shelves
                                             </span>
                                         @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $batchRisk = app(\App\Services\RiskPredictionService::class)->calculateExpiryRisk($batch, (float) $stockoutRisk['daily_consumption']);
+                                        @endphp
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold {{ $batchRisk['badge_class'] }}">
+                                            <span class="font-mono">{{ number_format($batchRisk['score'], 1) }}%</span>
+                                            <span>{{ $batchRisk['label'] }}</span>
+                                        </span>
+                                        <div class="text-[10px] text-gray-400 mt-0.5" title="{{ $batchRisk['action'] }}">
+                                            @if ($batch->quantity_remaining <= 0)
+                                                Depleted
+                                            @elseif ($batchRisk['days_until_expiry'] <= 0)
+                                                Expired stock
+                                            @elseif ($batchRisk['projected_loss_units'] > 0)
+                                                Loss: ~{{ number_format($batchRisk['projected_loss_units']) }} {{ $medicine->unit }}
+                                            @else
+                                                Safe FEFO
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 text-right whitespace-nowrap">
                                         @if ($batch->isPending())
@@ -462,7 +646,7 @@
                                 </div>
                                 <div>
                                     <h3 class="text-base font-bold text-gray-900">Log Delivery Batch</h3>
-                                    <p class="text-xs text-gray-500">{{ $medicine->name }} ({{ $medicine->generic_name }})</p>
+                                    <p class="text-xs text-gray-500">{{ trim(str_replace('(Out of Stock Demo)', '', $medicine->name)) }} ({{ $medicine->generic_name }})</p>
                                 </div>
                             </div>
                             <button type="button" @click="receiveModal = false" class="text-gray-400 hover:text-gray-600 p-1">

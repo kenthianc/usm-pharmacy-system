@@ -13,6 +13,7 @@ use App\Models\Medicine;
 use App\Models\StockBatch;
 use App\Models\StockMovement;
 use App\Services\InventoryService;
+use App\Services\RiskPredictionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
@@ -20,7 +21,10 @@ use Illuminate\Support\Facades\Gate;
 
 class InventoryController extends Controller
 {
-    public function __construct(private readonly InventoryService $inventoryService) {}
+    public function __construct(
+        private readonly InventoryService $inventoryService,
+        private readonly RiskPredictionService $riskService
+    ) {}
 
     /**
      * Stock overview: medicine list with aggregate stock, alerts.
@@ -39,7 +43,9 @@ class InventoryController extends Controller
         }])
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('generic_name', 'like', "%{$search}%");
+                    ->orWhere('generic_name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%");
             }))
             ->when($category, fn ($q) => $q->where('category', $category))
             ->orderBy('name')
@@ -52,6 +58,8 @@ class InventoryController extends Controller
             $medicines = $medicines->filter(fn ($m) => $m->available_stock === 0);
         } elseif ($stockStatus === 'in_stock') {
             $medicines = $medicines->filter(fn ($m) => $m->available_stock > $m->reorder_level);
+        } elseif ($stockStatus === 'high_risk') {
+            $medicines = $medicines->filter(fn ($m) => $m->stockout_risk_category === 'high');
         }
 
         $categories = Medicine::distinct()->orderBy('category')->pluck('category');
@@ -67,6 +75,7 @@ class InventoryController extends Controller
         $lowStockCount = $allFormulary->filter(fn ($m) => $m->available_stock > 0 && $m->available_stock <= $m->reorder_level)->count();
         $outOfStockCount = $allFormulary->filter(fn ($m) => $m->available_stock === 0)->count();
         $expiringSoonCount = StockBatch::expiringSoon(30)->count();
+        $highRiskCount = $allFormulary->filter(fn ($m) => $m->stockout_risk_category === 'high')->count();
 
         // Calculate dynamic inventory valuation and profit metrics
         $totalStockValue = (float) $allFormulary->sum(fn ($m) => $m->available_stock * $m->cost_price);
@@ -81,6 +90,7 @@ class InventoryController extends Controller
             'lowStockCount',
             'outOfStockCount',
             'expiringSoonCount',
+            'highRiskCount',
             'totalStockValue',
             'totalSaleValue',
             'expectedProfit',
@@ -137,7 +147,9 @@ class InventoryController extends Controller
             ->orderBy('expiry_date')
             ->get();
 
-        return view('inventory.show', compact('medicine', 'movements', 'expiringSoonBatches'));
+        $stockoutRisk = $this->riskService->calculateStockoutRisk($medicine);
+
+        return view('inventory.show', compact('medicine', 'movements', 'expiringSoonBatches', 'stockoutRisk'));
     }
 
     /**
@@ -461,5 +473,44 @@ class InventoryController extends Controller
         return $request->boolean('stream')
             ? $pdf->stream($filename)
             : $pdf->download($filename);
+    }
+
+    /**
+     * Display Dual-Risk Prediction Engine Command Center and Live Diagnostics.
+     */
+    public function riskEngineHub(Request $request)
+    {
+        Gate::authorize('viewAny', Medicine::class);
+
+        $leadTime = (int) $request->input('lead_time', RiskPredictionService::DEFAULT_LEAD_TIME_DAYS);
+        $insights = $this->riskService->getDualEngineInsights($leadTime);
+
+        if ($request->wantsJson()) {
+            return response()->json($insights);
+        }
+
+        return view('inventory.risk-engine', compact('insights', 'leadTime'));
+    }
+
+    /**
+     * Trigger immediate recalculation of all Dual-Risk metrics.
+     */
+    public function recalculateRiskEngine(Request $request)
+    {
+        Gate::authorize('viewAny', Medicine::class);
+
+        $leadTime = (int) $request->input('lead_time', RiskPredictionService::DEFAULT_LEAD_TIME_DAYS);
+        $results = $this->riskService->recalculateAllRisks($leadTime);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Dual-Risk Engine metrics recalculated successfully.',
+                'results' => $results,
+            ]);
+        }
+
+        return redirect()->route('inventory.risk-engine')
+            ->with('success', "Dual-Risk Engine re-analysis completed: {$results['medicines_processed']} formulations and {$results['batches_processed']} batches evaluated.");
     }
 }

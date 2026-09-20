@@ -18,6 +18,8 @@ class MedicineFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => strtoupper(fake()->unique()->bothify('???-###-???')),
+            'barcode' => fake()->ean13(),
             'name' => fake()->word(),
             'generic_name' => fake()->word(),
             'category' => 'Antibiotic',

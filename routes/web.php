@@ -10,6 +10,7 @@ use App\Models\Medicine;
 use App\Models\Prescription;
 use App\Models\StockBatch;
 use App\Models\StockMovement;
+use App\Services\RiskPredictionService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
@@ -51,7 +52,9 @@ Route::get('/dashboard', function () {
 
     $inventory = $allMedicines->take(8);
 
-    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory', 'inventoryCounts', 'recentMovements'));
+    $riskEngine = app(RiskPredictionService::class)->getDualEngineInsights(7);
+
+    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory', 'inventoryCounts', 'recentMovements', 'riskEngine'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -84,6 +87,7 @@ Route::middleware(['auth', 'role:nurse'])->prefix('prescriptions')->name('prescr
 // Pharmacy/POS Module (pharmacist, admin)
 Route::middleware(['auth', 'role:pharmacist'])->prefix('pos')->name('pos.')->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
+    Route::get('/reports', [PosController::class, 'reports'])->name('reports');
     Route::get('/otc', [PosController::class, 'otcCreate'])->name('otc.create');
     Route::post('/otc', [PosController::class, 'otcStore'])->name('otc.store');
     Route::get('/receipt/{transaction}', [PosController::class, 'receipt'])->name('receipt');
@@ -95,6 +99,8 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pos')->name('pos.')->gro
 Route::middleware(['auth', 'role:stock_manager'])->prefix('inventory')->name('inventory.')
     ->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::get('/risk-engine', [InventoryController::class, 'riskEngineHub'])->name('risk-engine');
+        Route::post('/risk-engine/recalculate', [InventoryController::class, 'recalculateRiskEngine'])->name('risk-engine.recalculate');
         Route::get('/export-pdf', [InventoryController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/movements', [InventoryController::class, 'movements'])->name('movements');
 

@@ -64,8 +64,12 @@
 
                     @hasanyrole('pharmacist|admin')
                         <a href="{{ route('pos.index') }}"
-                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('pos.*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
+                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('pos.index') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
                             {{ __('Pharmacy / POS') }}
+                        </a>
+                        <a href="{{ route('pos.reports') }}"
+                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('pos.reports') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
+                            {{ __('POS Reports') }}
                         </a>
                     @endhasanyrole
 
@@ -78,12 +82,30 @@
                            class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('inventory.movements') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
                             {{ __('Delivery & Logs') }}
                         </a>
+                        <a href="{{ route('inventory.risk-engine') }}"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('inventory.risk-engine*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-emerald-300 hover:bg-green-800 hover:text-white' }}">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span>{{ __('Risk Forecast') }}</span>
+                        </a>
                     @endhasanyrole
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- Settings Dropdown & Forecast Drawer Button -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                @hasanyrole('stock_manager|pharmacist|admin')
+                    <button type="button"
+                            @click="$dispatch('open-risk-engine')"
+                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-emerald-100 text-xs font-semibold transition shadow-xs cursor-pointer mr-3"
+                            title="Open Risk &amp; Demand Forecast Drawer">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                        </span>
+                        <span>Risk Forecast</span>
+                    </button>
+                @endhasanyrole
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium text-green-100 hover:bg-green-800/80 transition-colors focus:outline-none">
@@ -158,6 +180,9 @@
                 <a href="{{ route('pos.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
                     {{ __('Pharmacy / POS') }}
                 </a>
+                <a href="{{ route('pos.reports') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
+                    {{ __('POS Reports') }}
+                </a>
             @endhasanyrole
 
             @hasanyrole('stock_manager|admin')
@@ -166,6 +191,9 @@
                 </a>
                 <a href="{{ route('inventory.movements') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
                     {{ __('Delivery & Logs') }}
+                </a>
+                <a href="{{ route('inventory.risk-engine') }}" class="block px-3 py-2 rounded-md text-base font-medium text-emerald-300 hover:bg-green-800">
+                    {{ __('Risk & Forecasting') }}
                 </a>
             @endhasanyrole
         </div>
@@ -195,4 +223,7 @@
             </div>
         </div>
     </div>
+
+    <!-- Dual-Risk Engine Global Drawer Modal -->
+    <x-dual-risk-engine-modal />
 </nav>
