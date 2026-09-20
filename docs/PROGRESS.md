@@ -11,6 +11,7 @@
 | Nurse Portal | Member 1 | Done | Dedicated clinical workstation layout (`<x-nurse-layout>`), clinical KPI widgets, triage queue, live inventory check, and patient directory |
 | Pharmacy / POS | Member 2 | Done | FEFO dispense, OTC sales, receipt view, all behind `pharmacist` role |
 | Inventory | Member 2 | In progress | Stock decrements wired; nurse live inventory check view complete; batch-receiving UI not yet built |
+| Inventory | Member 2 | Done | Medicine CRUD, batch receiving UI, delivery & movement audit logs, disposal tracking, count adjustments, dedicated dashboard & navigation for stock_manager & admin |
 | Dual Risk Engine | Member 3 | Not started | `stock_movements` data exists; prediction algorithm not designed |
 | Patient Portal & Landing Page | Member 1 | Done | USM branded landing page with AI health assistant, features, stats band, and CTA |
 | Pharmacy Storefront | Member 1 | Done | Full hospital catalog with category sidebar, live search, 35 Figma products, stock badges, and inquiry modal |
@@ -169,5 +170,50 @@ See `database/migrations/` for full column lists.
   - Added Pest test coverage in `tests/Feature/PrescriptionModuleTest.php` to verify nurse access to the dedicated inventory check (`prescriptions.inventory`) and catalog details.
   - Ran full Pest test suite (`php artisan test`): **51 tests passed (181 assertions)** with 0 failures.
   - Ran code style fixer (`vendor/bin/pint --format agent`).
+
+---
+
+## Session Progress — 2026-09-19: Inventory Module Implementation
+
+### Summary of Changes
+
+- **Database Migrations:**
+  - Added `is_active` boolean (default `true`) to `medicines` (`2026_09_18_230924_add_is_active_to_medicines_table.php`), fixing the open issue where POS OTC creation filtered on `is_active`.
+  - Added `notes` nullable text column to `stock_movements` (`2026_09_18_230947_add_notes_to_stock_movements_table.php`) for delivery PO remarks, disposal reasons, and adjustment justifications.
+
+- **Models & Relationships:**
+  - `Medicine`: Added `is_active` to fillable/casts, `scopeActive()`, and `stockMovements()` HasMany relationship.
+  - `StockBatch`: Added `stockMovements()` HasMany relationship, `scopeActive()`, `scopeFefo()`, and `scopeExpiringSoon(int $days = 30)`.
+  - `StockMovement`: Added `notes` to fillable and `scopeOfType(string $type)`.
+
+- **Service Layer (`InventoryService`):**
+  - `receiveBatch()`: Atomically registers a `StockBatch` and records an incoming delivery audit movement (`type = 'in'`).
+  - `disposeBatch()`: Locks batch (`lockForUpdate`), zeroes `quantity_remaining`, and records disposal movement (`type = 'disposal'`) with required reason.
+  - `adjustStock()`: Locks batch (`lockForUpdate`), updates `quantity_remaining`, and records adjustment movement (`type = 'adjustment'`) with reason.
+
+- **Policies & Form Requests:**
+  - Created `MedicinePolicy` and `StockBatchPolicy` for granular role-based authorization.
+  - Created 5 Form Requests: `StoreMedicineRequest`, `UpdateMedicineRequest`, `ReceiveBatchRequest`, `DisposeBatchRequest`, and `AdjustStockRequest`.
+
+- **Controller & Routes (`InventoryController`):**
+  - Registered route group prefix `/inventory` guarded by `role:stock_manager` (with system `admin` access via `RoleMiddleware`).
+  - Actions: `index`, `create`, `store`, `show`, `edit`, `update`, `receiveBatch`, `storeReceivedBatch`, `disposeBatch`, `adjustStock`, and `movements`.
+
+- **Navigation & Dashboard Integration:**
+  - Added `Inventory` and `Delivery Logs` navigation links for `stock_manager` and `admin` in both desktop and mobile navigation bars (`navigation.blade.php`).
+  - Added dedicated Stock Manager / Administrator dashboard view (`dashboard.blade.php`) featuring 5 KPI overview cards (Total Formulary, Healthy Stock, Low Stock Alert, Out of Stock, Expiring in 30 Days), formulary stock snapshot, and recent stock activity logs.
+
+- **Views (`resources/views/inventory/`):**
+  - `index.blade.php`: Real-time stock monitor, category filters, search, reorder alert counters, batch status badges.
+  - `show.blade.php`: Medicine details, FEFO batch allocations table, expiring warning banners, interactive Alpine.js modals for disposal and count adjustment, and audit log.
+  - `create.blade.php` & `edit.blade.php`: Full formulary medicine CRUD forms with validation.
+  - `receive-batch.blade.php`: Shipment reception form with batch number uniqueness, expiry date calculation, supplier details, and PO remarks.
+  - `movements.blade.php`: Filterable stock movement & delivery logs by movement type (All, In, Out, Disposal, Adjustment) and search.
+
+- **Test Suite Verification:**
+  - Created `tests/Feature/InventoryModuleTest.php` with 9 tests covering RBAC, CRUD, batch receiving, disposal, adjustment, and movement logs.
+  - Full Pest test suite passed: **60 tests passed (227 assertions)**.
+  - Formatted with `vendor/bin/pint --dirty --format agent`.
+
 
 

@@ -19,9 +19,8 @@ class DispensingService
     public function suggestFefoBatches(Medicine $medicine, int $quantity): array
     {
         $batches = $medicine->stockBatches()
-            ->where('quantity_remaining', '>', 0)
-            ->where('expiry_date', '>=', now()) // only unexpired
-            ->orderBy('expiry_date', 'asc')
+            ->active()
+            ->fefo()
             ->get();
 
         $allocations = [];
@@ -143,9 +142,8 @@ class DispensingService
 
                 // Get FEFO batches directly inside transaction
                 $batches = $medicine->stockBatches()
-                    ->where('quantity_remaining', '>', 0)
-                    ->where('expiry_date', '>=', now())
-                    ->orderBy('expiry_date', 'asc')
+                    ->active()
+                    ->fefo()
                     ->lockForUpdate()
                     ->get();
 

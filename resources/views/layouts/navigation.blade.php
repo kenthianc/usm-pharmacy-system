@@ -16,6 +16,10 @@
                                     Nurse Portal
                                 @elsehasrole('pharmacist')
                                     Dispensary Portal
+                                @elsehasrole('stock_manager')
+                                    Inventory Portal
+                                @elsehasrole('admin')
+                                    Admin Control
                                 @else
                                     Hospital Health System
                                 @endhasanyrole
@@ -62,6 +66,17 @@
                         <a href="{{ route('pos.index') }}"
                            class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('pos.*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
                             {{ __('Pharmacy / POS') }}
+                        </a>
+                    @endhasanyrole
+
+                    @hasanyrole('stock_manager|admin')
+                        <a href="{{ route('inventory.index') }}"
+                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('inventory.index', 'inventory.medicines.*', 'inventory.batches.*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
+                            {{ __('Inventory') }}
+                        </a>
+                        <a href="{{ route('inventory.movements') }}"
+                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('inventory.movements') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
+                            {{ __('Delivery & Logs') }}
                         </a>
                     @endhasanyrole
                 </div>
@@ -142,6 +157,15 @@
             @hasanyrole('pharmacist|admin')
                 <a href="{{ route('pos.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
                     {{ __('Pharmacy / POS') }}
+                </a>
+            @endhasanyrole
+
+            @hasanyrole('stock_manager|admin')
+                <a href="{{ route('inventory.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
+                    {{ __('Inventory') }}
+                </a>
+                <a href="{{ route('inventory.movements') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-green-800">
+                    {{ __('Delivery & Logs') }}
                 </a>
             @endhasanyrole
         </div>

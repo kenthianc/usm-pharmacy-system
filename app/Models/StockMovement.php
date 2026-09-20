@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,7 @@ class StockMovement extends Model
         'quantity',
         'reference_type',
         'reference_id',
+        'notes',
         'created_by',
     ];
 
@@ -35,6 +37,16 @@ class StockMovement extends Model
         return [
             'quantity' => 'integer',
         ];
+    }
+
+    /**
+     * Scope a query to movements of a specific type.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeOfType(Builder $query, string $type): Builder
+    {
+        return $query->where('type', $type);
     }
 
     /**
