@@ -116,7 +116,8 @@ test('navigation bar displays links according to user role', function () {
         ->get('/dashboard')
         ->assertSee('Prescriptions')
         ->assertSee('Pharmacy / POS')
-        ->assertSee('admin');
+        ->assertSee('admin')
+        ->assertSee("confirm('Are you sure you want to log out?')", escape: false);
 
     $nurseRole = Role::findByName('nurse');
     $nurse = User::factory()->create(['role_id' => $nurseRole->id]);
@@ -125,7 +126,8 @@ test('navigation bar displays links according to user role', function () {
     $this->actingAs($nurse)
         ->get('/dashboard')
         ->assertSee('Prescriptions')
-        ->assertDontSee('Pharmacy / POS');
+        ->assertDontSee('Pharmacy / POS')
+        ->assertSee("confirm('Are you sure you want to log out?')", escape: false);
 
     $pharmRole = Role::findByName('pharmacist');
     $pharmacist = User::factory()->create(['role_id' => $pharmRole->id]);

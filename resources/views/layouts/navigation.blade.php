@@ -138,7 +138,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault(); this.closest('form').submit();">
+                                    onclick="event.preventDefault(); if (confirm('Are you sure you want to log out?')) this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -214,7 +214,7 @@
                 <a href="{{ route('profile.edit') }}" class="block px-3 py-2 rounded-md text-sm text-green-200 hover:bg-green-800 hover:text-white">
                     {{ __('Profile') }}
                 </a>
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Are you sure you want to log out?');">
                     @csrf
                     <button type="submit" class="w-full text-left px-3 py-2 rounded-md text-sm text-red-300 hover:bg-red-900/60 hover:text-white">
                         {{ __('Log Out') }}

@@ -135,7 +135,7 @@
             </nav>
 
             <div class="flex items-center gap-3">
-                <form method="POST" action="{{ route('logout') }}" class="inline">
+                <form method="POST" action="{{ route('logout') }}" class="inline" onsubmit="return confirm('Are you sure you want to log out?');">
                     @csrf
                     <button type="submit" class="flex items-center gap-1.5 text-green-300 hover:text-red-300 text-xs transition-colors font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -155,7 +155,7 @@
             </div>
 
             <!-- Log Out Action -->
-            <form method="POST" action="{{ route('logout') }}" x-show="sidebarOpen" class="pt-1">
+            <form method="POST" action="{{ route('logout') }}" x-show="sidebarOpen" class="pt-1" onsubmit="return confirm('Are you sure you want to log out?');">
                 @csrf
                 <button type="submit"
                         class="flex items-center gap-3 text-emerald-300 hover:text-white font-semibold text-sm transition-colors group">
