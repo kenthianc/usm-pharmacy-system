@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PrescriptionController;
@@ -7,6 +8,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WelcomeController;
 use App\Models\Medicine;
 use App\Models\Prescription;
+use App\Models\StockBatch;
+use App\Models\StockMovement;
+use App\Services\RiskPredictionService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
@@ -30,9 +34,27 @@ Route::get('/dashboard', function () {
         ->take(5)
         ->get();
 
-    $inventory = Medicine::with('stockBatches')->get()->take(8);
+    $allMedicines = Medicine::with(['stockBatches' => function ($q) {
+        $q->where('status', 'received')
+            ->where('expiry_date', '>=', now()->toDateString())
+            ->where('quantity_remaining', '>', 0);
+    }])->get();
 
-    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory'));
+    $inventoryCounts = [
+        'total' => $allMedicines->count(),
+        'in_stock' => $allMedicines->filter(fn ($m) => $m->available_stock > $m->reorder_level)->count(),
+        'low_stock' => $allMedicines->filter(fn ($m) => $m->available_stock > 0 && $m->available_stock <= $m->reorder_level)->count(),
+        'out_of_stock' => $allMedicines->filter(fn ($m) => $m->available_stock === 0)->count(),
+        'expiring_soon' => StockBatch::expiringSoon(30)->count(),
+    ];
+
+    $recentMovements = StockMovement::with(['medicine', 'batch', 'createdBy'])->latest()->take(6)->get();
+
+    $inventory = $allMedicines->take(8);
+
+    $riskEngine = app(RiskPredictionService::class)->getDualEngineInsights(7);
+
+    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory', 'inventoryCounts', 'recentMovements', 'riskEngine'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -65,11 +87,40 @@ Route::middleware(['auth', 'role:nurse'])->prefix('prescriptions')->name('prescr
 // Pharmacy/POS Module (pharmacist, admin)
 Route::middleware(['auth', 'role:pharmacist'])->prefix('pos')->name('pos.')->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
+    Route::get('/reports', [PosController::class, 'reports'])->name('reports');
     Route::get('/otc', [PosController::class, 'otcCreate'])->name('otc.create');
     Route::post('/otc', [PosController::class, 'otcStore'])->name('otc.store');
     Route::get('/receipt/{transaction}', [PosController::class, 'receipt'])->name('receipt');
     Route::get('/{prescription}', [PosController::class, 'process'])->name('process');
     Route::post('/{prescription}', [PosController::class, 'dispense'])->name('dispense');
 });
+
+// Inventory Module (stock_manager, admin)
+Route::middleware(['auth', 'role:stock_manager'])->prefix('inventory')->name('inventory.')
+    ->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::get('/risk-engine', [InventoryController::class, 'riskEngineHub'])->name('risk-engine');
+        Route::post('/risk-engine/recalculate', [InventoryController::class, 'recalculateRiskEngine'])->name('risk-engine.recalculate');
+        Route::get('/export-pdf', [InventoryController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/movements', [InventoryController::class, 'movements'])->name('movements');
+
+        // Multi-medicine deliveries
+        Route::get('/deliveries/create', [InventoryController::class, 'createDelivery'])->name('deliveries.create');
+        Route::post('/deliveries', [InventoryController::class, 'storeDelivery'])->name('deliveries.store');
+        Route::post('/deliveries/{delivery}/confirm', [InventoryController::class, 'confirmDeliveryRequest'])->name('deliveries.confirm');
+        Route::post('/deliveries/{delivery}/cancel', [InventoryController::class, 'cancelDeliveryRequest'])->name('deliveries.cancel');
+
+        Route::get('/medicines/create', [InventoryController::class, 'create'])->name('medicines.create');
+        Route::post('/medicines', [InventoryController::class, 'store'])->name('medicines.store');
+        Route::get('/medicines/{medicine}', [InventoryController::class, 'show'])->name('medicines.show');
+        Route::get('/medicines/{medicine}/edit', [InventoryController::class, 'edit'])->name('medicines.edit');
+        Route::patch('/medicines/{medicine}', [InventoryController::class, 'update'])->name('medicines.update');
+        Route::get('/medicines/{medicine}/receive', [InventoryController::class, 'receiveBatch'])->name('medicines.receive');
+        Route::post('/medicines/{medicine}/receive', [InventoryController::class, 'storeReceivedBatch'])->name('medicines.receive.store');
+        Route::post('/batches/{batch}/confirm', [InventoryController::class, 'confirmDelivery'])->name('batches.confirm');
+        Route::post('/batches/{batch}/reject', [InventoryController::class, 'rejectDelivery'])->name('batches.reject');
+        Route::post('/batches/{batch}/dispose', [InventoryController::class, 'disposeBatch'])->name('batches.dispose');
+        Route::post('/batches/{batch}/adjust', [InventoryController::class, 'adjustStock'])->name('batches.adjust');
+    });
 
 require __DIR__.'/auth.php';

@@ -87,4 +87,12 @@ class Prescription extends Model
     {
         return $query->where('status', 'cancelled');
     }
+
+    /**
+     * Get the formatted prescription number.
+     */
+    public function getPrescriptionNumberAttribute(): string
+    {
+        return 'RX-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+    }
 }

@@ -98,15 +98,20 @@ Handles the dispensing queue, FEFO dispensing, OTC sales, and receipts.
 
 ---
 
-### Module 4 — Inventory (Member 2, in progress)
+### Module 4 — Inventory (Member 2, Done)
 
-Manages the medicine catalogue and stock-batch receiving. Currently only stock **out** is wired (via dispensing). Stock **in** (receiving) has no UI yet.
+Manages the medicine catalogue, batch receiving, delivery tracking, stock disposals, and count adjustments.
 
 | File | Role |
 |---|---|
-| `app/Models/Medicine.php` | Catalogue model; `available_stock` accessor aggregates batch quantities |
-| `app/Models/StockBatch.php` | Batch model; `scopeActive()` and `scopeFefo()` |
-| `app/Models/StockMovement.php` | Audit log model |
+| `app/Models/Medicine.php` | Catalogue model; `available_stock` accessor aggregates batch quantities; `is_active` status |
+| `app/Models/StockBatch.php` | Batch model; `scopeActive()`, `scopeFefo()`, `scopeExpiringSoon()` |
+| `app/Models/StockMovement.php` | Audit log model with `notes` for reasons and PO remarks |
+| `app/Services/InventoryService.php` | Core service for `receiveBatch()`, `disposeBatch()`, and `adjustStock()` |
+| `app/Http/Controllers/InventoryController.php` | Actions for catalogue CRUD, batch receiving, disposal, adjustment, and movement logs |
+| `app/Policies/MedicinePolicy.php` | RBAC gates for medicine catalogue and batch receiving |
+| `app/Policies/StockBatchPolicy.php` | RBAC gates for batch disposal and stock adjustment |
+| `resources/views/inventory/` | Blade views: `index`, `show`, `create`, `edit`, `receive-batch`, `movements` |
 | `database/seeders/MedicineAndBatchSeeder.php` | Seeds sample medicines and batches with varied expiry dates |
 
 ---
@@ -135,8 +140,8 @@ Contextual assistant for pharmacy staff and patients. No code exists yet. Depend
 
 | Dependency | Rule |
 |---|---|
-| **Stock decrement** | Any module that removes stock (dispensing, expiry disposal) **must** call `DispensingService` methods — do not write direct `stock_batches` decrement queries in new controllers. |
-| **Stock movement audit** | Every inventory change must produce a `stock_movements` row. `DispensingService` does this automatically; the inventory-receiving UI must do it too with `type = 'in'`. |
+| **Stock decrement** | Any module that removes stock (dispensing, expiry disposal) **must** call service methods (`DispensingService` for POS, `InventoryService` for inventory disposal) — do not write direct `stock_batches` decrement queries in new controllers. |
+| **Stock movement audit** | Every inventory change must produce a `stock_movements` row. `DispensingService` and `InventoryService` do this automatically with types `in`, `out`, `disposal`, and `adjustment`. |
 | **FEFO ordering** | Always use `StockBatch::scopeActive()->scopeFefo()` rather than re-writing the `orderBy expiry_date` query manually. |
 | **Role middleware** | Use Spatie's `role:` middleware on route groups, not manual `if ($user->hasRole(...))` guards in controllers. Save that for `Gate::authorize()` inside the controller where policy context is needed. |
-| **`medicines.is_active`** | `PosController::otcCreate` already filters on this column, but it **does not exist in the migration**. Before the inventory module adds the batch-receiving UI, a migration must add this column. |
+| **`medicines.is_active`** | Added via migration `2026_09_18_230924_add_is_active_to_medicines_table.php`. Active formulations are scoped via `Medicine::scopeActive()`. |

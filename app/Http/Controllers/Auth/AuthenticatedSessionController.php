@@ -28,6 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        if ($request->user()->hasRole('pharmacist')) {
+            return redirect()->intended(route('pos.index', absolute: false));
+        }
+
+        if ($request->user()->hasRole('patient')) {
+            return redirect()->intended(route('patient.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

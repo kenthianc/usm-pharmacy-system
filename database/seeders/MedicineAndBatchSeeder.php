@@ -14,8 +14,14 @@ class MedicineAndBatchSeeder extends Seeder
      */
     public function run(): void
     {
+        // Cleanup demo naming if already in database
+        Medicine::where('name', 'Azithromycin 500mg (Out of Stock Demo)')
+            ->update(['name' => 'Azithromycin 500mg', 'code' => 'AZI-500-TAB', 'barcode' => '4800016644081']);
+
         $catalog = [
             [
+                'code' => 'PAR-500-TAB',
+                'barcode' => '4800016644012',
                 'name' => 'Paracetamol 500mg',
                 'generic_name' => 'Paracetamol',
                 'category' => 'Analgesic / Antipyretic',
@@ -42,6 +48,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'AMX-500-CAP',
+                'barcode' => '4800016644029',
                 'name' => 'Amoxicillin 500mg',
                 'generic_name' => 'Amoxicillin Trihydrate',
                 'category' => 'Antibiotic',
@@ -60,6 +68,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'MEF-500-CAP',
+                'barcode' => '4800016644036',
                 'name' => 'Mefenamic Acid 500mg',
                 'generic_name' => 'Mefenamic Acid',
                 'category' => 'NSAID / Pain Relief',
@@ -78,6 +88,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'CET-010-TAB',
+                'barcode' => '4800016644043',
                 'name' => 'Cetirizine 10mg',
                 'generic_name' => 'Cetirizine Dihydrochloride',
                 'category' => 'Antihistamine',
@@ -96,6 +108,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'OMP-020-CAP',
+                'barcode' => '4800016644050',
                 'name' => 'Omeprazole 20mg',
                 'generic_name' => 'Omeprazole',
                 'category' => 'Antacid / PPI',
@@ -114,6 +128,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'SLB-002-SYR',
+                'barcode' => '4800016644067',
                 'name' => 'Salbutamol 2mg/5ml Syrup 60ml',
                 'generic_name' => 'Salbutamol Sulfate',
                 'category' => 'Bronchodilator',
@@ -132,6 +148,8 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'ORS-000-SAC',
+                'barcode' => '4800016644074',
                 'name' => 'Oral Rehydration Salts',
                 'generic_name' => 'Sodium Chloride + Potassium Chloride + Sodium Citrate + Glucose',
                 'category' => 'Electrolytes',
@@ -150,7 +168,9 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Azithromycin 500mg (Out of Stock Demo)',
+                'code' => 'AZI-500-TAB',
+                'barcode' => '4800016644081',
+                'name' => 'Azithromycin 500mg',
                 'generic_name' => 'Azithromycin',
                 'category' => 'Antibiotic',
                 'unit' => 'tablet',

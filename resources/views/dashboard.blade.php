@@ -301,6 +301,426 @@
 
     </div>
 </x-nurse-layout>
+@elseif(auth()->user()->hasAnyRole(['stock_manager', 'admin', 'pharmacist']))
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-base shadow-sm">
+                        📦
+                    </span>
+                    {{ auth()->user()->hasRole('admin') ? __('Hospital Administrator Dashboard') : (auth()->user()->hasRole('pharmacist') ? __('Dispensary & Pharmacy Operations Dashboard') : __('Inventory & Stock Management Dashboard')) }}
+                </h2>
+                <p class="text-xs text-gray-500 mt-1">Welcome back, {{ Auth::user()->name }} ({{ strtoupper(Auth::user()->roles->pluck('name')->first() ?? 'Staff') }}). Real-time stock status, batch allocations, and predictive intelligence.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('inventory.risk-engine') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700 text-emerald-100 hover:text-white rounded-lg text-xs font-semibold shadow-xs transition">
+                    <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span>Risk &amp; Forecasting</span>
+                </a>
+                <a href="{{ route('inventory.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    <span>Full Inventory Catalog</span>
+                </a>
+                <a href="{{ route('inventory.movements') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-xs transition">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    <span>Delivery Logs</span>
+                </a>
+            </div>
+        </div>
+    </x-slot>
+
+    <div class="py-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+            <!-- 5 KPI Overview Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Total Formulations -->
+                <a href="{{ route('inventory.index') }}" class="bg-white p-4 rounded-xl border border-gray-200 shadow-xs hover:border-gray-300 transition">
+                    <div class="flex items-center justify-between text-gray-500">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Total Formulary</span>
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+                            💊
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-gray-900">{{ $inventoryCounts['total'] ?? 0 }}</div>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Catalogued medicines</p>
+                    </div>
+                </a>
+
+                <!-- Healthy Stock -->
+                <a href="{{ route('inventory.index', ['stock_status' => 'in_stock']) }}" class="bg-white p-4 rounded-xl border border-emerald-200/80 shadow-xs hover:border-emerald-400 transition">
+                    <div class="flex items-center justify-between text-emerald-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Healthy Stock</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                            ✓
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-emerald-700">{{ $inventoryCounts['in_stock'] ?? 0 }}</div>
+                        <p class="text-[11px] text-emerald-600 mt-0.5">Above reorder limits</p>
+                    </div>
+                </a>
+
+                <!-- Low Stock Alert -->
+                <a href="{{ route('inventory.index', ['stock_status' => 'low_stock']) }}" class="bg-white p-4 rounded-xl border border-amber-200/80 shadow-xs hover:border-amber-400 transition">
+                    <div class="flex items-center justify-between text-amber-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Low Stock</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                            ⚠️
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-amber-700">{{ $inventoryCounts['low_stock'] ?? 0 }}</div>
+                        <p class="text-[11px] text-amber-600 mt-0.5">Needs reordering</p>
+                    </div>
+                </a>
+
+                <!-- Out of Stock -->
+                <a href="{{ route('inventory.index', ['stock_status' => 'out_of_stock']) }}" class="bg-white p-4 rounded-xl border border-rose-200/80 shadow-xs hover:border-rose-400 transition">
+                    <div class="flex items-center justify-between text-rose-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Out of Stock</span>
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                            ✕
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-rose-700">{{ $inventoryCounts['out_of_stock'] ?? 0 }}</div>
+                        <p class="text-[11px] text-rose-600 mt-0.5">Critical stockout</p>
+                    </div>
+                </a>
+
+                <!-- Expiring Soon -->
+                <div class="bg-white p-4 rounded-xl border border-purple-200/80 shadow-xs">
+                    <div class="flex items-center justify-between text-purple-700">
+                        <span class="text-xs font-semibold uppercase tracking-wider">Expiring (30d)</span>
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                            ⏳
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="text-2xl font-extrabold text-purple-700">{{ $inventoryCounts['expiring_soon'] ?? 0 }}</div>
+                        <p class="text-[11px] text-purple-600 mt-0.5">Active batches</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── DUAL-RISK PREDICTION ENGINE LIVE DASHBOARD SECTION ────────────── -->
+            <div class="rounded-2xl border border-gray-200 shadow-sm overflow-hidden bg-white">
+                <!-- Section Header Banner -->
+                <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 bg-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Inventory Risk &amp; Demand Forecasting</h3>
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Active Monitoring
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Stockout warning horizons and batch-level expiration exposure
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <div class="text-left sm:text-right">
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Value at Expiry Risk</span>
+                            <span class="text-base font-bold text-gray-900 font-mono">
+                                ₱{{ number_format($riskEngine['telemetry']['total_financial_loss_at_risk'], 2) }}
+                            </span>
+                        </div>
+
+                        <a href="{{ route('inventory.risk-engine') }}"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs">
+                            <span>Detailed Risk Analysis &rarr;</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4 High-Level Risk Stats Strip -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 bg-gray-50/70 border-b border-gray-200 text-xs">
+                    <div class="p-3.5 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-gray-400">Stockout Threats</div>
+                            <div class="text-sm font-bold text-rose-600">{{ $riskEngine['telemetry']['high_stockout_count'] }} at risk</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-gray-400">Batches Near Expiry</div>
+                            <div class="text-sm font-bold text-purple-700">{{ $riskEngine['telemetry']['high_expiry_count'] }} batches</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-gray-400">Monitored Formulary</div>
+                            <div class="text-xs font-bold text-gray-900">{{ $riskEngine['telemetry']['analyzed_medicines_count'] }} meds ({{ $riskEngine['telemetry']['analyzed_batches_count'] }} batches)</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-gray-400">Forecast Horizon</div>
+                            <div class="text-xs font-bold text-gray-800">{{ $riskEngine['telemetry']['lead_time_days'] }}d Lead Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side-by-Side Live Feeds -->
+                <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-5 bg-white">
+                    <!-- Left: Stockout Vulnerabilities (Sr) -->
+                    <div class="rounded-xl border border-rose-200 bg-rose-50/20 p-4 flex flex-col">
+                        <div class="flex items-center justify-between pb-3 border-b border-rose-100">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
+                                <h4 class="text-xs font-black text-rose-950 uppercase tracking-wider">
+                                    Stockout Vulnerabilities (S<sub>r</sub>)
+                                </h4>
+                            </div>
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200">
+                                {{ count($riskEngine['stockout_insights']) }} Flagged
+                            </span>
+                        </div>
+
+                        <div class="mt-3 space-y-3">
+                            @forelse (array_slice($riskEngine['stockout_insights'], 0, 4) as $item)
+                                <div class="p-4 rounded-xl bg-white border border-rose-200/90 hover:border-rose-300 transition shadow-xs">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h5 class="font-bold text-sm text-gray-900 truncate">
+                                                    {{ trim(str_replace('(Out of Stock Demo)', '', $item['medicine_name'])) }}
+                                                </h5>
+                                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 border border-gray-200/80">
+                                                    {{ $item['category'] }}
+                                                </span>
+                                            </div>
+                                            <div class="font-mono text-[11px] font-bold text-gray-700 tracking-wider mt-0.5">
+                                                {{ $item['code'] }}
+                                            </div>
+                                            <div class="text-[11px] text-gray-500 flex items-center gap-2.5 mt-2 flex-wrap">
+                                                <span>On-Hand: <strong class="text-rose-600 font-bold">{{ $item['current_stock'] }} {{ $item['unit'] }}</strong></span>
+                                                <span class="text-gray-300">•</span>
+                                                <span>Burn: {{ number_format($item['daily_consumption'], 1) }}/day</span>
+                                                <span class="text-gray-300">•</span>
+                                                <span class="font-extrabold {{ $item['days_until_depleted'] !== null && $item['days_until_depleted'] <= 3 ? 'text-rose-600' : 'text-amber-700' }}">
+                                                    {{ $item['days_until_depleted'] !== null ? ($item['days_until_depleted'] == 0 ? 'Depleted' : $item['days_until_depleted'].'d left') : 'Depleted' }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-black {{ $item['badge_class'] }}">
+                                                {{ number_format($item['score'], 0) }}%
+                                            </span>
+                                            <a href="{{ route('inventory.deliveries.create', ['medicine_id' => $item['medicine_id']]) }}"
+                                               class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs">
+                                                + Restock
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-6 text-center text-gray-500 text-xs">
+                                    <span class="text-emerald-600 font-bold text-base block mb-1">✓ Safe Inventory</span>
+                                    Zero stockout threats detected.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- Right: Expiry Vulnerabilities (Er) -->
+                    <div class="rounded-xl border border-amber-200 bg-amber-50/20 p-4 flex flex-col">
+                        <div class="flex items-center justify-between pb-3 border-b border-amber-100">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                <h4 class="text-xs font-black text-amber-950 uppercase tracking-wider">
+                                    Expiry Spoilage Risks (E<sub>r</sub>)
+                                </h4>
+                            </div>
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+                                {{ count($riskEngine['expiry_insights']) }} Flagged
+                            </span>
+                        </div>
+
+                        <div class="mt-3 space-y-3">
+                            @forelse (array_slice($riskEngine['expiry_insights'], 0, 4) as $item)
+                                <div class="p-4 rounded-xl bg-white border border-amber-200 hover:border-amber-300 transition shadow-xs">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h5 class="font-bold text-sm text-gray-900 truncate">
+                                                    {{ trim(str_replace('(Out of Stock Demo)', '', $item['medicine_name'])) }}
+                                                </h5>
+                                                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">#{{ $item['batch_no'] }}</span>
+                                            </div>
+                                            <div class="font-mono text-[11px] font-bold text-gray-700 tracking-wider mt-0.5">
+                                                {{ $item['code'] ?? '' }}
+                                            </div>
+                                            <div class="text-[11px] text-gray-500 flex items-center gap-2.5 mt-2 flex-wrap">
+                                                <span><strong class="text-amber-900 font-bold">{{ $item['remaining_stock'] }} {{ $item['unit'] }}</strong> at risk</span>
+                                                <span class="text-gray-300">•</span>
+                                                <span class="font-mono font-bold text-rose-600">₱{{ number_format($item['financial_loss'], 2) }}</span>
+                                                <span class="text-gray-300">•</span>
+                                                <span class="font-semibold {{ $item['days_until_expiry'] <= 30 ? 'text-rose-600 font-bold' : 'text-amber-800' }}">
+                                                    {{ $item['days_until_expiry'] <= 0 ? 'Expired' : $item['days_until_expiry'].'d left' }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-black {{ $item['badge_class'] }}">
+                                                {{ number_format($item['score'], 0) }}%
+                                            </span>
+                                            <a href="{{ route('inventory.risk-engine') }}"
+                                               class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-[11px] transition border border-amber-300">
+                                                FEFO &rarr;
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="py-6 text-center text-gray-500 text-xs">
+                                    <span class="text-emerald-600 font-bold text-base block mb-1">✓ Safe Horizons</span>
+                                    No batches projected to spoil before consumption.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Columns: Stock Status & Recent Movements -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Stock Overview Panel -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-xs p-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Formulary Stock Snapshot
+                        </h3>
+                        <a href="{{ route('inventory.index') }}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                            View All &rarr;
+                        </a>
+                    </div>
+
+                    <div class="mt-4 divide-y divide-gray-100">
+                        @foreach ($inventory as $med)
+                            @php
+                                $stock = $med->available_stock;
+                            @endphp
+                            <div class="py-3 flex items-center justify-between text-xs">
+                                <div class="min-w-0 pr-3">
+                                    <a href="{{ route('inventory.medicines.show', $med) }}" class="font-bold text-gray-900 hover:text-emerald-700 truncate block">
+                                        {{ $med->name }}
+                                    </a>
+                                    <div class="text-[11px] text-gray-400 truncate">{{ $med->generic_name }} • {{ $med->category }}</div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold {{ $stock > $med->reorder_level ? 'bg-emerald-50 text-emerald-700' : ($stock > 0 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700') }}">
+                                        {{ number_format($stock) }} {{ $med->unit }}
+                                    </span>
+                                    <a href="{{ route('inventory.medicines.receive', $med) }}" class="p-1 rounded text-emerald-600 hover:bg-emerald-50 text-[11px] font-semibold" title="Receive shipment">
+                                        + Receive
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Recent Movement Audit -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-xs p-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Recent Stock Activities
+                        </h3>
+                        <a href="{{ route('inventory.movements') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                            Full Log &rarr;
+                        </a>
+                    </div>
+
+                    <div class="mt-4 divide-y divide-gray-100 text-xs">
+                        @forelse ($recentMovements as $m)
+                            <div class="py-3 flex items-center justify-between">
+                                <div class="min-w-0 pr-3">
+                                    <div class="font-bold text-gray-900 truncate">{{ $m->medicine->name }}</div>
+                                    <div class="text-[11px] text-gray-400">
+                                        Batch {{ $m->batch?->batch_no ?? 'N/A' }} • {{ $m->created_at->diffForHumans() }}
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    @if ($m->type === 'in')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                            +{{ $m->quantity }} IN
+                                        </span>
+                                    @elseif ($m->type === 'out')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                                            -{{ $m->quantity }} OUT
+                                        </span>
+                                    @elseif ($m->type === 'disposal')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                            -{{ $m->quantity }} DISPOSAL
+                                        </span>
+                                    @elseif ($m->type === 'adjustment')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                            ADJUST {{ $m->quantity }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="py-6 text-center text-gray-400">
+                                No recent movements logged.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</x-app-layout>
 @else
 <x-app-layout>
     <x-slot name="header">
@@ -320,3 +740,4 @@
     </div>
 </x-app-layout>
 @endhasrole
+
