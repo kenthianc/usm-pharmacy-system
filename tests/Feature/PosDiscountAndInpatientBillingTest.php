@@ -266,58 +266,6 @@ it('allows pharmacist to mark in-patient ward order as prepared before dispensin
     expect($prescription->status)->toBe('prepared');
 });
 
-it('settles patient hospital bill upon discharge', function () {
-    $prescription = Prescription::factory()->create([
-        'status' => 'dispensed',
-        'patient_id' => $this->patient->id,
-        'order_type' => 'inpatient',
-        'room_bed_number' => 'ICU - Bed 3',
-        'billing_status' => 'billed_to_account',
-    ]);
-
-    $transaction = PosTransaction::create([
-        'prescription_id' => $prescription->id,
-        'cashier_id' => $this->pharmacist->id,
-        'order_type' => 'inpatient',
-        'room_bed_number' => 'ICU - Bed 3',
-        'payment_method' => 'hospital_bill',
-        'billing_status' => 'billed_to_account',
-        'subtotal' => 1500.00,
-        'total_amount' => 1500.00,
-        'net_amount' => 1500.00,
-    ]);
-
-    $bill = PatientBill::create([
-        'patient_id' => $this->patient->id,
-        'prescription_id' => $prescription->id,
-        'pos_transaction_id' => $transaction->id,
-        'room_bed_number' => 'ICU - Bed 3',
-        'gross_amount' => 1500.00,
-        'discount_amount' => 0.00,
-        'net_amount' => 1500.00,
-        'status' => 'billed_to_account',
-        'billed_by' => $this->pharmacist->id,
-    ]);
-
-    actingAs($this->pharmacist)
-        ->post(route('pos.bills.settle', $bill), [], ['Accept' => 'application/json'])
-        ->assertStatus(200)
-        ->assertJson([
-            'success' => true,
-            'bill_id' => $bill->id,
-        ]);
-
-    $bill->refresh();
-    $prescription->refresh();
-    $transaction->refresh();
-
-    expect($bill->status)->toBe('settled')
-        ->and($bill->settled_at)->not->toBeNull()
-        ->and($bill->settled_by)->toBe($this->pharmacist->id)
-        ->and($prescription->billing_status)->toBe('settled')
-        ->and($transaction->billing_status)->toBe('settled');
-});
-
 it('renders printable receipt with statutory breakdown and ward room bed information', function () {
     $prescription = Prescription::factory()->create([
         'status' => 'dispensed',

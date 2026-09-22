@@ -97,7 +97,6 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pos')->name('pos.')->gro
     Route::post('/otc', [PosController::class, 'otcStore'])->name('otc.store');
     Route::get('/receipt/{transaction}', [PosController::class, 'receipt'])->name('receipt');
     Route::post('/prescriptions/{prescription}/prepare', [PosController::class, 'markPrepared'])->name('prepare');
-    Route::post('/bills/{bill}/settle', [PosController::class, 'settleBill'])->name('bills.settle');
     Route::get('/{prescription}', [PosController::class, 'process'])->name('process');
     Route::post('/{prescription}', [PosController::class, 'dispense'])->name('dispense');
 });

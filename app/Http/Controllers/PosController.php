@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DispensePrescriptionRequest;
 use App\Http\Requests\OtcSaleRequest;
 use App\Models\Medicine;
-use App\Models\PatientBill;
 use App\Models\PosTransaction;
 use App\Models\Prescription;
 use App\Services\DispensingService;
@@ -26,11 +25,6 @@ class PosController extends Controller
         $prescriptions = Prescription::with(['patient.user', 'encodedBy', 'items.medicine.stockBatches'])
             ->whereIn('status', ['routed', 'prepared'])
             ->orderBy('created_at', 'asc')
-            ->get();
-
-        $patientBills = PatientBill::with(['patient.user', 'prescription', 'posTransaction.items.medicine', 'billedBy'])
-            ->where('status', 'billed_to_account')
-            ->latest()
             ->get();
 
         $medicines = Medicine::with(['stockBatches' => function ($query) {
@@ -100,34 +94,6 @@ class PosController extends Controller
         $queueData = $prescriptions->map($mapPrescriptionToData);
         $inpatientQueueData = [];
 
-        $patientBillsData = $patientBills->map(function ($bill) {
-            return [
-                'id' => $bill->id,
-                'bill_no' => 'BILL-'.str_pad($bill->id, 6, '0', STR_PAD_LEFT),
-                'patient_id' => $bill->patient_id,
-                'patient_name' => $bill->patient->name,
-                'patient_id_number' => $bill->patient->id_number,
-                'patient_type' => $bill->patient->patient_type,
-                'room_bed_number' => $bill->room_bed_number ?? 'N/A',
-                'doctor_name' => $bill->doctor_name ?? 'Attending Doctor',
-                'rx_number' => $bill->prescription ? 'RX-'.str_pad($bill->prescription->id, 5, '0', STR_PAD_LEFT) : 'N/A',
-                'gross_amount' => (float) $bill->gross_amount,
-                'discount_amount' => (float) $bill->discount_amount,
-                'net_amount' => (float) $bill->net_amount,
-                'status' => $bill->status,
-                'billed_by' => $bill->billedBy?->name ?? 'Pharmacist',
-                'billed_at' => $bill->created_at->format('Y-m-d H:i'),
-                'items' => $bill->posTransaction?->items->map(function ($i) {
-                    return [
-                        'medicine' => $i->medicine?->generic_name ?? 'Medicine',
-                        'quantity' => $i->quantity,
-                        'unit_price' => (float) $i->unit_price,
-                        'subtotal' => (float) $i->subtotal,
-                    ];
-                })->values()->all() ?? [],
-            ];
-        });
-
         $medicinesData = $medicines->map(function ($med) {
             return [
                 'id' => $med->id,
@@ -192,7 +158,6 @@ class PosController extends Controller
             'transactions',
             'queueData',
             'inpatientQueueData',
-            'patientBillsData',
             'medicinesData',
             'transactionsData'
         ));
@@ -229,50 +194,18 @@ class PosController extends Controller
             );
 
             if ($request->wantsJson() || $request->ajax()) {
-                $patientBillData = null;
-                $bill = $transaction->patientBill;
-                if ($bill) {
-                    $bill->loadMissing(['patient', 'billedBy']);
-                    $patientBillData = [
-                        'id' => $bill->id,
-                        'bill_no' => 'BILL-'.str_pad($bill->id, 6, '0', STR_PAD_LEFT),
-                        'patient_id' => $bill->patient_id,
-                        'patient_name' => $bill->patient->name,
-                        'patient_id_number' => $bill->patient->id_number,
-                        'patient_type' => $bill->patient->patient_type,
-                        'room_bed_number' => $bill->room_bed_number ?? 'N/A',
-                        'doctor_name' => $bill->doctor_name ?? 'Attending Doctor',
-                        'rx_number' => $transaction->prescription ? 'RX-'.str_pad($transaction->prescription->id, 5, '0', STR_PAD_LEFT) : 'N/A',
-                        'gross_amount' => (float) $bill->gross_amount,
-                        'discount_amount' => (float) $bill->discount_amount,
-                        'net_amount' => (float) $bill->net_amount,
-                        'status' => $bill->status,
-                        'billed_by' => $bill->billedBy?->name ?? 'Pharmacist',
-                        'billed_at' => $bill->created_at->format('Y-m-d H:i'),
-                        'items' => $transaction->items->map(function ($i) {
-                            return [
-                                'medicine' => $i->medicine?->generic_name ?? 'Medicine',
-                                'quantity' => $i->quantity,
-                                'unit_price' => (float) $i->unit_price,
-                                'subtotal' => (float) $i->subtotal,
-                            ];
-                        })->values()->all(),
-                    ];
-                }
-
                 return response()->json([
                     'success' => true,
                     'message' => $transaction->order_type === 'inpatient'
-                        ? 'In-Patient order dispensed and charged to patient hospital bill successfully.'
+                        ? 'In-Patient order dispensed and charged to patient ledger successfully.'
                         : 'Prescription dispensed successfully.',
                     'transaction' => $this->formatTransactionForJson($transaction),
-                    'patient_bill' => $patientBillData,
                 ]);
             }
 
             return redirect()->route('pos.index', ['receipt' => $transaction->id])
                 ->with('success', $transaction->order_type === 'inpatient'
-                    ? 'In-Patient order dispensed and charged to patient hospital bill.'
+                    ? 'In-Patient order dispensed and charged to patient ledger.'
                     : 'Prescription dispensed successfully.');
         } catch (Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
@@ -306,42 +239,6 @@ class PosController extends Controller
         }
 
         return back()->with('success', "Order {$prescription->prescription_number} prepared safely.");
-    }
-
-    public function settleBill(Request $request, PatientBill $bill)
-    {
-        Gate::authorize('create', PosTransaction::class);
-
-        if ($bill->status === 'settled') {
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['error' => 'Bill is already settled.'], 422);
-            }
-
-            return back()->with('error', 'Bill is already settled.');
-        }
-
-        $bill->update([
-            'status' => 'settled',
-            'settled_at' => now(),
-            'settled_by' => $request->user()->id,
-        ]);
-
-        if ($bill->prescription) {
-            $bill->prescription->update(['billing_status' => 'settled']);
-        }
-        if ($bill->posTransaction) {
-            $bill->posTransaction->update(['billing_status' => 'settled']);
-        }
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => "Hospital Bill #{$bill->id} for {$bill->patient->name} settled successfully upon discharge.",
-                'bill_id' => $bill->id,
-            ]);
-        }
-
-        return back()->with('success', "Hospital Bill #{$bill->id} settled successfully.");
     }
 
     public function otcCreate()

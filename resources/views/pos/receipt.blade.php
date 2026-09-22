@@ -111,7 +111,7 @@
                         @if($transaction->billing_status === 'billed_to_account')
                             <tr>
                                 <td colspan="4" class="text-right py-1 text-sm text-blue-700 font-bold">Hospital Ledger Status:</td>
-                                <td class="text-right py-1 text-sm font-bold text-blue-700 uppercase">Billed to Account (Pending Discharge)</td>
+                                <td class="text-right py-1 text-sm font-bold text-blue-700 uppercase">Charged to In-Patient Ledger</td>
                             </tr>
                         @endif
                     </tfoot>

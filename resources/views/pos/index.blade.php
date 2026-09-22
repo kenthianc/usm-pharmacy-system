@@ -232,24 +232,7 @@
                         <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">2</span>
                     </button>
 
-                    <!-- TAB 3: Discharge Billing (Active Hospital Ledgers) -->
-                    <button @click="setMode('bills')"
-                        :class="mode === 'bills' ? 'border-amber-600 text-amber-950 bg-white shadow-xs font-black' :
-                            'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
-                        class="flex items-center gap-2 px-5 py-4 text-sm sm:text-base border-b-4 transition-all cursor-pointer whitespace-nowrap">
-                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                        <span>Discharge Billing</span>
-                        <span x-show="patientBills.length > 0"
-                            class="text-xs font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs"
-                            x-text="patientBills.length"></span>
-                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">3</span>
-                    </button>
-
-                    <!-- TAB 4: History -->
+                    <!-- TAB 3: History / Dispensing Logs -->
                     <button @click="setMode('history')"
                         :class="mode === 'history' ? 'border-emerald-700 text-emerald-900 bg-white shadow-xs font-black' :
                             'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
@@ -258,12 +241,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <span>History</span>
-                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">4</span>
+                        <span>History / Dispensing Logs</span>
+                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">3</span>
                     </button>
 
                     <div class="ml-auto pr-6 flex items-center gap-2 text-xs font-bold text-slate-400">
-                        <span class="hidden xl:inline">Shortcuts: 1-4 Switch tabs · Esc Back</span>
+                        <span class="hidden xl:inline">Shortcuts: 1-3 Switch tabs · Esc Back</span>
                     </div>
                 </div>
 
@@ -712,92 +695,6 @@
                                 </button>
                             </template>
                         </div>
-                    </div>
-
-                    <!-- ── MODE: DISCHARGE BILLING (ACTIVE HOSPITAL LEDGERS) ───── -->
-                    <div x-show="mode === 'bills'" class="max-w-6xl mx-auto space-y-4">
-                        <!-- Header & Search -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-xs">
-                            <div>
-                                <div class="flex items-center gap-2.5">
-                                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                                    <h3 class="text-base font-black text-slate-900">Active Hospitalization Ledgers (Discharge Billing)</h3>
-                                </div>
-                                <p class="text-xs text-slate-500 mt-0.5">In-patient pharmacy charges waiting to be reconciled and settled upon patient discharge.</p>
-                            </div>
-                            <div class="w-full sm:w-72">
-                                <input type="text" x-model="billSearch" placeholder="Search patient, ID, or bed..."
-                                    class="w-full text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all">
-                            </div>
-                        </div>
-
-                        <!-- Empty State -->
-                        <template x-if="filteredPatientBills.length === 0">
-                            <div class="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-3xl border-2 border-dashed border-slate-300 shadow-sm">
-                                <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <h4 class="text-base font-black text-slate-800">No Unsettled Hospital Bills</h4>
-                                <p class="text-xs text-slate-500 mt-1 max-w-sm">All in-patient dispensary charges have been settled or no active ward accounts are pending.</p>
-                            </div>
-                        </template>
-
-                        <!-- Bills List -->
-                        <template x-if="filteredPatientBills.length > 0">
-                            <div class="grid grid-cols-1 gap-4">
-                                <template x-for="bill in filteredPatientBills" :key="bill.id">
-                                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs hover:border-amber-300 transition-all">
-                                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                                            <div class="space-y-3 flex-1 min-w-0">
-                                                <div class="flex items-center gap-3 flex-wrap">
-                                                    <span class="font-mono text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-xl" x-text="bill.bill_no"></span>
-                                                    <span class="font-mono text-xs font-black text-blue-900 bg-blue-100 px-2.5 py-1 rounded-xl" x-text="bill.rx_number"></span>
-                                                    <span class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-black px-3 py-1 rounded-xl">
-                                                        <span x-text="'Room/Bed: ' + bill.room_bed_number"></span>
-                                                    </span>
-                                                    <span class="text-xs font-bold text-slate-400" x-text="'Billed ' + bill.billed_at"></span>
-                                                </div>
-
-                                                <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <h4 class="text-lg font-black text-slate-900" x-text="bill.patient_name"></h4>
-                                                        <span class="font-mono text-xs text-slate-500" x-text="'(' + (bill.patient_id_number || 'ID-' + bill.patient_id) + ')'"></span>
-                                                    </div>
-                                                    <p class="text-xs text-slate-500 font-semibold mt-0.5" x-text="'Physician: ' + bill.doctor_name + ' · Dispensed by: ' + bill.billed_by"></p>
-                                                </div>
-
-                                                <!-- Itemized list preview -->
-                                                <div class="flex flex-wrap gap-2 pt-1">
-                                                    <template x-for="(item, idx) in bill.items" :key="idx">
-                                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-lg">
-                                                            <span x-text="item.medicine"></span>
-                                                            <span class="text-slate-500 font-mono" x-text="'×' + item.quantity"></span>
-                                                        </span>
-                                                    </template>
-                                                </div>
-                                            </div>
-
-                                            <!-- Amount & Settle Button -->
-                                            <div class="shrink-0 flex sm:flex-col items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
-                                                <div class="text-right">
-                                                    <p class="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Billed Amount</p>
-                                                    <p class="text-2xl font-black font-mono text-amber-600" x-text="fmt(bill.net_amount)"></p>
-                                                </div>
-                                                <button type="button" @click="settleHospitalBill(bill)"
-                                                    class="flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-black px-5 py-3 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer">
-                                                    <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                                                    </svg>
-                                                    <span>Settle &amp; Discharge</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
                     </div>
 
                     <!-- ── MODE: TRANSACTION HISTORY ──────────────────────────── -->
@@ -1319,34 +1216,16 @@
                                 </div>
                             </div>
 
-                            <!-- Billing & Tender Selector -->
-                            <div>
-                                <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-2">Billing &amp; Tender Method</p>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" @click="processPayment = 'hospital_bill'"
-                                        :class="processPayment === 'hospital_bill' ? 'bg-blue-600 text-white font-black border-blue-400 shadow-md scale-102' :
-                                            'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
-                                        class="py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
-                                        🏥 Hospital Bill
-                                    </button>
-                                    <button type="button" @click="processPayment = 'Cash'"
-                                        :class="processPayment !== 'hospital_bill' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md scale-102' :
-                                            'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
-                                        class="py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
-                                        💵 Cash Tender
-                                    </button>
-                                </div>
-                                <template x-if="processPayment === 'hospital_bill'">
-                                    <div class="mt-2 bg-blue-950/80 border border-blue-600/70 rounded-xl p-2.5 text-center">
-                                        <p class="text-[11px] text-blue-200 font-semibold">Charges post directly to patient hospitalization ledger. No cash collection required now.</p>
-                                    </div>
-                                </template>
+                            <!-- In-Patient Ledger Notice -->
+                            <div class="bg-blue-950/80 border border-blue-600/70 rounded-2xl p-3 text-center">
+                                <p class="text-[11px] font-black uppercase text-blue-200 tracking-wider">In-Patient Ward Order</p>
+                                <p class="text-[11px] text-blue-300 font-semibold mt-0.5">Dispensation immediately deducts FEFO inventory and charges to the patient hospital ledger.</p>
                             </div>
 
                             <!-- Form submission to Laravel pos.dispense -->
                             <form method="POST" :action="'{{ url('/pos') }}/' + processRx.raw_id" @submit="submitDispenseForm($event)">
                                 @csrf
-                                <input type="hidden" name="payment_method" :value="processPayment === 'hospital_bill' ? 'hospital_bill' : 'cash'">
+                                <input type="hidden" name="payment_method" value="hospital_bill">
                                 <input type="hidden" name="discount_type" :value="processDiscountType">
                                 <input type="hidden" name="discount_id_number" :value="processDiscountId">
                                 <template x-for="item in processRx.items" :key="item.id">
@@ -1358,13 +1237,12 @@
                                 </template>
 
                                 <button type="submit"
-                                    :class="processPayment === 'hospital_bill' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-amber-400 hover:bg-amber-300 text-emerald-950'"
-                                    class="w-full font-black py-4 rounded-2xl transition-all text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-xl active:scale-98">
+                                    class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl transition-all text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-xl active:scale-98">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                             d="M5 13l4 4L19 7"></path>
                                     </svg>
-                                    <span x-text="processPayment === 'hospital_bill' ? 'Dispense & Charge to Hospital Bill' : 'Confirm & Dispense Order'"></span>
+                                    <span>Dispense to Ward / Charge to Patient Ledger</span>
                                 </button>
                             </form>
                         </div>
@@ -1384,9 +1262,9 @@
                         </div>
                         <div>
                             <h3 class="font-black text-white text-2xl"
-                                x-text="mode === 'bills' ? 'Discharge Billing Desk' : (mode === 'history' ? 'Transaction History' : 'Dispensary Till Ready')"></h3>
+                                x-text="mode === 'history' ? 'History & Dispensing Logs' : 'Prescription Queue Ready'"></h3>
                             <p class="text-emerald-200 text-sm mt-1.5 leading-relaxed"
-                                x-text="mode === 'bills' ? 'Review active hospitalization ledgers on the left and reconcile dispensary charges for discharge.' : (mode === 'history' ? 'Click View Receipt on any completed transaction on the left to print or reprint receipts.' : 'Select a queued patient prescription on the left to review FEFO allocations, or start a direct counter sale for walk-ins.')">
+                                x-text="mode === 'history' ? 'Click View Receipt on any completed transaction on the left to print or reprint receipts.' : 'Select a queued patient prescription on the left to review FEFO allocations, or start a direct counter sale for walk-ins.'">
                             </p>
                         </div>
                         
@@ -1418,7 +1296,6 @@
                 completedTx: null,
                 queue: @json($queueData),
                 inpatientQueue: @json($inpatientQueueData),
-                patientBills: @json($patientBillsData),
                 medicines: @json($medicinesData),
                 transactions: @json($transactionsData),
 
@@ -1431,12 +1308,9 @@
 
                 // Processing state
                 batchEdits: {},
-                processPayment: 'Cash',
+                processPayment: 'hospital_bill',
                 processDiscountType: 'regular',
                 processDiscountId: '',
-
-                // Discharge billing search
-                billSearch: '',
 
                 initData() {
                     // If receipt ID passed in query parameter, auto-open receipt
@@ -1476,18 +1350,6 @@
 
                 get processBreakdown() {
                     return this.calculateBreakdown(this.processTotal, this.processDiscountType);
-                },
-
-                get filteredPatientBills() {
-                    if (!this.billSearch.trim()) return this.patientBills;
-                    const q = this.billSearch.toLowerCase();
-                    return this.patientBills.filter(b =>
-                        (b.patient_name && b.patient_name.toLowerCase().includes(q)) ||
-                        (b.patient_id_number && String(b.patient_id_number).toLowerCase().includes(q)) ||
-                        (b.bill_no && b.bill_no.toLowerCase().includes(q)) ||
-                        (b.rx_number && b.rx_number.toLowerCase().includes(q)) ||
-                        (b.room_bed_number && b.room_bed_number.toLowerCase().includes(q))
-                    );
                 },
 
                 // ── Asynchronous in-page checkout & dispensing (zero page reload) ──
@@ -1556,11 +1418,6 @@
                             this.transactions.unshift(data.transaction);
                             this.completedTx = data.transaction;
 
-                            // Add to patient bills if charged to hospital account
-                            if (data.patient_bill) {
-                                this.patientBills.unshift(data.patient_bill);
-                            }
-
                             if (this.processRxId) {
                                 const rxId = this.processRxId;
                                 const rawId = this.processRx?.raw_id;
@@ -1579,7 +1436,7 @@
                     });
                 },
 
-                // ── Ward preparation & discharge bill settlement ──
+                // ── Ward preparation ──
                 markOrderPrepared(rx) {
                     const token = document.querySelector('meta[name="csrf-token"]')?.content;
                     fetch(`{{ url('/pos/prescriptions') }}/${rx.raw_id}/prepare`, {
@@ -1603,33 +1460,6 @@
                     });
                 },
 
-                settleHospitalBill(bill) {
-                    if (!confirm(`Reconcile and settle Hospital Bill #${bill.id} for ${bill.patient_name}? This will clear the active ledger upon patient discharge.`)) {
-                        return;
-                    }
-                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
-                    fetch(`{{ url('/pos/bills') }}/${bill.id}/settle`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': token,
-                        }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            this.patientBills = this.patientBills.filter(b => b.id !== bill.id);
-                            alert(data.message || 'Hospital bill settled successfully.');
-                        } else if (data.error) {
-                            alert('Error: ' + data.error);
-                        }
-                    })
-                    .catch(() => {
-                        alert('Failed to settle hospital bill.');
-                    });
-                },
-
                 // ── Keyboard ergonomics for Flow State ──
                 handleShortcuts(e) {
                     if (['input', 'textarea', 'select'].includes(e.target.tagName.toLowerCase())) {
@@ -1641,8 +1471,7 @@
 
                     if (e.key === '1') { this.goQueue(); }
                     else if (e.key === '2') { this.goOtc(); }
-                    else if (e.key === '3') { this.setMode('bills'); }
-                    else if (e.key === '4') { this.setMode('history'); }
+                    else if (e.key === '3') { this.setMode('history'); }
                     else if (e.key === 'Escape') {
                         if (this.completedTx) { this.completedTx = null; }
                         else if (this.mode === 'processing') { this.cancelProcess(); }
@@ -1652,7 +1481,7 @@
                 // ── Mode navigation ──
                 setMode(m) {
                     this.mode = m;
-                    if (m === 'queue' || m === 'bills' || m === 'history') {
+                    if (m === 'queue' || m === 'history') {
                         this.processRxId = null;
                     }
                 },
