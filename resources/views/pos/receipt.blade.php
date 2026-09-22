@@ -19,13 +19,34 @@
                 </div>
 
                 @if(!$transaction->isOtc())
-                    <div class="mb-6 text-sm">
-                        <p><strong>Patient:</strong> {{ $transaction->prescription->patient->name }} </p>
-                        <p><strong>Rx #:</strong> {{ $transaction->prescription->id }}</p>
+                    <div class="mb-6 text-sm grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div>
+                            <p><strong>Patient:</strong> {{ $transaction->prescription?->patient?->name }}</p>
+                            <p><strong>Patient Type:</strong> {{ $transaction->prescription?->patient?->patient_type ?? 'Regular' }}</p>
+                            <p><strong>Rx #:</strong> {{ $transaction->prescription?->prescription_number ?? 'RX-'.str_pad($transaction->prescription_id, 5, '0', STR_PAD_LEFT) }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p><strong>Care Track:</strong> {{ $transaction->order_type === 'inpatient' ? 'In-Patient Ward' : 'Out-Patient Walk-in' }}</p>
+                            @if($transaction->room_bed_number)
+                                <p><strong>Bed / Room:</strong> {{ $transaction->room_bed_number }}</p>
+                            @endif
+                            @if($transaction->discount_id_number)
+                                <p><strong>Discount ID:</strong> {{ $transaction->discount_id_number }}</p>
+                            @endif
+                        </div>
                     </div>
                 @else
-                    <div class="mb-6 text-sm">
-                        <p><strong>Type:</strong> Over-The-Counter (OTC) Sale</p>
+                    <div class="mb-6 text-sm flex justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div>
+                            <p><strong>Type:</strong> Over-The-Counter (OTC) Sale</p>
+                            <p><strong>Customer:</strong> Walk-in Client</p>
+                        </div>
+                        @if($transaction->discount_id_number)
+                            <div class="text-right">
+                                <p><strong>Discount ID:</strong> {{ $transaction->discount_id_number }}</p>
+                                <p><strong>Tier:</strong> {{ ucfirst($transaction->discount_type ?? 'Regular') }}</p>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -47,22 +68,52 @@
                                     {{ $item->medicine->generic_name }}<br>
                                     <span class="text-xs text-gray-500">{{ $item->medicine->name }}</span>
                                 </td>
-                                <td class="py-2 text-center text-xs text-gray-500">{{ $item->batch->batch_no }}</td>
+                                <td class="py-2 text-center text-xs text-gray-500">{{ $item->batch?->batch_no ?? 'N/A' }}</td>
                                 <td class="py-2 text-right">{{ $item->quantity }}</td>
-                                <td class="py-2 text-right">${{ number_format($item->unit_price, 2) }}</td>
-                                <td class="py-2 text-right font-medium">${{ number_format($item->subtotal, 2) }}</td>
+                                <td class="py-2 text-right">₱{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="py-2 text-right font-medium">₱{{ number_format($item->subtotal, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="border-t-2 border-gray-300">
-                            <td colspan="4" class="text-right py-3 font-bold text-base">TOTAL:</td>
-                            <td class="text-right py-3 font-bold text-lg">${{ number_format($transaction->total_amount, 2) }}</td>
+                            <td colspan="4" class="text-right py-2 font-bold text-gray-700">Subtotal (Gross):</td>
+                            <td class="text-right py-2 font-bold text-gray-900">₱{{ number_format($transaction->subtotal ?? $transaction->total_amount, 2) }}</td>
+                        </tr>
+                        @if(($transaction->vat_exempt_amount ?? 0) > 0)
+                            <tr>
+                                <td colspan="4" class="text-right py-1 text-sm text-emerald-700">12% VAT Exemption (RA 9994/10754):</td>
+                                <td class="text-right py-1 text-sm font-bold text-emerald-700">-₱{{ number_format($transaction->vat_exempt_amount, 2) }}</td>
+                            </tr>
+                        @endif
+                        @if(($transaction->discount_amount ?? 0) > 0)
+                            <tr>
+                                <td colspan="4" class="text-right py-1 text-sm text-emerald-700">
+                                    {{ $transaction->discount_type === 'senior' ? 'Senior Citizen 20% Discount' : ($transaction->discount_type === 'pwd' ? 'PWD 20% Discount' : ($transaction->discount_type === 'student' ? 'Student 10% Subsidy' : 'Statutory Discount')) }}:
+                                </td>
+                                <td class="text-right py-1 text-sm font-bold text-emerald-700">-₱{{ number_format($transaction->discount_amount, 2) }}</td>
+                            </tr>
+                        @endif
+                        <tr class="border-t border-gray-300">
+                            <td colspan="4" class="text-right py-3 font-bold text-base">NET TOTAL DUE:</td>
+                            <td class="text-right py-3 font-bold text-lg text-emerald-900">₱{{ number_format($transaction->net_amount ?? $transaction->total_amount, 2) }}</td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="text-right py-1 text-sm text-gray-600">Payment Method:</td>
-                            <td class="text-right py-1 text-sm font-medium capitalize">{{ $transaction->payment_method }}</td>
+                            <td colspan="4" class="text-right py-1 text-sm text-gray-600">Payment Tender:</td>
+                            <td class="text-right py-1 text-sm font-medium capitalize">
+                                @if($transaction->payment_method === 'hospital_bill')
+                                    <span class="text-blue-700 font-bold">Charge to Hospital Bill</span>
+                                @else
+                                    {{ str_replace('_', ' ', $transaction->payment_method) }}
+                                @endif
+                            </td>
                         </tr>
+                        @if($transaction->billing_status === 'billed_to_account')
+                            <tr>
+                                <td colspan="4" class="text-right py-1 text-sm text-blue-700 font-bold">Hospital Ledger Status:</td>
+                                <td class="text-right py-1 text-sm font-bold text-blue-700 uppercase">Billed to Account (Pending Discharge)</td>
+                            </tr>
+                        @endif
                     </tfoot>
                 </table>
 

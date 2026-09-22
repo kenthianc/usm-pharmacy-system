@@ -115,7 +115,7 @@ test('navigation bar displays links according to user role', function () {
     $this->actingAs($admin)
         ->get('/dashboard')
         ->assertSee('Prescriptions')
-        ->assertSee('Pharmacy / POS')
+        ->assertSee('Inventory')
         ->assertSee('admin')
         ->assertSee("confirm('Are you sure you want to log out?')", escape: false);
 
@@ -137,4 +137,16 @@ test('navigation bar displays links according to user role', function () {
         ->get('/dashboard')
         ->assertDontSee('Prescriptions')
         ->assertSee('Pharmacy / POS');
+
+    $stockRole = Role::findByName('stock_manager');
+    $stockManager = User::factory()->create(['role_id' => $stockRole->id]);
+    $stockManager->assignRole($stockRole);
+
+    $this->actingAs($stockManager)
+        ->get('/dashboard')
+        ->assertSee('Inventory Portal')
+        ->assertSee('Inventory Formulary')
+        ->assertSee('Delivery & Logs')
+        ->assertSee('Dual-Risk Engine')
+        ->assertSee('Stockout Risk');
 });

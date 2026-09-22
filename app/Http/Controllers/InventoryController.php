@@ -82,6 +82,9 @@ class InventoryController extends Controller
         $totalSaleValue = (float) $allFormulary->sum(fn ($m) => $m->available_stock * $m->selling_price);
         $expectedProfit = (float) ($totalSaleValue - $totalStockValue);
 
+        $riskInsights = $this->riskService->getDualEngineInsights(7);
+        $globalRisk = $this->riskService->getGlobalRiskStatus(7);
+
         return view('inventory.index', compact(
             'medicines',
             'categories',
@@ -94,6 +97,8 @@ class InventoryController extends Controller
             'totalStockValue',
             'totalSaleValue',
             'expectedProfit',
+            'riskInsights',
+            'globalRisk',
             'search',
             'category',
             'stockStatus'
@@ -489,7 +494,9 @@ class InventoryController extends Controller
             return response()->json($insights);
         }
 
-        return view('inventory.risk-engine', compact('insights', 'leadTime'));
+        $activeTab = $request->input('tab', $request->input('view', 'overview'));
+
+        return view('inventory.risk-engine', compact('insights', 'leadTime', 'activeTab'));
     }
 
     /**
@@ -497,7 +504,7 @@ class InventoryController extends Controller
      */
     public function recalculateRiskEngine(Request $request)
     {
-        Gate::authorize('viewAny', Medicine::class);
+        abort_unless($request->user()->hasAnyRole(['stock_manager', 'admin']), 403, 'Pharmacists have read-only access to risk telemetry.');
 
         $leadTime = (int) $request->input('lead_time', RiskPredictionService::DEFAULT_LEAD_TIME_DAYS);
         $results = $this->riskService->recalculateAllRisks($leadTime);

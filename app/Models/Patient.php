@@ -21,9 +21,24 @@ class Patient extends Model
         'patient_type',
         'id_number',
         'contact_number',
+        'address',
+        'date_of_birth',
+        'sex',
         'allergies',
         'medical_notes',
     ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'date_of_birth' => 'date',
+        ];
+    }
 
     /**
      * Get the user account associated with the patient.

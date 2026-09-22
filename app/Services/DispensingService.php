@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Medicine;
+use App\Models\PatientBill;
 use App\Models\PosTransaction;
 use App\Models\Prescription;
 use App\Models\StockBatch;
@@ -46,22 +47,90 @@ class DispensingService
     }
 
     /**
+     * Compute statutory discount breakdown (Regular, Senior RA 9994, PWD RA 10754, Student).
+     *
+     * @return array{gross: float, vat_exempt: float, discount: float, net: float}
+     */
+    public function calculateDiscountBreakdown(float $grossAmount, string $discountType = 'regular'): array
+    {
+        $gross = round($grossAmount, 2);
+
+        if (in_array($discountType, ['senior', 'pwd'], true)) {
+            // Under Philippine tax law for retail medicine (RA 9994 / RA 10754):
+            // 1. VAT Exemption: Remove 12% VAT
+            $netOfVat = round($gross / 1.12, 2);
+            $vatExempt = round($gross - $netOfVat, 2);
+            // 2. 20% discount on the net-of-VAT amount
+            $discount = round($netOfVat * 0.20, 2);
+            // 3. Net total due
+            $net = round($netOfVat - $discount, 2);
+
+            return [
+                'gross' => $gross,
+                'vat_exempt' => $vatExempt,
+                'discount' => $discount,
+                'net' => $net,
+            ];
+        }
+
+        if ($discountType === 'student') {
+            // Institutional student health discount (10%)
+            $vatExempt = 0.00;
+            $discount = round($gross * 0.10, 2);
+            $net = round($gross - $discount, 2);
+
+            return [
+                'gross' => $gross,
+                'vat_exempt' => $vatExempt,
+                'discount' => $discount,
+                'net' => $net,
+            ];
+        }
+
+        // Regular: standard rate
+        return [
+            'gross' => $gross,
+            'vat_exempt' => 0.00,
+            'discount' => 0.00,
+            'net' => $gross,
+        ];
+    }
+
+    /**
      * Dispense a prescription.
      *
      * @param  array  $allocations  Format: ['medicine_id' => ['batch_id' => quantity, ...], ...]
      *
      * @throws Exception
      */
-    public function dispensePrescription(Prescription $prescription, array $allocations, User $cashier, string $paymentMethod): PosTransaction
-    {
-        return DB::transaction(function () use ($prescription, $allocations, $cashier, $paymentMethod) {
-            $totalAmount = 0;
+    public function dispensePrescription(
+        Prescription $prescription,
+        array $allocations,
+        User $cashier,
+        string $paymentMethod,
+        string $discountType = 'regular',
+        ?string $discountIdNumber = null
+    ): PosTransaction {
+        return DB::transaction(function () use ($prescription, $allocations, $cashier, $paymentMethod, $discountType, $discountIdNumber) {
+            $grossAmount = 0;
+            $isBilledToAccount = ($paymentMethod === 'hospital_bill');
+            $isInpatient = ($isBilledToAccount || ($prescription->order_type ?? null) === 'inpatient');
+            $billingStatus = $isBilledToAccount ? 'billed_to_account' : 'paid';
 
             $transaction = PosTransaction::create([
                 'prescription_id' => $prescription->id,
                 'cashier_id' => $cashier->id,
-                'total_amount' => 0, // will update later
+                'subtotal' => 0,
+                'total_amount' => 0,
+                'discount_type' => $discountType,
+                'discount_id_number' => $discountIdNumber,
+                'vat_exempt_amount' => 0,
+                'discount_amount' => 0,
+                'net_amount' => 0,
                 'payment_method' => $paymentMethod,
+                'order_type' => $prescription->order_type ?? 'inpatient',
+                'room_bed_number' => $prescription->room_bed_number,
+                'billing_status' => $billingStatus,
             ]);
 
             foreach ($allocations as $medicineId => $batches) {
@@ -83,9 +152,9 @@ class DispensingService
                     $batch->quantity_remaining -= $quantity;
                     $batch->save();
 
-                    $unitPrice = $medicine->unit_price; // Or maybe price is on batch, typically medicine
+                    $unitPrice = $medicine->unit_price;
                     $subtotal = $unitPrice * $quantity;
-                    $totalAmount += $subtotal;
+                    $grossAmount += $subtotal;
 
                     // Create Transaction Item
                     $transaction->items()->create([
@@ -102,16 +171,48 @@ class DispensingService
                         'batch_id' => $batchId,
                         'type' => 'out',
                         'quantity' => $quantity,
-                        'reference_type' => 'prescription',
+                        'reference_type' => $isInpatient ? 'inpatient_dispensation' : 'prescription',
                         'reference_id' => $prescription->id,
                         'created_by' => $cashier->id,
+                        'notes' => $isInpatient ? 'Charged to Hospital Bill: '.($prescription->room_bed_number ?? 'In-Patient') : null,
                     ]);
                 }
             }
 
-            $transaction->update(['total_amount' => $totalAmount]);
+            $breakdown = $this->calculateDiscountBreakdown($grossAmount, $discountType);
 
-            $prescription->update(['status' => 'dispensed']);
+            $transaction->update([
+                'subtotal' => $breakdown['gross'],
+                'vat_exempt_amount' => $breakdown['vat_exempt'],
+                'discount_amount' => $breakdown['discount'],
+                'net_amount' => $breakdown['net'],
+                'total_amount' => $breakdown['net'],
+            ]);
+
+            if ($isBilledToAccount) {
+                PatientBill::create([
+                    'patient_id' => $prescription->patient_id,
+                    'prescription_id' => $prescription->id,
+                    'pos_transaction_id' => $transaction->id,
+                    'room_bed_number' => $prescription->room_bed_number,
+                    'doctor_name' => $prescription->doctor_name,
+                    'gross_amount' => $breakdown['gross'],
+                    'discount_amount' => $breakdown['discount'],
+                    'net_amount' => $breakdown['net'],
+                    'status' => 'billed_to_account',
+                    'billed_by' => $cashier->id,
+                ]);
+
+                $prescription->update([
+                    'status' => 'dispensed',
+                    'billing_status' => 'billed_to_account',
+                ]);
+            } else {
+                $prescription->update([
+                    'status' => 'dispensed',
+                    'billing_status' => 'paid',
+                ]);
+            }
 
             return $transaction;
         });
@@ -124,16 +225,29 @@ class DispensingService
      *
      * @throws Exception
      */
-    public function processOtcSale(array $items, User $cashier, string $paymentMethod): PosTransaction
-    {
-        return DB::transaction(function () use ($items, $cashier, $paymentMethod) {
-            $totalAmount = 0;
+    public function processOtcSale(
+        array $items,
+        User $cashier,
+        string $paymentMethod,
+        string $discountType = 'regular',
+        ?string $discountIdNumber = null
+    ): PosTransaction {
+        return DB::transaction(function () use ($items, $cashier, $paymentMethod, $discountType, $discountIdNumber) {
+            $grossAmount = 0;
 
             $transaction = PosTransaction::create([
                 'prescription_id' => null,
                 'cashier_id' => $cashier->id,
+                'subtotal' => 0,
                 'total_amount' => 0,
+                'discount_type' => $discountType,
+                'discount_id_number' => $discountIdNumber,
+                'vat_exempt_amount' => 0,
+                'discount_amount' => 0,
+                'net_amount' => 0,
                 'payment_method' => $paymentMethod,
+                'order_type' => 'outpatient',
+                'billing_status' => 'paid',
             ]);
 
             foreach ($items as $item) {
@@ -162,7 +276,7 @@ class DispensingService
 
                     $unitPrice = $medicine->unit_price;
                     $subtotal = $unitPrice * $allocate;
-                    $totalAmount += $subtotal;
+                    $grossAmount += $subtotal;
 
                     // Create Transaction Item
                     $transaction->items()->create([
@@ -192,7 +306,15 @@ class DispensingService
                 }
             }
 
-            $transaction->update(['total_amount' => $totalAmount]);
+            $breakdown = $this->calculateDiscountBreakdown($grossAmount, $discountType);
+
+            $transaction->update([
+                'subtotal' => $breakdown['gross'],
+                'vat_exempt_amount' => $breakdown['vat_exempt'],
+                'discount_amount' => $breakdown['discount'],
+                'net_amount' => $breakdown['net'],
+                'total_amount' => $breakdown['net'],
+            ]);
 
             return $transaction;
         });

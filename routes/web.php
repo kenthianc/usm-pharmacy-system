@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminAuditController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminReportController;
+use App\Http\Controllers\Admin\AdminSettingController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PosController;
@@ -91,15 +96,22 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pos')->name('pos.')->gro
     Route::get('/otc', [PosController::class, 'otcCreate'])->name('otc.create');
     Route::post('/otc', [PosController::class, 'otcStore'])->name('otc.store');
     Route::get('/receipt/{transaction}', [PosController::class, 'receipt'])->name('receipt');
+    Route::post('/prescriptions/{prescription}/prepare', [PosController::class, 'markPrepared'])->name('prepare');
+    Route::post('/bills/{bill}/settle', [PosController::class, 'settleBill'])->name('bills.settle');
     Route::get('/{prescription}', [PosController::class, 'process'])->name('process');
     Route::post('/{prescription}', [PosController::class, 'dispense'])->name('dispense');
 });
+
+// Dual-Risk Prediction Engine Hub (stock_manager, pharmacist, admin - read-only analytics for pharmacists)
+Route::middleware(['auth', 'role:stock_manager|pharmacist'])->prefix('inventory')->name('inventory.')
+    ->group(function () {
+        Route::get('/risk-engine', [InventoryController::class, 'riskEngineHub'])->name('risk-engine');
+    });
 
 // Inventory Module (stock_manager, admin)
 Route::middleware(['auth', 'role:stock_manager'])->prefix('inventory')->name('inventory.')
     ->group(function () {
         Route::get('/', [InventoryController::class, 'index'])->name('index');
-        Route::get('/risk-engine', [InventoryController::class, 'riskEngineHub'])->name('risk-engine');
         Route::post('/risk-engine/recalculate', [InventoryController::class, 'recalculateRiskEngine'])->name('risk-engine.recalculate');
         Route::get('/export-pdf', [InventoryController::class, 'exportPdf'])->name('export-pdf');
         Route::get('/movements', [InventoryController::class, 'movements'])->name('movements');
@@ -122,5 +134,18 @@ Route::middleware(['auth', 'role:stock_manager'])->prefix('inventory')->name('in
         Route::post('/batches/{batch}/dispose', [InventoryController::class, 'disposeBatch'])->name('batches.dispose');
         Route::post('/batches/{batch}/adjust', [InventoryController::class, 'adjustStock'])->name('batches.adjust');
     });
+
+// Admin Portal Module (admin only)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::get('/audit-logs', [AdminAuditController::class, 'index'])->name('audit-logs');
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
+    Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+});
 
 require __DIR__.'/auth.php';

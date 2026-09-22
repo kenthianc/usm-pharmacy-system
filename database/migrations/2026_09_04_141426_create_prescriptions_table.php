@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('encoded_by')->constrained('users')->cascadeOnDelete();
             $table->string('doctor_name');
-            $table->enum('status', ['pending', 'routed', 'dispensed', 'cancelled'])->default('pending')->index();
+            $table->enum('status', ['pending', 'routed', 'prepared', 'dispensed', 'cancelled'])->default('pending')->index();
             $table->timestamps();
         });
     }

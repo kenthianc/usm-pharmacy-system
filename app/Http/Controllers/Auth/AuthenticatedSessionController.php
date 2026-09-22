@@ -26,7 +26,21 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        if (! $request->user()->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'email' => 'This account has been deactivated by the clinic administrator.',
+            ]);
+        }
+
         $request->session()->regenerate();
+
+        if ($request->user()->hasRole('admin')) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
 
         if ($request->user()->hasRole('pharmacist')) {
             return redirect()->intended(route('pos.index', absolute: false));

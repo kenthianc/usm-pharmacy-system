@@ -24,6 +24,8 @@ class OtcSaleRequest extends FormRequest
     {
         return [
             'payment_method' => ['required', 'string', 'in:cash,card,insurance'],
+            'discount_type' => ['nullable', 'string', 'in:regular,senior,pwd,student'],
+            'discount_id_number' => ['nullable', 'string', 'max:50', 'required_if:discount_type,senior,pwd'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.medicine_id' => ['required', 'exists:medicines,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],

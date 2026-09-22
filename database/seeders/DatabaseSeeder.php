@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@usm.edu.ph',
-                'password' => 'password',
+                'password' => 'admin123',
                 'role' => 'admin',
             ],
             [

@@ -137,7 +137,10 @@ class PrescriptionController extends Controller
                 'patient_id' => $patientId,
                 'encoded_by' => $request->user()->id,
                 'doctor_name' => $validated['doctor_name'],
+                'order_type' => $validated['order_type'] ?? 'inpatient',
+                'room_bed_number' => $validated['room_bed_number'] ?? null,
                 'status' => 'pending',
+                'billing_status' => 'pending_payment',
             ]);
 
             foreach ($validated['items'] as $item) {

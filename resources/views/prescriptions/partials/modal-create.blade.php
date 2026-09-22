@@ -133,6 +133,18 @@
                     </div>
                 </div>
 
+                <!-- In-Patient Ward / Bed Location -->
+                <div>
+                    <label for="modal_room_bed_number" class="block text-xs font-bold text-slate-800 mb-1">
+                        Ward / Bed &amp; Room Number <span class="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <input type="hidden" name="order_type" value="inpatient">
+                    <input type="text" id="modal_room_bed_number" name="room_bed_number"
+                           value="{{ old('room_bed_number') }}"
+                           placeholder="e.g. Ward 2 - Bed 14, ICU - Bed 3, or Room 304"
+                           class="w-full text-xs rounded-xl border-slate-200 focus:border-emerald-600 text-slate-800 py-2 bg-white">
+                </div>
+
                 <!-- 2. Attending Doctor -->
                 <div>
                     <label for="modal_doctor_name" class="block text-xs font-bold text-slate-800 mb-1">

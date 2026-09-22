@@ -27,6 +27,8 @@ class StorePrescriptionRequest extends FormRequest
     {
         $rules = [
             'doctor_name' => ['required', 'string', 'max:255'],
+            'order_type' => ['nullable', 'string', 'in:outpatient,inpatient'],
+            'room_bed_number' => ['nullable', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.medicine_id' => ['required', 'exists:medicines,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],

@@ -89,12 +89,13 @@
             
             <!-- Left: Brand & Navigation -->
             <div class="flex items-center gap-4">
-                <a href="{{ route('dashboard') }}" title="Back to Main Dashboard (Esc)"
-                    class="bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 hover:text-white p-2.5 rounded-xl transition-all flex items-center justify-center border border-emerald-700/60 shadow-xs">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="{{ Auth::user()?->hasRole('admin') ? route('admin.dashboard') : route('dashboard') }}" title="{{ Auth::user()?->hasRole('admin') ? 'Back to Admin Portal (Esc)' : 'Back to Main Dashboard (Esc)' }}"
+                    class="bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 hover:text-white px-3 py-2 rounded-xl transition-all flex items-center gap-2 border border-emerald-700/60 shadow-xs text-xs font-bold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
+                    <span>{{ Auth::user()?->hasRole('admin') ? 'Admin Portal' : 'Back' }}</span>
                 </a>
 
                 <div class="flex items-center gap-3">
@@ -115,17 +116,8 @@
 
             <!-- Center/Right Quick Actions & Stats -->
             <div class="flex items-center gap-3">
-                <!-- Dual-Risk Engine Radar Trigger -->
-                <button type="button"
-                    @click="$dispatch('open-risk-engine')"
-                    class="flex items-center gap-2 bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 hover:text-white border border-emerald-600/80 text-sm font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-sm"
-                    title="Open Dual-Risk Prediction Engine Live Diagnostic Hub">
-                    <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
-                    </span>
-                    <span>⚡ Dual-Risk Engine</span>
-                </button>
+                <!-- Consistent Risk Summary Pill -->
+                <x-risk-summary-pill />
 
                 <!-- Executive Sales Reports link -->
                 <a href="{{ route('pos.reports') }}"
@@ -203,58 +195,75 @@
             <div class="flex-1 flex flex-col overflow-hidden bg-white border-r border-slate-200">
 
                 <!-- Streamlined Ergonomic Tab Strip -->
-                <div class="flex items-stretch gap-0 border-b-2 border-slate-200 bg-slate-50/80 shrink-0 select-none">
+                <div class="flex items-stretch gap-0 border-b-2 border-slate-200 bg-slate-50/80 shrink-0 select-none overflow-x-auto">
                     
-                    <!-- TAB 1: Rx Queue (Nurse/Doctor Routed) -->
+                    <!-- TAB 1: Prescription Queue (In-Patient / Nurse Routed) -->
                     <button @click="setMode('queue')"
                         :class="(mode === 'queue' || mode === 'processing') ?
                         'border-emerald-700 text-emerald-900 bg-white shadow-xs font-black' :
                         'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
-                        class="flex items-center gap-2.5 px-7 py-4 text-base border-b-4 transition-all cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex items-center gap-2 px-5 py-4 text-sm sm:text-base border-b-4 transition-all cursor-pointer whitespace-nowrap">
+                        <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
                             </path>
                         </svg>
-                        <span>Rx Queue</span>
+                        <span>Prescription Queue</span>
                         <span x-show="queue.length > 0"
-                            :class="(mode === 'queue' || mode === 'processing') ? 'bg-emerald-700 text-white' : 'bg-rose-600 text-white'"
-                            class="text-xs font-black px-2.5 py-0.5 rounded-full shadow-xs" x-text="queue.length"></span>
+                            :class="(mode === 'queue') ? 'bg-emerald-700 text-white' : 'bg-rose-600 text-white'"
+                            class="text-xs font-black px-2 py-0.5 rounded-full shadow-xs" x-text="queue.length"></span>
                         <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">1</span>
                     </button>
 
-                    <!-- TAB 2: Counter & OTC Sale (Direct Walk-in Dispense & OTC) -->
+                    <!-- TAB 2: Counter & OTC Sale -->
                     <button @click="goOtc()"
                         :class="mode === 'otc' ? 'border-emerald-700 text-emerald-900 bg-white shadow-xs font-black' :
                             'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
-                        class="flex items-center gap-2.5 px-7 py-4 text-base border-b-4 transition-all cursor-pointer">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex items-center gap-2 px-5 py-4 text-sm sm:text-base border-b-4 transition-all cursor-pointer whitespace-nowrap">
+                        <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
                             </path>
                         </svg>
-                        <span>Counter &amp; OTC Sale</span>
+                        <span>Counter &amp; OTC</span>
                         <span x-show="otcCart.length > 0"
-                            class="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-emerald-950 shadow-xs"
+                            class="text-xs font-black px-2 py-0.5 rounded-full bg-amber-400 text-emerald-950 shadow-xs"
                             x-text="otcCart.reduce((s, i) => s + i.qty, 0)"></span>
                         <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">2</span>
                     </button>
 
-                    <!-- TAB 3: History -->
+                    <!-- TAB 3: Discharge Billing (Active Hospital Ledgers) -->
+                    <button @click="setMode('bills')"
+                        :class="mode === 'bills' ? 'border-amber-600 text-amber-950 bg-white shadow-xs font-black' :
+                            'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+                        class="flex items-center gap-2 px-5 py-4 text-sm sm:text-base border-b-4 transition-all cursor-pointer whitespace-nowrap">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <span>Discharge Billing</span>
+                        <span x-show="patientBills.length > 0"
+                            class="text-xs font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs"
+                            x-text="patientBills.length"></span>
+                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">3</span>
+                    </button>
+
+                    <!-- TAB 4: History -->
                     <button @click="setMode('history')"
                         :class="mode === 'history' ? 'border-emerald-700 text-emerald-900 bg-white shadow-xs font-black' :
                             'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
-                        class="flex items-center gap-2.5 px-7 py-4 text-base border-b-4 transition-all cursor-pointer">
+                        class="flex items-center gap-2 px-5 py-4 text-sm sm:text-base border-b-4 transition-all cursor-pointer whitespace-nowrap">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <span>History</span>
-                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">3</span>
+                        <span class="text-[10px] font-mono font-bold text-slate-400 bg-slate-200/80 px-1.5 py-0.5 rounded">4</span>
                     </button>
 
                     <div class="ml-auto pr-6 flex items-center gap-2 text-xs font-bold text-slate-400">
-                        <span class="hidden md:inline">Shortcuts: 1-3 Switch tabs · Esc Back</span>
+                        <span class="hidden xl:inline">Shortcuts: 1-4 Switch tabs · Esc Back</span>
                     </div>
                 </div>
 
@@ -325,7 +334,7 @@
                                                 </div>
 
                                                 <div class="min-w-0 space-y-2">
-                                                    <!-- Patient Name -->
+                                                    <!-- Patient Name & Badges -->
                                                     <div class="flex items-center gap-3 flex-wrap">
                                                         <h3 class="font-black text-slate-900 text-xl lg:text-2xl truncate leading-snug"
                                                             x-text="rx.patient.name"></h3>
@@ -342,15 +351,45 @@
                                                         <!-- Rx ID Tag -->
                                                         <span class="font-mono text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg"
                                                             x-text="rx.id"></span>
+
+                                                        <!-- Bed & Room Number Badge -->
+                                                        <template x-if="rx.room_bed_number">
+                                                            <span class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-black px-3 py-1 rounded-xl">
+                                                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                                                </svg>
+                                                                <span x-text="'Bed/Room: ' + rx.room_bed_number"></span>
+                                                            </span>
+                                                        </template>
+
+                                                        <!-- Preparation Status Badge -->
+                                                        <template x-if="rx.status === 'prepared'">
+                                                            <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black px-3 py-1 rounded-xl">
+                                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                                <span>Prepared / Ready</span>
+                                                            </span>
+                                                        </template>
+                                                        <template x-if="rx.status !== 'prepared'">
+                                                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black px-3 py-1 rounded-xl">
+                                                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                                                                <span>Pending Preparation</span>
+                                                            </span>
+                                                        </template>
                                                     </div>
 
-                                                    <!-- Prescribing Physician -->
-                                                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                                        </svg>
-                                                        <span x-text="'Prescribing: ' + rx.doctor"></span>
+                                                    <!-- Prescribing Physician & Nurse Station -->
+                                                    <div class="flex items-center gap-3 text-sm font-semibold text-slate-600 flex-wrap">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                            </svg>
+                                                            <span x-text="'Prescribing: ' + rx.doctor"></span>
+                                                        </div>
+                                                        <span class="text-slate-300">·</span>
+                                                        <span class="text-slate-500 text-xs" x-text="'Nurse Station: ' + (rx.nurse || 'Ward Nurse')"></span>
                                                     </div>
 
                                                     <!-- High-Legibility Medicines Chips -->
@@ -375,10 +414,19 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Prominent Process Order Button -->
-                                            <div class="shrink-0 flex items-center justify-end">
+                                            <!-- Actions: Mark Prepared + Process Order Button -->
+                                            <div class="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                                                <template x-if="rx.status !== 'prepared'">
+                                                    <button type="button" @click="markOrderPrepared(rx)"
+                                                        class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border-2 border-slate-300 text-xs font-black px-5 py-3.5 rounded-2xl transition-all cursor-pointer shadow-xs">
+                                                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                                        </svg>
+                                                        <span>Mark Prepared</span>
+                                                    </button>
+                                                </template>
                                                 <button @click="startProcess(rx.id)"
-                                                    class="w-full sm:w-auto flex items-center justify-center gap-3 bg-emerald-700 hover:bg-emerald-800 text-white text-base font-black px-8 py-4 rounded-2xl transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer">
+                                                    class="flex items-center justify-center gap-3 bg-emerald-700 hover:bg-emerald-800 text-white text-base font-black px-8 py-4 rounded-2xl transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer">
                                                     <span>Process Order</span>
                                                     <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -404,12 +452,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                                     </svg>
-                                    <span>Back to Queue</span>
+                                    <span x-text="'Back to Prescription Queue'"></span>
                                 </button>
                                 <span class="text-slate-300 font-bold">/</span>
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs font-black uppercase tracking-wider text-slate-400">Processing:</span>
                                     <span class="font-mono text-base font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-xl" x-text="processRx?.id"></span>
+                                    <span class="text-xs font-black text-blue-800 bg-blue-100 border border-blue-300 px-2.5 py-1 rounded-xl">In-Patient Order</span>
                                 </div>
                             </div>
                         </div>
@@ -424,9 +473,14 @@
                                     </svg>
                                     <span>Patient Clinical Dossier</span>
                                 </p>
-                                <span class="text-xs font-black uppercase px-3 py-1 rounded-xl shadow-2xs"
-                                    :class="getTypeBadgeClass(processRx?.patient.type)"
-                                    x-text="processRx?.patient.type"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black uppercase px-3 py-1 rounded-xl bg-blue-700 text-white shadow-2xs">
+                                        🏥 In-Patient
+                                    </span>
+                                    <span class="text-xs font-black uppercase px-3 py-1 rounded-xl shadow-2xs"
+                                        :class="getTypeBadgeClass(processRx?.patient.type)"
+                                        x-text="processRx?.patient.type"></span>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -435,8 +489,10 @@
                                     <p class="text-lg font-black text-slate-900 mt-0.5 truncate" x-text="processRx?.patient.name"></p>
                                 </div>
                                 <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                                    <p class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Patient ID / Reference</p>
-                                    <p class="font-mono text-base font-black text-slate-800 mt-0.5" x-text="processRx?.patient.id"></p>
+                                    <p class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider"
+                                        x-text="processRx?.room_bed_number ? 'Bed / Room Number' : 'Patient ID / Reference'"></p>
+                                    <p class="font-mono text-base font-black text-slate-800 mt-0.5"
+                                        x-text="processRx?.room_bed_number || processRx?.patient.id"></p>
                                 </div>
                                 <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                                     <p class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Prescribing Physician</p>
@@ -658,6 +714,92 @@
                         </div>
                     </div>
 
+                    <!-- ── MODE: DISCHARGE BILLING (ACTIVE HOSPITAL LEDGERS) ───── -->
+                    <div x-show="mode === 'bills'" class="max-w-6xl mx-auto space-y-4">
+                        <!-- Header & Search -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-xs">
+                            <div>
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                                    <h3 class="text-base font-black text-slate-900">Active Hospitalization Ledgers (Discharge Billing)</h3>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">In-patient pharmacy charges waiting to be reconciled and settled upon patient discharge.</p>
+                            </div>
+                            <div class="w-full sm:w-72">
+                                <input type="text" x-model="billSearch" placeholder="Search patient, ID, or bed..."
+                                    class="w-full text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <template x-if="filteredPatientBills.length === 0">
+                            <div class="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-3xl border-2 border-dashed border-slate-300 shadow-sm">
+                                <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <h4 class="text-base font-black text-slate-800">No Unsettled Hospital Bills</h4>
+                                <p class="text-xs text-slate-500 mt-1 max-w-sm">All in-patient dispensary charges have been settled or no active ward accounts are pending.</p>
+                            </div>
+                        </template>
+
+                        <!-- Bills List -->
+                        <template x-if="filteredPatientBills.length > 0">
+                            <div class="grid grid-cols-1 gap-4">
+                                <template x-for="bill in filteredPatientBills" :key="bill.id">
+                                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-xs hover:border-amber-300 transition-all">
+                                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                            <div class="space-y-3 flex-1 min-w-0">
+                                                <div class="flex items-center gap-3 flex-wrap">
+                                                    <span class="font-mono text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-xl" x-text="bill.bill_no"></span>
+                                                    <span class="font-mono text-xs font-black text-blue-900 bg-blue-100 px-2.5 py-1 rounded-xl" x-text="bill.rx_number"></span>
+                                                    <span class="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-black px-3 py-1 rounded-xl">
+                                                        <span x-text="'Room/Bed: ' + bill.room_bed_number"></span>
+                                                    </span>
+                                                    <span class="text-xs font-bold text-slate-400" x-text="'Billed ' + bill.billed_at"></span>
+                                                </div>
+
+                                                <div>
+                                                    <div class="flex items-center gap-2">
+                                                        <h4 class="text-lg font-black text-slate-900" x-text="bill.patient_name"></h4>
+                                                        <span class="font-mono text-xs text-slate-500" x-text="'(' + (bill.patient_id_number || 'ID-' + bill.patient_id) + ')'"></span>
+                                                    </div>
+                                                    <p class="text-xs text-slate-500 font-semibold mt-0.5" x-text="'Physician: ' + bill.doctor_name + ' · Dispensed by: ' + bill.billed_by"></p>
+                                                </div>
+
+                                                <!-- Itemized list preview -->
+                                                <div class="flex flex-wrap gap-2 pt-1">
+                                                    <template x-for="(item, idx) in bill.items" :key="idx">
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-lg">
+                                                            <span x-text="item.medicine"></span>
+                                                            <span class="text-slate-500 font-mono" x-text="'×' + item.quantity"></span>
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                            </div>
+
+                                            <!-- Amount & Settle Button -->
+                                            <div class="shrink-0 flex sm:flex-col items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+                                                <div class="text-right">
+                                                    <p class="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Billed Amount</p>
+                                                    <p class="text-2xl font-black font-mono text-amber-600" x-text="fmt(bill.net_amount)"></p>
+                                                </div>
+                                                <button type="button" @click="settleHospitalBill(bill)"
+                                                    class="flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-black px-5 py-3 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer">
+                                                    <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
+                                                    <span>Settle &amp; Discharge</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
                     <!-- ── MODE: TRANSACTION HISTORY ──────────────────────────── -->
                     <div x-show="mode === 'history'" class="max-w-6xl mx-auto bg-white border-2 border-slate-200 rounded-3xl overflow-hidden shadow-sm">
                         <div class="overflow-x-auto">
@@ -826,14 +968,42 @@
 
                                 <!-- Total & Payment -->
                                 <div class="space-y-1.5 mb-3.5">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm font-bold text-slate-700">Total</span>
-                                        <span class="text-2xl sm:text-3xl font-black text-amber-600 font-mono tracking-tight" x-text="fmt(completedTx.total)"></span>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-slate-500 font-bold">Subtotal (Gross)</span>
+                                        <span class="font-mono text-slate-800 font-bold" x-text="fmt(completedTx.subtotal || completedTx.total)"></span>
+                                    </div>
+                                    <template x-if="completedTx.vat_exempt_amount > 0">
+                                        <div class="flex justify-between items-center text-xs text-emerald-700">
+                                            <span>12% VAT Exemption</span>
+                                            <span class="font-mono font-bold" x-text="'- ' + fmt(completedTx.vat_exempt_amount)"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="completedTx.discount_amount > 0">
+                                        <div class="flex justify-between items-center text-xs text-emerald-700">
+                                            <span x-text="'Discount (' + (completedTx.discount_type === 'senior' ? 'Senior RA 9994' : (completedTx.discount_type === 'pwd' ? 'PWD RA 10754' : (completedTx.discount_type === 'student' ? 'Student 10%' : 'Discount'))) + ')'"></span>
+                                            <span class="font-mono font-bold" x-text="'- ' + fmt(completedTx.discount_amount)"></span>
+                                        </div>
+                                    </template>
+                                    <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+                                        <span class="text-sm font-bold text-slate-700">Net Total</span>
+                                        <span class="text-2xl sm:text-3xl font-black text-amber-600 font-mono tracking-tight" x-text="fmt(completedTx.net_amount || completedTx.total)"></span>
                                     </div>
                                     <div class="flex justify-between items-center text-xs pt-1">
-                                        <span class="text-slate-500 font-semibold">Payment</span>
+                                        <span class="text-slate-500 font-semibold">Tender</span>
                                         <span class="font-black text-slate-900 text-sm" x-text="completedTx.method"></span>
                                     </div>
+                                    <template x-if="completedTx.discount_id_number">
+                                        <div class="flex justify-between items-center text-[11px] pt-0.5 text-slate-600">
+                                            <span>Discount ID No:</span>
+                                            <span class="font-mono font-bold text-slate-900" x-text="completedTx.discount_id_number"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="completedTx.order_type === 'inpatient'">
+                                        <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                                            <p class="text-[11px] font-black text-blue-900 uppercase">Hospital Ward Dispensation</p>
+                                            <p class="text-[11px] text-blue-700 font-bold" x-text="completedTx.room_bed_number ? 'Bed/Room: ' + completedTx.room_bed_number : 'Charged to In-Patient Ledger'"></p>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <div class="text-center mt-4 pt-1">
@@ -920,9 +1090,65 @@
 
                         <!-- High-Impact Checkout Footer -->
                         <div class="shrink-0 px-6 pb-6 pt-4 bg-emerald-950/90 border-t border-emerald-800/80 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-emerald-300 text-xs font-black uppercase tracking-wider">Total Due</span>
-                                <span class="text-3xl lg:text-4xl font-black text-amber-400" x-text="fmt(otcTotal)"></span>
+                            
+                            <!-- Dynamic Patient Type / Discount Selector -->
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-2">Patient Type &amp; Statutory Discount</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="otcDiscountType = 'regular'"
+                                        :class="otcDiscountType === 'regular' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Regular (Standard)
+                                    </button>
+                                    <button type="button" @click="otcDiscountType = 'senior'"
+                                        :class="otcDiscountType === 'senior' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Senior (RA 9994)
+                                    </button>
+                                    <button type="button" @click="otcDiscountType = 'pwd'"
+                                        :class="otcDiscountType === 'pwd' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        PWD (RA 10754)
+                                    </button>
+                                    <button type="button" @click="otcDiscountType = 'student'"
+                                        :class="otcDiscountType === 'student' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Student (10% Subsidy)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Conditional Government ID / Student ID Input -->
+                            <div x-show="otcDiscountType === 'senior' || otcDiscountType === 'pwd' || otcDiscountType === 'student'">
+                                <label class="block text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-1"
+                                    x-text="otcDiscountType === 'student' ? 'Student ID Number' : (otcDiscountType === 'senior' ? 'Senior Citizen OSCA ID *' : 'PWD ID Number *')"></label>
+                                <input type="text" x-model="otcDiscountId"
+                                    :placeholder="otcDiscountType === 'student' ? 'Enter Student ID (e.g. 2024-00123)' : 'Enter Government ID (e.g. OSCA-12345)'"
+                                    class="w-full text-xs font-bold px-3.5 py-2.5 rounded-xl border border-emerald-700 bg-emerald-950/80 text-white placeholder-emerald-500 focus:outline-hidden focus:border-amber-400 focus:ring-1 focus:ring-amber-400">
+                            </div>
+
+                            <!-- Financial Breakdown Summary -->
+                            <div class="space-y-1.5 border-t border-emerald-800/60 pt-3 text-xs">
+                                <div class="flex justify-between items-center text-emerald-300 font-bold">
+                                    <span>Gross Subtotal</span>
+                                    <span class="font-mono text-white" x-text="fmt(otcBreakdown.gross)"></span>
+                                </div>
+                                <template x-if="otcBreakdown.vatExempt > 0">
+                                    <div class="flex justify-between items-center text-emerald-300">
+                                        <span class="text-[11px]">12% VAT Exemption</span>
+                                        <span class="font-mono text-amber-300 font-bold" x-text="'- ' + fmt(otcBreakdown.vatExempt)"></span>
+                                    </div>
+                                </template>
+                                <template x-if="otcBreakdown.discount > 0">
+                                    <div class="flex justify-between items-center text-emerald-300">
+                                        <span class="text-[11px]" x-text="otcDiscountType === 'student' ? 'Student Subsidy (10%)' : 'Statutory Discount (20%)'"></span>
+                                        <span class="font-mono text-amber-300 font-bold" x-text="'- ' + fmt(otcBreakdown.discount)"></span>
+                                    </div>
+                                </template>
+                                <div class="flex justify-between items-center pt-2 border-t border-emerald-800/80">
+                                    <span class="text-emerald-300 text-xs font-black uppercase tracking-wider">Net Total Due</span>
+                                    <span class="text-3xl lg:text-4xl font-black text-amber-400 font-mono" x-text="fmt(otcBreakdown.net)"></span>
+                                </div>
                             </div>
 
                             <!-- Payment Tender Selector -->
@@ -943,6 +1169,8 @@
                             <form method="POST" action="{{ route('pos.otc.store') }}" @submit="submitOtcForm($event)">
                                 @csrf
                                 <input type="hidden" name="payment_method" :value="mapPaymentMethod(otcPayment)">
+                                <input type="hidden" name="discount_type" :value="otcDiscountType">
+                                <input type="hidden" name="discount_id_number" :value="otcDiscountId">
                                 <template x-for="(item, idx) in otcCart" :key="item.id">
                                     <div>
                                         <input type="hidden" :name="'items[' + idx + '][medicine_id]'" :value="item.id">
@@ -968,19 +1196,40 @@
                     <div class="flex-1 flex flex-col overflow-hidden">
                         <div class="flex-1 overflow-y-auto px-5 py-4">
                             
+                            <!-- In-Patient Ward Charge Alert Banner -->
+                            <template x-if="processRx.order_type === 'inpatient'">
+                                <div class="mb-4 bg-blue-900/60 border border-blue-500/80 rounded-2xl p-3.5 flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center shrink-0">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-black text-blue-200 uppercase tracking-wider">In-Patient Ward Dispensation</p>
+                                        <p class="text-[11px] font-bold text-blue-300 mt-0.5 truncate"
+                                            x-text="processRx.room_bed_number ? 'Bed/Room: ' + processRx.room_bed_number : 'Charge Directly to Hospital Ledger'"></p>
+                                    </div>
+                                </div>
+                            </template>
+
                             <div class="mb-4 pb-4 border-b border-emerald-800/80 bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-800/40">
-                                <p class="text-emerald-400 text-[10px] font-black uppercase tracking-wider mb-1">Patient</p>
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-emerald-400 text-[10px] font-black uppercase tracking-wider">Patient Profile</p>
+                                    <span class="text-[10px] font-mono font-bold text-amber-300" x-text="processRx.id"></span>
+                                </div>
                                 <p class="font-black text-white text-base leading-tight" x-text="processRx.patient.name"></p>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="font-mono text-xs text-amber-400 font-bold" x-text="processRx.id"></span>
-                                    <span class="text-emerald-400 text-xs">·</span>
-                                    <span class="text-xs text-emerald-200" x-text="processRx.doctor"></span>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-emerald-200">
+                                    <span x-text="'Dr. ' + processRx.doctor"></span>
+                                    <template x-if="processRx.room_bed_number">
+                                        <span class="text-blue-300 font-bold" x-text="'· ' + processRx.room_bed_number"></span>
+                                    </template>
                                 </div>
                             </div>
 
                             <!-- Itemized Batch Summary -->
                             <div class="space-y-2 mb-4">
-                                <p class="text-[10px] font-black uppercase tracking-wider text-emerald-400">Allocated Batches</p>
+                                <p class="text-[10px] font-black uppercase tracking-wider text-emerald-400">Allocated Batches (FEFO)</p>
                                 <template x-for="item in processRx.items" :key="item.id">
                                     <template x-for="b in item.batches" :key="b.batchNo">
                                         <template x-if="getBatchQty(item.id, b.batchNo, b.qtyAllocated) > 0">
@@ -1009,30 +1258,97 @@
 
                         <!-- Dispense Action Footer -->
                         <div class="shrink-0 px-6 pb-6 pt-4 bg-emerald-950/90 border-t border-emerald-800/80 space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-emerald-300 text-xs font-black uppercase tracking-wider">Total Prescription Bill</span>
-                                <span class="text-3xl lg:text-4xl font-black text-amber-400" x-text="fmt(processTotal)"></span>
+                            
+                            <!-- Dynamic Patient Type / Discount Selector -->
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-2">Prescription Discount Tier</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="processDiscountType = 'regular'"
+                                        :class="processDiscountType === 'regular' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Regular
+                                    </button>
+                                    <button type="button" @click="processDiscountType = 'senior'"
+                                        :class="processDiscountType === 'senior' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Senior (RA 9994)
+                                    </button>
+                                    <button type="button" @click="processDiscountType = 'pwd'"
+                                        :class="processDiscountType === 'pwd' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        PWD (RA 10754)
+                                    </button>
+                                    <button type="button" @click="processDiscountType = 'student'"
+                                        :class="processDiscountType === 'student' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md' : 'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2 px-2 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        Student (10%)
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Payment selector -->
-                            <div>
-                                <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-2">Tender Method</p>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <template x-for="pm in ['Cash', 'PhilHealth', 'HMO', 'Institutional']" :key="pm">
-                                        <button type="button" @click="processPayment = pm"
-                                            :class="processPayment === pm ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md scale-102' :
-                                                'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
-                                            class="py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center"
-                                            x-text="pm">
-                                        </button>
-                                    </template>
+                            <!-- Conditional Government ID / Student ID Input -->
+                            <div x-show="processDiscountType === 'senior' || processDiscountType === 'pwd' || processDiscountType === 'student'">
+                                <label class="block text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-1"
+                                    x-text="processDiscountType === 'student' ? 'Student ID Number' : (processDiscountType === 'senior' ? 'Senior Citizen OSCA ID *' : 'PWD ID Number *')"></label>
+                                <input type="text" x-model="processDiscountId"
+                                    :placeholder="processDiscountType === 'student' ? 'Enter Student ID (e.g. 2024-00123)' : 'Enter Government ID (e.g. OSCA-12345)'"
+                                    class="w-full text-xs font-bold px-3.5 py-2.5 rounded-xl border border-emerald-700 bg-emerald-950/80 text-white placeholder-emerald-500 focus:outline-hidden focus:border-amber-400 focus:ring-1 focus:ring-amber-400">
+                            </div>
+
+                            <!-- Financial Breakdown Summary -->
+                            <div class="space-y-1.5 border-t border-emerald-800/60 pt-3 text-xs">
+                                <div class="flex justify-between items-center text-emerald-300 font-bold">
+                                    <span>Gross Prescription Bill</span>
+                                    <span class="font-mono text-white" x-text="fmt(processBreakdown.gross)"></span>
                                 </div>
+                                <template x-if="processBreakdown.vatExempt > 0">
+                                    <div class="flex justify-between items-center text-emerald-300">
+                                        <span class="text-[11px]">12% VAT Exemption</span>
+                                        <span class="font-mono text-amber-300 font-bold" x-text="'- ' + fmt(processBreakdown.vatExempt)"></span>
+                                    </div>
+                                </template>
+                                <template x-if="processBreakdown.discount > 0">
+                                    <div class="flex justify-between items-center text-emerald-300">
+                                        <span class="text-[11px]" x-text="processDiscountType === 'student' ? 'Student Subsidy (10%)' : 'Statutory Discount (20%)'"></span>
+                                        <span class="font-mono text-amber-300 font-bold" x-text="'- ' + fmt(processBreakdown.discount)"></span>
+                                    </div>
+                                </template>
+                                <div class="flex justify-between items-center pt-2 border-t border-emerald-800/80">
+                                    <span class="text-emerald-300 text-xs font-black uppercase tracking-wider">Net Amount Due</span>
+                                    <span class="text-3xl lg:text-4xl font-black text-amber-400 font-mono" x-text="fmt(processBreakdown.net)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Billing & Tender Selector -->
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-2">Billing &amp; Tender Method</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="processPayment = 'hospital_bill'"
+                                        :class="processPayment === 'hospital_bill' ? 'bg-blue-600 text-white font-black border-blue-400 shadow-md scale-102' :
+                                            'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        🏥 Hospital Bill
+                                    </button>
+                                    <button type="button" @click="processPayment = 'Cash'"
+                                        :class="processPayment !== 'hospital_bill' ? 'bg-amber-400 text-emerald-950 font-black border-amber-300 shadow-md scale-102' :
+                                            'border-emerald-700/80 text-emerald-100 hover:border-emerald-500 bg-emerald-900/40'"
+                                        class="py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer text-center">
+                                        💵 Cash Tender
+                                    </button>
+                                </div>
+                                <template x-if="processPayment === 'hospital_bill'">
+                                    <div class="mt-2 bg-blue-950/80 border border-blue-600/70 rounded-xl p-2.5 text-center">
+                                        <p class="text-[11px] text-blue-200 font-semibold">Charges post directly to patient hospitalization ledger. No cash collection required now.</p>
+                                    </div>
+                                </template>
                             </div>
 
                             <!-- Form submission to Laravel pos.dispense -->
                             <form method="POST" :action="'{{ url('/pos') }}/' + processRx.raw_id" @submit="submitDispenseForm($event)">
                                 @csrf
-                                <input type="hidden" name="payment_method" :value="mapPaymentMethod(processPayment)">
+                                <input type="hidden" name="payment_method" :value="processPayment === 'hospital_bill' ? 'hospital_bill' : 'cash'">
+                                <input type="hidden" name="discount_type" :value="processDiscountType">
+                                <input type="hidden" name="discount_id_number" :value="processDiscountId">
                                 <template x-for="item in processRx.items" :key="item.id">
                                     <template x-for="b in item.batches" :key="b.batch_id">
                                         <input type="hidden"
@@ -1042,12 +1358,13 @@
                                 </template>
 
                                 <button type="submit"
-                                    class="w-full bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black py-4 rounded-2xl transition-all text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-xl active:scale-98">
+                                    :class="processPayment === 'hospital_bill' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-amber-400 hover:bg-amber-300 text-emerald-950'"
+                                    class="w-full font-black py-4 rounded-2xl transition-all text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-xl active:scale-98">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                             d="M5 13l4 4L19 7"></path>
                                     </svg>
-                                    <span>Confirm &amp; Dispense Order</span>
+                                    <span x-text="processPayment === 'hospital_bill' ? 'Dispense & Charge to Hospital Bill' : 'Confirm & Dispense Order'"></span>
                                 </button>
                             </form>
                         </div>
@@ -1055,7 +1372,7 @@
                 </template>
 
                 <!-- ── TILL STATE 4: IDLE READY ── -->
-                <template x-if="!completedTx && mode === 'queue'">
+                <template x-if="!completedTx && mode !== 'otc' && (mode !== 'processing' || !processRx)">
                     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center gap-5">
                         <div
                             class="w-20 h-20 bg-emerald-800/80 rounded-3xl flex items-center justify-center shadow-inner border-2 border-emerald-600">
@@ -1066,9 +1383,10 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="font-black text-white text-2xl">Dispensary Till Ready</h3>
-                            <p class="text-emerald-200 text-sm mt-1.5 leading-relaxed">
-                                Select a queued patient prescription on the left to review FEFO allocations, or start a direct counter sale for walk-ins.
+                            <h3 class="font-black text-white text-2xl"
+                                x-text="mode === 'bills' ? 'Discharge Billing Desk' : (mode === 'history' ? 'Transaction History' : 'Dispensary Till Ready')"></h3>
+                            <p class="text-emerald-200 text-sm mt-1.5 leading-relaxed"
+                                x-text="mode === 'bills' ? 'Review active hospitalization ledgers on the left and reconcile dispensary charges for discharge.' : (mode === 'history' ? 'Click View Receipt on any completed transaction on the left to print or reprint receipts.' : 'Select a queued patient prescription on the left to review FEFO allocations, or start a direct counter sale for walk-ins.')">
                             </p>
                         </div>
                         
@@ -1099,6 +1417,8 @@
                 processRxId: null,
                 completedTx: null,
                 queue: @json($queueData),
+                inpatientQueue: @json($inpatientQueueData),
+                patientBills: @json($patientBillsData),
                 medicines: @json($medicinesData),
                 transactions: @json($transactionsData),
 
@@ -1106,10 +1426,17 @@
                 otcSearch: '',
                 otcCart: [],
                 otcPayment: 'Cash',
+                otcDiscountType: 'regular',
+                otcDiscountId: '',
 
                 // Processing state
                 batchEdits: {},
                 processPayment: 'Cash',
+                processDiscountType: 'regular',
+                processDiscountId: '',
+
+                // Discharge billing search
+                billSearch: '',
 
                 initData() {
                     // If receipt ID passed in query parameter, auto-open receipt
@@ -1123,9 +1450,56 @@
                     }
                 },
 
+                // ── Statutory Discount Breakdown Calculator ──
+                calculateBreakdown(gross, type) {
+                    gross = Math.round((Number(gross) || 0) * 100) / 100;
+                    if (type === 'senior' || type === 'pwd') {
+                        // RA 9994 (Senior) & RA 10754 (PWD): Remove 12% VAT, then 20% discount on net of VAT
+                        const netOfVat = Math.round((gross / 1.12) * 100) / 100;
+                        const vatExempt = Math.round((gross - netOfVat) * 100) / 100;
+                        const discount = Math.round((netOfVat * 0.20) * 100) / 100;
+                        const net = Math.round((netOfVat - discount) * 100) / 100;
+                        return { gross, vatExempt, discount, net };
+                    }
+                    if (type === 'student') {
+                        // Institutional Student Subsidy: 10% discount on retail
+                        const discount = Math.round((gross * 0.10) * 100) / 100;
+                        const net = Math.round((gross - discount) * 100) / 100;
+                        return { gross, vatExempt: 0, discount, net };
+                    }
+                    return { gross, vatExempt: 0, discount: 0, net: gross };
+                },
+
+                get otcBreakdown() {
+                    return this.calculateBreakdown(this.otcTotal, this.otcDiscountType);
+                },
+
+                get processBreakdown() {
+                    return this.calculateBreakdown(this.processTotal, this.processDiscountType);
+                },
+
+                get filteredPatientBills() {
+                    if (!this.billSearch.trim()) return this.patientBills;
+                    const q = this.billSearch.toLowerCase();
+                    return this.patientBills.filter(b =>
+                        (b.patient_name && b.patient_name.toLowerCase().includes(q)) ||
+                        (b.patient_id_number && String(b.patient_id_number).toLowerCase().includes(q)) ||
+                        (b.bill_no && b.bill_no.toLowerCase().includes(q)) ||
+                        (b.rx_number && b.rx_number.toLowerCase().includes(q)) ||
+                        (b.room_bed_number && b.room_bed_number.toLowerCase().includes(q))
+                    );
+                },
+
                 // ── Asynchronous in-page checkout & dispensing (zero page reload) ──
                 submitOtcForm(e) {
                     e.preventDefault();
+
+                    // Validation for Senior / PWD statutory compliance
+                    if ((this.otcDiscountType === 'senior' || this.otcDiscountType === 'pwd') && !this.otcDiscountId.trim()) {
+                        alert('Compliance Requirement: Please enter the Senior Citizen OSCA ID or PWD ID Number before completing the sale.');
+                        return;
+                    }
+
                     const form = e.target;
                     const formData = new FormData(form);
 
@@ -1143,6 +1517,8 @@
                             this.transactions.unshift(data.transaction);
                             this.completedTx = data.transaction;
                             this.otcCart = [];
+                            this.otcDiscountType = 'regular';
+                            this.otcDiscountId = '';
                         } else if (data.error) {
                             alert('Error: ' + data.error);
                         } else if (data.message) {
@@ -1156,6 +1532,13 @@
 
                 submitDispenseForm(e) {
                     e.preventDefault();
+
+                    // Validation for Senior / PWD statutory compliance
+                    if ((this.processDiscountType === 'senior' || this.processDiscountType === 'pwd') && !this.processDiscountId.trim()) {
+                        alert('Compliance Requirement: Please enter the Senior Citizen OSCA ID or PWD ID Number before dispensing.');
+                        return;
+                    }
+
                     const form = e.target;
                     const formData = new FormData(form);
 
@@ -1172,6 +1555,12 @@
                         if (data.success && data.transaction) {
                             this.transactions.unshift(data.transaction);
                             this.completedTx = data.transaction;
+
+                            // Add to patient bills if charged to hospital account
+                            if (data.patient_bill) {
+                                this.patientBills.unshift(data.patient_bill);
+                            }
+
                             if (this.processRxId) {
                                 const rxId = this.processRxId;
                                 const rawId = this.processRx?.raw_id;
@@ -1190,6 +1579,57 @@
                     });
                 },
 
+                // ── Ward preparation & discharge bill settlement ──
+                markOrderPrepared(rx) {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                    fetch(`{{ url('/pos/prescriptions') }}/${rx.raw_id}/prepare`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': token,
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            rx.status = 'prepared';
+                        } else if (data.error) {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to update preparation status.');
+                    });
+                },
+
+                settleHospitalBill(bill) {
+                    if (!confirm(`Reconcile and settle Hospital Bill #${bill.id} for ${bill.patient_name}? This will clear the active ledger upon patient discharge.`)) {
+                        return;
+                    }
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                    fetch(`{{ url('/pos/bills') }}/${bill.id}/settle`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': token,
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.patientBills = this.patientBills.filter(b => b.id !== bill.id);
+                            alert(data.message || 'Hospital bill settled successfully.');
+                        } else if (data.error) {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to settle hospital bill.');
+                    });
+                },
+
                 // ── Keyboard ergonomics for Flow State ──
                 handleShortcuts(e) {
                     if (['input', 'textarea', 'select'].includes(e.target.tagName.toLowerCase())) {
@@ -1201,7 +1641,8 @@
 
                     if (e.key === '1') { this.goQueue(); }
                     else if (e.key === '2') { this.goOtc(); }
-                    else if (e.key === '3') { this.setMode('history'); }
+                    else if (e.key === '3') { this.setMode('bills'); }
+                    else if (e.key === '4') { this.setMode('history'); }
                     else if (e.key === 'Escape') {
                         if (this.completedTx) { this.completedTx = null; }
                         else if (this.mode === 'processing') { this.cancelProcess(); }
@@ -1211,7 +1652,7 @@
                 // ── Mode navigation ──
                 setMode(m) {
                     this.mode = m;
-                    if (m === 'queue') {
+                    if (m === 'queue' || m === 'bills' || m === 'history') {
                         this.processRxId = null;
                     }
                 },
@@ -1225,12 +1666,39 @@
                 newSale() {
                     this.completedTx = null;
                     this.otcCart = [];
+                    this.otcDiscountType = 'regular';
+                    this.otcDiscountId = '';
                     this.goQueue();
                 },
                 startProcess(rxId) {
                     this.processRxId = rxId;
                     this.batchEdits = {};
-                    this.processPayment = 'Cash';
+                    const rx = this.processRx;
+
+                    // Auto-select discount tier based on linked patient profile
+                    if (rx && rx.patient) {
+                        const pType = (rx.patient.type || '').toLowerCase();
+                        if (pType.includes('student')) {
+                            this.processDiscountType = 'student';
+                            this.processDiscountId = rx.patient.id || '';
+                        } else if (pType.includes('senior')) {
+                            this.processDiscountType = 'senior';
+                            this.processDiscountId = rx.patient.id || '';
+                        } else if (pType.includes('pwd')) {
+                            this.processDiscountType = 'pwd';
+                            this.processDiscountId = rx.patient.id || '';
+                        } else {
+                            this.processDiscountType = 'regular';
+                            this.processDiscountId = '';
+                        }
+                    } else {
+                        this.processDiscountType = 'regular';
+                        this.processDiscountId = '';
+                    }
+
+                    // Default to hospital bill for in-patient prescriptions
+                    this.processPayment = 'hospital_bill';
+
                     this.mode = 'processing';
                     this.completedTx = null;
                 },
