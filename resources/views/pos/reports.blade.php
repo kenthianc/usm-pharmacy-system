@@ -57,7 +57,10 @@
 
         <div class="flex-1"></div>
 
-        <div class="flex items-center gap-2 no-print">
+        <div class="flex items-center gap-2.5 sm:gap-3 no-print">
+            <!-- Consistent Risk Summary Pill -->
+            <x-risk-summary-pill />
+
             <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-green-950 text-xs font-bold transition-colors cursor-pointer shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 <span>Print Report</span>
@@ -285,6 +288,12 @@
     </main>
 
 </div>
+
+<!-- Dual-Risk Engine Global Drawer Modal -->
+<x-dual-risk-engine-modal />
+
+<!-- Sign Out Confirmation Modal UI -->
+<x-signout-modal />
 
 </body>
 </html>

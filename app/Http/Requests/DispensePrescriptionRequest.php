@@ -23,7 +23,9 @@ class DispensePrescriptionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', 'string', 'in:cash,card,insurance'],
+            'payment_method' => ['required', 'string', 'in:cash,card,insurance,hospital_bill'],
+            'discount_type' => ['nullable', 'string', 'in:regular,senior,pwd,student'],
+            'discount_id_number' => ['nullable', 'string', 'max:50', 'required_if:discount_type,senior,pwd'],
             'allocations' => ['required', 'array'],
             'allocations.*' => ['required', 'array'],
             'allocations.*.*' => ['required', 'integer', 'min:0'],

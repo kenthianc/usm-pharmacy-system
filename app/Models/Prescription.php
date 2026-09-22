@@ -21,7 +21,10 @@ class Prescription extends Model
         'patient_id',
         'encoded_by',
         'doctor_name',
+        'order_type',
+        'room_bed_number',
         'status',
+        'billing_status',
     ];
 
     /**
@@ -79,6 +82,16 @@ class Prescription extends Model
     }
 
     /**
+     * Scope a query to only include prepared prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopePrepared(Builder $query): Builder
+    {
+        return $query->where('status', 'prepared');
+    }
+
+    /**
      * Scope a query to only include cancelled prescriptions.
      *
      * @param  Builder<static>  $query
@@ -86,6 +99,36 @@ class Prescription extends Model
     public function scopeCancelled(Builder $query): Builder
     {
         return $query->where('status', 'cancelled');
+    }
+
+    /**
+     * Scope a query to only include in-patient prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeInpatient(Builder $query): Builder
+    {
+        return $query->where('order_type', 'inpatient');
+    }
+
+    /**
+     * Scope a query to only include out-patient prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeOutpatient(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('order_type')->orWhere('order_type', 'outpatient');
+        });
+    }
+
+    /**
+     * Get the hospitalization bill associated with the prescription.
+     */
+    public function patientBill()
+    {
+        return $this->hasOne(PatientBill::class);
     }
 
     /**

@@ -19,8 +19,17 @@ class PosTransaction extends Model
     protected $fillable = [
         'prescription_id',
         'cashier_id',
+        'subtotal',
         'total_amount',
+        'discount_type',
+        'discount_id_number',
+        'vat_exempt_amount',
+        'discount_amount',
+        'net_amount',
         'payment_method',
+        'order_type',
+        'room_bed_number',
+        'billing_status',
     ];
 
     /**
@@ -31,8 +40,20 @@ class PosTransaction extends Model
     protected function casts(): array
     {
         return [
+            'subtotal' => 'decimal:2',
             'total_amount' => 'decimal:2',
+            'vat_exempt_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'net_amount' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Hospitalization bill associated with this transaction.
+     */
+    public function patientBill()
+    {
+        return $this->hasOne(PatientBill::class);
     }
 
     /**
