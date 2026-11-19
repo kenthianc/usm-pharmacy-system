@@ -18,6 +18,7 @@
 
 @php
     $pendingCount = \App\Models\Prescription::pending()->count();
+    $pendingEndorsementsCount = \App\Models\PatientEndorsement::where('acknowledgment_status', 'pending')->count();
     $lowStockCount = Auth::user()?->hasRole('admin') ? \App\Models\Medicine::with(['stockBatches' => function ($q) {
         $q->where('status', 'received')
             ->where('expiry_date', '>=', now()->toDateString())
@@ -199,14 +200,41 @@
                 </div>
             @else
                 <!-- Standard Nurse Navigation Menu -->
-                @php $isDashboard = request()->routeIs('dashboard'); @endphp
-                <a href="{{ route('dashboard') }}"
+                @php $isDashboard = request()->routeIs('nurse.dashboard') || request()->routeIs('dashboard'); @endphp
+                <a href="{{ route('nurse.dashboard') }}"
                    class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold transition-all {{ $isDashboard ? 'bg-amber-500 text-[#064e2b] shadow-sm' : 'text-emerald-100/90 hover:bg-white/10 hover:text-white' }}"
-                   :title="!sidebarOpen ? 'Dashboard' : ''">
+                   :title="!sidebarOpen ? 'Nurse Station Hub' : ''">
                     <svg class="w-5 h-5 shrink-0 {{ $isDashboard ? 'text-[#064e2b]' : 'text-emerald-200' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                     </svg>
-                    <span x-show="sidebarOpen" class="truncate">Dashboard</span>
+                    <span x-show="sidebarOpen" class="truncate">Nurse Station Hub</span>
+                </a>
+
+                @php $isEndorsements = request()->routeIs('nurse.endorsements*'); @endphp
+                <a href="{{ route('nurse.endorsements') }}"
+                   class="flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-all {{ $isEndorsements ? 'bg-amber-500 text-[#064e2b] shadow-sm' : 'text-emerald-100/90 hover:bg-white/10 hover:text-white' }}"
+                   :title="!sidebarOpen ? 'Patient Endorsements' : ''">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <svg class="w-5 h-5 shrink-0 {{ $isEndorsements ? 'text-[#064e2b]' : 'text-emerald-200' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span x-show="sidebarOpen" class="truncate">Endorsements</span>
+                    </div>
+                    @if ($pendingEndorsementsCount > 0)
+                        <span x-show="sidebarOpen" class="w-5 h-5 rounded-full {{ $isEndorsements ? 'bg-[#064e2b] text-amber-400' : 'bg-amber-500 text-[#064e2b]' }} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs animate-pulse">
+                            {{ $pendingEndorsementsCount }}
+                        </span>
+                    @endif
+                </a>
+
+                @php $isInpatients = request()->routeIs('nurse.inpatients*') || request()->routeIs('nurse.chart*'); @endphp
+                <a href="{{ route('nurse.inpatients') }}"
+                   class="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-bold transition-all {{ $isInpatients ? 'bg-amber-500 text-[#064e2b] shadow-sm' : 'text-emerald-100/90 hover:bg-white/10 hover:text-white' }}"
+                   :title="!sidebarOpen ? 'Admitted Inpatients' : ''">
+                    <svg class="w-5 h-5 shrink-0 {{ $isInpatients ? 'text-[#064e2b]' : 'text-emerald-200' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span x-show="sidebarOpen" class="truncate">Admitted Inpatients</span>
                 </a>
 
                 @php

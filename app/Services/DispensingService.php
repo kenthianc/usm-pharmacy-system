@@ -144,6 +144,10 @@ class DispensingService
                     // Lock batch for update
                     $batch = StockBatch::where('id', $batchId)->lockForUpdate()->firstOrFail();
 
+                    if ($batch->expiry_date < now()->toDateString()) {
+                        throw new Exception("Cannot dispense batch {$batch->batch_no} because it expired on {$batch->expiry_date}.");
+                    }
+
                     if ($batch->quantity_remaining < $quantity) {
                         throw new Exception("Insufficient stock for batch {$batch->batch_no}.");
                     }
@@ -266,6 +270,10 @@ class DispensingService
                 foreach ($batches as $batch) {
                     if ($remaining <= 0) {
                         break;
+                    }
+
+                    if ($batch->expiry_date < now()->toDateString()) {
+                        throw new Exception("Cannot dispense batch {$batch->batch_no} because it expired on {$batch->expiry_date}.");
                     }
 
                     $allocate = min($batch->quantity_remaining, $remaining);

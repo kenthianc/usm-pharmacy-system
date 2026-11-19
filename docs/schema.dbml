@@ -1,0 +1,458 @@
+// USM Hospital Pharmacy Management System
+// Full Complete Database Markup Language (DBML) Specification for dbdocs.io & dbdiagram.io
+
+Project usm_pharmacy_system {
+  database_type: 'MySQL'
+  Note: '''
+    # USM Hospital Pharmacy Management System Database
+    Full system schema including all application tables, RBAC permissions, audit trails, and Laravel operational tables.
+  '''
+}
+
+// ====================================================
+// 1. AUTHENTICATION & ACCESS CONTROL (RBAC)
+// ====================================================
+
+Table users {
+  id bigint [pk, increment]
+  role_id bigint [ref: > roles.id, null, note: 'Direct primary role assignment']
+  name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  email_verified_at timestamp [null]
+  password varchar(255) [not null]
+  is_active boolean [default: true, note: 'Account active/suspended status']
+  remember_token varchar(100) [null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Central credentials and identities for doctors, nurses, pharmacists, managers, and patients'
+}
+
+Table roles {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  guard_name varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (name, guard_name) [unique]
+  }
+}
+
+Table permissions {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  guard_name varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (name, guard_name) [unique]
+  }
+}
+
+Table model_has_roles {
+  role_id bigint [ref: > roles.id, not null]
+  model_type varchar(255) [not null]
+  model_id bigint [not null, ref: > users.id]
+
+  indexes {
+    (role_id, model_id, model_type) [pk]
+    (model_id, model_type)
+  }
+}
+
+Table model_has_permissions {
+  permission_id bigint [ref: > permissions.id, not null]
+  model_type varchar(255) [not null]
+  model_id bigint [not null, ref: > users.id]
+
+  indexes {
+    (permission_id, model_id, model_type) [pk]
+    (model_id, model_type)
+  }
+}
+
+Table role_has_permissions {
+  permission_id bigint [ref: > permissions.id, not null]
+  role_id bigint [ref: > roles.id, not null]
+
+  indexes {
+    (permission_id, role_id) [pk]
+  }
+}
+
+// ====================================================
+// 2. PATIENT RECORDS
+// ====================================================
+
+Table patients {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id, null, note: 'Associated user account for patient portal access']
+  patient_type enum [note: 'student, resident']
+  id_number varchar(255) [not null, note: 'Student ID or Employee/Resident ID']
+  contact_number varchar(255) [null]
+  address varchar(255) [null]
+  date_of_birth date [null]
+  sex varchar(20) [null]
+  allergies text [null, note: 'Known drug or food allergies']
+  medical_notes text [null, note: 'Medical history and special instructions']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    id_number [unique]
+  }
+}
+
+// ====================================================
+// 3. MEDICINES CATALOGUE & INVENTORY MANAGEMENT
+// ====================================================
+
+Table medicines {
+  id bigint [pk, increment]
+  code varchar(50) [unique, null, note: 'Internal stock keeping SKU']
+  barcode varchar(100) [null, note: 'Scannable barcode string']
+  name varchar(255) [not null, note: 'Brand or trade name']
+  generic_name varchar(255) [not null, note: 'Active pharmaceutical ingredient']
+  category varchar(255) [not null, note: 'e.g. Antibiotic, Analgesic, Antipyretic']
+  unit varchar(255) [not null, note: 'Tablet, Capsule, Bottle, Vial']
+  unit_price decimal(10,2) [not null, note: 'Selling price per unit']
+  purchase_price decimal(10,2) [null, note: 'Acquisition cost per unit']
+  reorder_level int [default: 10, note: 'Threshold for low-stock alerts']
+  is_active boolean [default: true, note: 'Active status in pharmacy catalogue']
+  stockout_risk_score decimal(5,2) [null, note: 'Dual Risk Engine calculated probability (0-100)']
+  stockout_risk_category varchar(20) [null, note: 'low, medium, high, critical']
+  daily_consumption_rate decimal(8,2) [default: 0.00, note: 'Average units dispensed per day']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table stock_batches {
+  id bigint [pk, increment]
+  medicine_id bigint [ref: > medicines.id, not null]
+  batch_no varchar(255) [not null]
+  quantity_received int [not null]
+  quantity_remaining int [not null, note: 'Current unallocated stock level']
+  expiry_risk_score decimal(5,2) [null, note: 'Calculated expiry probability']
+  expiry_risk_category varchar(20) [null, note: 'low, medium, high, critical']
+  expiry_date date [not null, note: 'Used for FEFO (First-Expired, First-Out) dispensing']
+  received_date date [not null]
+  supplier varchar(255) [null]
+  status enum [default: 'received', note: 'pending, received, cancelled']
+  received_by bigint [ref: > users.id, null]
+  confirmed_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    batch_no
+    expiry_date
+  }
+}
+
+Table stock_movements {
+  id bigint [pk, increment]
+  medicine_id bigint [ref: > medicines.id, not null]
+  batch_id bigint [ref: > stock_batches.id, not null]
+  type enum [note: 'in, out, disposal, adjustment']
+  quantity int [not null]
+  reference_type varchar(255) [not null, note: 'pos_transaction, prescription, delivery, manual']
+  reference_id bigint [null]
+  notes text [null, note: 'Reason or disposal justification']
+  created_by bigint [ref: > users.id, not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Immutable ledger of all inventory transactions for audit compliance and risk forecasting'
+}
+
+// ====================================================
+// 4. PRESCRIPTIONS & CLINIC ROUTING
+// ====================================================
+
+Table prescriptions {
+  id bigint [pk, increment]
+  patient_id bigint [ref: > patients.id, not null]
+  encoded_by bigint [ref: > users.id, not null, note: 'Staff who recorded the order']
+  doctor_name varchar(255) [not null]
+  order_type varchar(255) [default: 'outpatient', note: 'outpatient or inpatient']
+  room_bed_number varchar(255) [null, note: 'Specified for inpatient room allocation']
+  status enum [default: 'pending', note: 'pending, routed, prepared, dispensed, cancelled']
+  billing_status varchar(255) [default: 'pending_payment', note: 'pending_payment, billed_to_account, paid']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    status
+    billing_status
+  }
+}
+
+Table prescription_items {
+  id bigint [pk, increment]
+  prescription_id bigint [ref: > prescriptions.id, not null]
+  medicine_id bigint [ref: > medicines.id, not null]
+  quantity int [not null]
+  dosage_instructions text [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ====================================================
+// 5. POINT OF SALE (POS) & DISPENSING
+// ====================================================
+
+Table pos_transactions {
+  id bigint [pk, increment]
+  prescription_id bigint [ref: > prescriptions.id, null, note: 'Null for over-the-counter (OTC) customer sales']
+  cashier_id bigint [ref: > users.id, not null]
+  subtotal decimal(10,2) [null]
+  total_amount decimal(10,2) [not null]
+  discount_type varchar(255) [default: 'regular', note: 'regular, senior, pwd, employee, student']
+  discount_id_number varchar(255) [null, note: 'Government or institutional discount ID']
+  vat_exempt_amount decimal(10,2) [default: 0]
+  discount_amount decimal(10,2) [default: 0]
+  net_amount decimal(10,2) [null]
+  payment_method varchar(255) [default: 'cash', note: 'cash, gcash, maya, credit_card, billed_to_account']
+  order_type varchar(255) [default: 'outpatient', note: 'outpatient, inpatient']
+  room_bed_number varchar(255) [null]
+  billing_status varchar(255) [default: 'paid', note: 'paid, billed_to_account']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table pos_transaction_items {
+  id bigint [pk, increment]
+  pos_transaction_id bigint [ref: > pos_transactions.id, not null]
+  medicine_id bigint [ref: > medicines.id, not null]
+  batch_id bigint [ref: > stock_batches.id, not null, note: 'Batch deducted according to FEFO']
+  quantity int [not null]
+  unit_price decimal(10,2) [not null]
+  subtotal decimal(10,2) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ====================================================
+// 6. DELIVERIES & SUPPLIER SHIPMENTS
+// ====================================================
+
+Table deliveries {
+  id bigint [pk, increment]
+  reference_no varchar(255) [unique, not null, note: 'Invoice / Purchase Order reference']
+  supplier varchar(255) [null]
+  delivery_date date [null]
+  status varchar(255) [default: 'pending', note: 'pending, confirmed, rejected']
+  notes text [null]
+  created_by bigint [ref: > users.id, not null]
+  received_by bigint [ref: > users.id, null]
+  confirmed_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    reference_no
+    status
+  }
+}
+
+Table delivery_items {
+  id bigint [pk, increment]
+  delivery_id bigint [ref: > deliveries.id, not null]
+  medicine_id bigint [ref: > medicines.id, not null]
+  quantity int [not null]
+  batch_no varchar(255) [null]
+  expiry_date date [null]
+  stock_batch_id bigint [ref: > stock_batches.id, null, note: 'Stock batch generated upon confirmation']
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ====================================================
+// 7. INPATIENT BILLING & ACCOUNTS
+// ====================================================
+
+Table patient_bills {
+  id bigint [pk, increment]
+  patient_id bigint [ref: > patients.id, not null]
+  prescription_id bigint [ref: > prescriptions.id, null]
+  pos_transaction_id bigint [ref: > pos_transactions.id, null]
+  room_bed_number varchar(255) [null]
+  doctor_name varchar(255) [null]
+  gross_amount decimal(10,2) [not null]
+  discount_amount decimal(10,2) [default: 0]
+  net_amount decimal(10,2) [not null]
+  status varchar(255) [default: 'billed_to_account', note: 'billed_to_account, settled, cancelled']
+  billed_by bigint [ref: > users.id, not null]
+  settled_at timestamp [null]
+  settled_by bigint [ref: > users.id, null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    status
+  }
+}
+
+// ====================================================
+// 8. AUDIT TRAILS & CLINIC CONFIGURATION
+// ====================================================
+
+Table audit_logs {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id, null]
+  action varchar(60) [not null, note: 'E.g. CREATE, UPDATE, DISPENSE, ADJUST']
+  module varchar(40) [not null, note: 'inventory, pos, prescriptions, billing, auth']
+  description text [not null]
+  metadata json [null, note: 'Changed attributes, old/new states']
+  ip_address varchar(45) [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    action
+    module
+  }
+}
+
+Table clinic_settings {
+  id bigint [pk, increment]
+  key varchar(255) [unique, not null]
+  value text [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ====================================================
+// 9. LARAVEL FRAMEWORK SYSTEM TABLES
+// ====================================================
+
+Table password_reset_tokens {
+  email varchar(255) [pk]
+  token varchar(255) [not null]
+  created_at timestamp [null]
+}
+
+Table sessions {
+  id varchar(255) [pk]
+  user_id bigint [ref: > users.id, null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  payload longtext [not null]
+  last_activity int [not null]
+
+  indexes {
+    last_activity
+  }
+}
+
+Table cache {
+  key varchar(255) [pk]
+  value mediumtext [not null]
+  expiration int [not null]
+
+  indexes {
+    expiration
+  }
+}
+
+Table cache_locks {
+  key varchar(255) [pk]
+  owner varchar(255) [not null]
+  expiration int [not null]
+
+  indexes {
+    expiration
+  }
+}
+
+Table jobs {
+  id bigint [pk, increment]
+  queue varchar(255) [not null]
+  payload longtext [not null]
+  attempts smallint [not null]
+  reserved_at int [null]
+  available_at int [not null]
+  created_at int [not null]
+
+  indexes {
+    queue
+  }
+}
+
+Table job_batches {
+  id varchar(255) [pk]
+  name varchar(255) [not null]
+  total_jobs int [not null]
+  pending_jobs int [not null]
+  failed_jobs int [not null]
+  failed_job_ids longtext [not null]
+  options mediumtext [null]
+  cancelled_at int [null]
+  created_at int [not null]
+  finished_at int [null]
+}
+
+Table failed_jobs {
+  id bigint [pk, increment]
+  uuid varchar(255) [unique, not null]
+  connection text [not null]
+  queue text [not null]
+  payload longtext [not null]
+  exception longtext [not null]
+  failed_at timestamp [default: `now()`]
+
+  indexes {
+    failed_at
+  }
+}
+
+// ====================================================
+// TABLE GROUPS (ORGANIZATION IN DBDOCS SIDEBAR)
+// ====================================================
+
+TableGroup Authentication_RBAC {
+  users
+  roles
+  permissions
+  model_has_roles
+  model_has_permissions
+  role_has_permissions
+}
+
+TableGroup Patient_Care {
+  patients
+  prescriptions
+  prescription_items
+}
+
+TableGroup Inventory_Logistics {
+  medicines
+  stock_batches
+  stock_movements
+  deliveries
+  delivery_items
+}
+
+TableGroup POS_Dispensing_Billing {
+  pos_transactions
+  pos_transaction_items
+  patient_bills
+}
+
+TableGroup Audit_Configuration {
+  audit_logs
+  clinic_settings
+}
+
+TableGroup Laravel_System {
+  sessions
+  password_reset_tokens
+  cache
+  cache_locks
+  jobs
+  job_batches
+  failed_jobs
+}

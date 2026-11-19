@@ -174,6 +174,14 @@
                                                     {{ $user->is_active ? 'Deactivate' : 'Activate' }}
                                                 </button>
                                             </form>
+
+                                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="inline-block" onsubmit="return confirm('Delete user account for {{ addslashes($user->name) }}? Accounts with clinical/audit records will be safely preserved.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="px-2.5 py-1.5 rounded-lg font-semibold text-xs transition cursor-pointer bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-700 border border-slate-200">
+                                                    Delete
+                                                </button>
+                                            </form>
                                         @endif
                                     </td>
                                 </tr>

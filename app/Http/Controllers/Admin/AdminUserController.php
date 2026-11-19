@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreStaffUserRequest;
 use App\Http\Requests\Admin\UpdateStaffUserRequest;
+use App\Models\Admission;
 use App\Models\AuditLog;
+use App\Models\PosTransaction;
+use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -151,5 +154,53 @@ class AdminUserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('status', "Account for '{$user->name}' was {$statusText} successfully.");
+    }
+
+    /**
+     * Delete the specified user account from the system.
+     */
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors([
+                'delete_error' => 'Safety lock: You cannot delete your own administrative account.',
+            ]);
+        }
+
+        // Check if user has linked records that would violate referential integrity
+        $hasRecords = Prescription::where('encoded_by', $user->id)->exists()
+            || PosTransaction::where('cashier_id', $user->id)->exists()
+            || Admission::where('admitted_by', $user->id)->exists();
+
+        $userName = $user->name;
+        $userEmail = $user->email;
+
+        if ($hasRecords) {
+            $user->is_active = false;
+            $user->save();
+
+            AuditLog::record(
+                'user_deactivated',
+                'users',
+                "User {$userName} ({$userEmail}) has historical hospital records; safely deactivated to preserve clinical audit trails.",
+                ['target_user_id' => $user->id]
+            );
+
+            return redirect()->route('admin.users.index')
+                ->with('status', "Account for '{$userName}' has historical hospital records. It was safely deactivated to preserve clinical audit trails.");
+        }
+
+        $user->roles()->detach();
+        $user->delete();
+
+        AuditLog::record(
+            'user_deleted',
+            'users',
+            "Deleted staff account: {$userName} ({$userEmail})",
+            ['deleted_user_email' => $userEmail]
+        );
+
+        return redirect()->route('admin.users.index')
+            ->with('status', "Staff account for '{$userName}' has been deleted successfully.");
     }
 }

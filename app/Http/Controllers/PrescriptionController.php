@@ -135,6 +135,7 @@ class PrescriptionController extends Controller
 
             $prescription = Prescription::create([
                 'patient_id' => $patientId,
+                'admission_id' => $validated['admission_id'] ?? null,
                 'encoded_by' => $request->user()->id,
                 'doctor_name' => $validated['doctor_name'],
                 'order_type' => $validated['order_type'] ?? 'inpatient',

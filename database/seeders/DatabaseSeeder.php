@@ -19,6 +19,12 @@ class DatabaseSeeder extends Seeder
 
         $demoUsers = [
             [
+                'name' => 'Admission Officer 001',
+                'email' => 'admission001@usm.edu.ph',
+                'password' => 'admission123',
+                'role' => 'admission',
+            ],
+            [
                 'name' => 'Nurse 001',
                 'email' => 'nurse001@usm.edu.ph',
                 'password' => 'nurse123',
@@ -104,6 +110,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PatientSeeder::class,
             MedicineAndBatchSeeder::class,
+            HospitalWardAndBedSeeder::class,
         ]);
     }
 }

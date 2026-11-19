@@ -37,7 +37,7 @@ class UpdateStaffUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($targetUserId),
             ],
-            'role' => ['required', 'string', 'in:nurse,pharmacist,stock_manager,admin,patient'],
+            'role' => ['required', 'string', 'in:admission,nurse,pharmacist,stock_manager,admin,patient'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
     }

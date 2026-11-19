@@ -96,6 +96,7 @@ class RiskPredictionService
             'lead_time_days' => $leadTime,
             'buffer_stock' => $bs,
             'reorder_point' => round($targetThreshold, 2),
+            'days_until_depletion' => $dc > 0 ? round($ic / $dc, 1) : null,
         ];
     }
 

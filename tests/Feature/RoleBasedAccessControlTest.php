@@ -37,6 +37,7 @@ test('medical secretary role does not exist and only nurse and admin access pres
             'stock_manager',
             'patient',
             'admin',
+            'admission',
         ]);
 });
 

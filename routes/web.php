@@ -5,7 +5,11 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminWardController;
+use App\Http\Controllers\AdmissionController;
+use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\NurseStationController;
 use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\PrescriptionController;
@@ -20,10 +24,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
 Route::get('/medicines', [WelcomeController::class, 'medicines'])->name('medicines');
+Route::post('/chatbot/message', [ChatbotController::class, 'message'])->name('chatbot.message');
 
 Route::get('/dashboard', function () {
     if (auth()->user()->hasRole('patient')) {
         return redirect()->route('patient.dashboard');
+    }
+    if (auth()->user()->hasRole('admission')) {
+        return redirect()->route('admission.index');
     }
 
     $counts = [
@@ -75,6 +83,29 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     Route::get('/prescriptions/{prescription}', [PatientPortalController::class, 'showPrescription'])->name('prescriptions.show');
     Route::get('/profile', [PatientPortalController::class, 'profile'])->name('profile');
     Route::patch('/profile', [PatientPortalController::class, 'updateProfile'])->name('profile.update');
+});
+
+// Admission Module (admission, admin)
+Route::middleware(['auth', 'role:admission'])->prefix('admission')->name('admission.')->group(function () {
+    Route::get('/', [AdmissionController::class, 'index'])->name('index');
+    Route::get('/beds', [AdmissionController::class, 'beds'])->name('beds');
+    Route::get('/patients', [AdmissionController::class, 'patients'])->name('patients');
+    Route::post('/patients', [AdmissionController::class, 'storePatient'])->name('patients.store');
+    Route::get('/admit/{patient}', [AdmissionController::class, 'createAdmission'])->name('create');
+    Route::post('/admit', [AdmissionController::class, 'storeAdmission'])->name('store');
+    Route::post('/admit/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('discharge');
+});
+
+// Nurse Station Module (nurse, admin)
+Route::middleware(['auth', 'role:nurse'])->prefix('nurse')->name('nurse.')->group(function () {
+    Route::get('/dashboard', [NurseStationController::class, 'dashboard'])->name('dashboard');
+    Route::get('/endorsements', [NurseStationController::class, 'endorsements'])->name('endorsements');
+    Route::post('/endorsements/{endorsement}/acknowledge', [NurseStationController::class, 'acknowledgeEndorsement'])->name('endorsements.acknowledge');
+    Route::get('/inpatients', [NurseStationController::class, 'inpatients'])->name('inpatients');
+    Route::get('/chart/{admission}', [NurseStationController::class, 'showChart'])->name('chart');
+    Route::post('/chart/{admission}/vitals', [NurseStationController::class, 'updateVitals'])->name('chart.vitals');
+    Route::post('/chart/{admission}/transfer', [NurseStationController::class, 'transferBed'])->name('admissions.transfer');
+    Route::post('/chart/{admission}/discharge', [NurseStationController::class, 'discharge'])->name('admissions.discharge');
 });
 
 // Prescription Module (nurse, admin)
@@ -141,7 +172,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::get('/audit-logs', [AdminAuditController::class, 'index'])->name('audit-logs');
+    Route::get('/wards', [AdminWardController::class, 'index'])->name('wards.index');
+    Route::post('/wards', [AdminWardController::class, 'storeWard'])->name('wards.store');
+    Route::put('/wards/{ward}', [AdminWardController::class, 'updateWard'])->name('wards.update');
+    Route::post('/wards/{ward}/beds', [AdminWardController::class, 'storeBed'])->name('wards.beds.store');
+    Route::post('/beds/{bed}/toggle-status', [AdminWardController::class, 'toggleBedStatus'])->name('beds.toggle-status');
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports');
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [AdminSettingController::class, 'update'])->name('settings.update');

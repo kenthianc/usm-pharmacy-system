@@ -19,6 +19,7 @@ class Prescription extends Model
      */
     protected $fillable = [
         'patient_id',
+        'admission_id',
         'encoded_by',
         'doctor_name',
         'order_type',
@@ -26,6 +27,16 @@ class Prescription extends Model
         'status',
         'billing_status',
     ];
+
+    /**
+     * Get the admission that the prescription belongs to (if inpatient).
+     *
+     * @return BelongsTo<Admission, $this>
+     */
+    public function admission(): BelongsTo
+    {
+        return $this->belongsTo(Admission::class);
+    }
 
     /**
      * Get the patient that the prescription belongs to.

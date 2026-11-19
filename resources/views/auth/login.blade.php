@@ -3,11 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign In &mdash; USM Hospital &amp; Health Services Pharmacy</title>
+    <title>Sign In &mdash; USM Hospital Management System</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" /></noscript>
 
     <!-- Scripts and Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -19,7 +20,7 @@
 
     <!-- ── LEFT HERO SHOWCASE PANEL (55% on Desktop) ─────────────────── -->
     <div class="relative lg:w-[52%] xl:w-[55%] text-white p-8 sm:p-12 lg:p-14 flex flex-col justify-between overflow-hidden shrink-0"
-         style="background: linear-gradient(145deg, rgba(2, 32, 17, 0.88) 0%, rgba(6, 78, 43, 0.82) 45%, rgba(10, 95, 53, 0.88) 100%), url('{{ asset('images/auth-mesh-bg.png') }}') center/cover no-repeat !important; color: #ffffff !important;">
+         style="background: radial-gradient(circle at 12% 18%, rgba(16, 185, 129, 0.22) 0%, transparent 45%), radial-gradient(circle at 88% 82%, rgba(245, 158, 11, 0.16) 0%, transparent 45%), linear-gradient(145deg, #022011 0%, #064e2b 50%, #08331d 100%) !important; color: #ffffff !important;">
         
         <!-- Ambient Glowing Orbs & Background Decoration -->
         <div class="absolute -top-24 -left-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -31,14 +32,16 @@
         <div class="relative z-10">
             <div class="flex items-center justify-between gap-4">
                 <a href="{{ route('home') }}" class="flex items-center gap-3.5 group">
-                    <div class="w-11 h-11 rounded-2xl bg-yellow-400 text-green-950 flex items-center justify-center font-black text-2xl shadow-lg shadow-yellow-500/20 border-2 border-yellow-300 transform group-hover:scale-105 transition-transform duration-200 shrink-0">
-                        ℞
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-yellow-300 to-yellow-500 text-green-950 flex items-center justify-center shadow-lg shadow-yellow-500/20 border-2 border-yellow-200/80 transform group-hover:scale-105 transition-transform duration-200 shrink-0">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 6v12M6 12h12"/>
+                        </svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-lg font-black tracking-tight text-white leading-none">USM Pharmacy</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-400 text-green-950 shadow-xs">
-                                Hospital System
+                            <span class="text-lg font-black tracking-tight text-white leading-none">USM Hospital</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/30 text-emerald-200 border border-emerald-400/30">
+                                Management System
                             </span>
                         </div>
                         <p class="text-xs font-semibold text-emerald-200/90 mt-1">University of Southern Mindanao</p>
@@ -46,7 +49,7 @@
                 </a>
 
                 <!-- Campus Live Pulse Status -->
-                <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs font-medium backdrop-blur-md shadow-xs">
+                <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs font-medium backdrop-blur-md shadow-xs">
                     <span class="relative flex h-2 w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
@@ -60,63 +63,73 @@
         <div class="relative z-10 my-10 sm:my-14 space-y-8">
             <div class="space-y-4 max-w-xl">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-yellow-400/15 border border-yellow-400/30 text-yellow-300 text-xs font-bold uppercase tracking-wider">
-                    <span>Clinical Operations &amp; Intelligence Hub</span>
+                    <span>Clinical Operations &amp; Dual-Risk Intelligence</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-[1.15]">
-                    Advancing Campus <span class="text-yellow-400">Patient Care</span> &amp; Smart Pharmacy Operations
+                    Advancing Hospital Care &amp; <span class="text-yellow-400">Predictive Intelligence</span>
                 </h1>
                 <p class="text-sm sm:text-base text-emerald-100/90 leading-relaxed font-normal">
-                    The integrated medical dispensary platform connecting triage nurses, outpatient doctors, hospital pharmacists, and warehouse inventory controllers in real time.
+                    The integrated medical platform connecting Patient Admission, Nurse Stations, Ward Bed Telemetry, Pharmacy POS, and Warehouse Inventory with Dual-Risk Forecasting.
                 </p>
             </div>
 
             <!-- 4 Grid Feature Highlights -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-2xl">
-                <!-- Feature 1 -->
+                <!-- Feature 1: Admission & Bed Telemetry -->
                 <div class="p-4 rounded-2xl transition-colors backdrop-blur-md flex items-start gap-3.5"
                      style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);">
-                    <div class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold text-base shrink-0 border border-amber-400/30">
-                        ⚡
+                    <div class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0 border border-amber-400/30">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/>
+                        </svg>
                     </div>
                     <div>
-                        <h2 class="text-xs font-bold text-white tracking-wide">Dual-Risk Engine</h2>
-                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Predictive stockout horizon &amp; batch expiration vulnerability alarms.</p>
+                        <h2 class="text-xs font-bold text-white tracking-wide">Admission &amp; Beds</h2>
+                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Patient classification, respiratory status &amp; vitals, and real-time bed assignment.</p>
                     </div>
                 </div>
 
-                <!-- Feature 2 -->
+                <!-- Feature 2: Nurse Clinical Station -->
                 <div class="p-4 rounded-2xl transition-colors backdrop-blur-md flex items-start gap-3.5"
                      style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center font-bold text-base shrink-0 border border-emerald-400/30">
-                        📋
+                    <div class="w-9 h-9 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-400/30">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
                     </div>
                     <div>
-                        <h2 class="text-xs font-bold text-white tracking-wide">Digital Rx Triage</h2>
-                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Doctor and nurse prescription encoding with instantaneous dispensary routing.</p>
+                        <h2 class="text-xs font-bold text-white tracking-wide">Nurse Clinical Station</h2>
+                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Shift endorsement handoffs, bedside clinical charting, and doctor prescription routing.</p>
                     </div>
                 </div>
 
-                <!-- Feature 3 -->
+                <!-- Feature 3: Pharmacy POS & FEFO -->
                 <div class="p-4 rounded-2xl transition-colors backdrop-blur-md flex items-start gap-3.5"
                      style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);">
-                    <div class="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-300 flex items-center justify-center font-bold text-base shrink-0 border border-yellow-400/30">
-                        💊
+                    <div class="w-9 h-9 rounded-xl bg-yellow-400/20 text-yellow-300 flex items-center justify-center shrink-0 border border-yellow-400/30">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
+                            <path d="m8.5 8.5 7 7"/>
+                        </svg>
                     </div>
                     <div>
-                        <h2 class="text-xs font-bold text-white tracking-wide">Dispensary POS</h2>
-                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Rapid barcode checkout with built-in student, employee, &amp; senior benefits.</p>
+                        <h2 class="text-xs font-bold text-white tracking-wide">Pharmacy POS &amp; FEFO</h2>
+                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Prescription queue verification, FEFO batch dispensing, and over-the-counter sales.</p>
                     </div>
                 </div>
 
-                <!-- Feature 4 -->
+                <!-- Feature 4: Dual-Risk Forecasting -->
                 <div class="p-4 rounded-2xl transition-colors backdrop-blur-md flex items-start gap-3.5"
                      style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);">
-                    <div class="w-9 h-9 rounded-xl bg-teal-400/20 text-teal-300 flex items-center justify-center font-bold text-base shrink-0 border border-teal-400/30">
-                        🛡️
+                    <div class="w-9 h-9 rounded-xl bg-teal-400/20 text-teal-300 flex items-center justify-center shrink-0 border border-teal-400/30">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/>
+                            <path d="m19 9-5 5-4-4-3 3"/>
+                        </svg>
                     </div>
                     <div>
-                        <h2 class="text-xs font-bold text-white tracking-wide">Regulatory Governance</h2>
-                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Complete audit trail logging and role-segregated clinical permissions.</p>
+                        <h2 class="text-xs font-bold text-white tracking-wide">Dual-Risk Forecasting</h2>
+                        <p class="text-[11px] text-emerald-100/80 mt-0.5 leading-snug">Predictive stockout horizon and batch expiration vulnerability forecasting.</p>
                     </div>
                 </div>
             </div>
@@ -124,7 +137,7 @@
 
         <!-- Left Bottom: Institutional Trust Statement -->
         <div class="relative z-10 pt-6 border-t border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-emerald-200/75">
-            <p>University Health Services Clinic &bull; Kabacan, North Cotabato</p>
+            <p>USM Hospital Complex &bull; Kabacan, North Cotabato</p>
             <span class="font-medium text-amber-300">Authorized Personnel &amp; Patients Only</span>
         </div>
     </div>
@@ -139,7 +152,7 @@
                 <svg class="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                <span>Back to Storefront</span>
+                <span>Back to Home</span>
             </a>
 
             <div class="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
@@ -316,6 +329,22 @@
                         </span>
                     </button>
 
+                    <!-- Admission Staff -->
+                    <button type="button"
+                            onclick="autofillLogin('admission001@usm.edu.ph', 'admission123')"
+                            class="col-span-2 p-2 rounded-xl bg-emerald-50/80 hover:bg-emerald-100/80 border border-emerald-300 text-left transition-all hover:shadow-xs group cursor-pointer flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">🏨</span>
+                            <div>
+                                <div class="text-xs font-bold text-emerald-950 group-hover:text-emerald-900">Admission Staff</div>
+                                <div class="text-[10px] text-emerald-800/80 font-mono">admission001@usm.edu.ph</div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-600 text-white shadow-2xs">
+                            Admission &amp; Beds
+                        </span>
+                    </button>
+
                     <!-- Nurse -->
                     <button type="button"
                             onclick="autofillLogin('nurse001@usm.edu.ph', 'nurse123')"
@@ -338,13 +367,13 @@
                         <div class="text-[10px] text-slate-500 font-mono truncate mt-0.5">pharm001@usm.edu.ph</div>
                     </button>
 
-                    <!-- Stock Keeper -->
+                    <!-- Stock Manager -->
                     <button type="button"
                             onclick="autofillLogin('stock001@usm.edu.ph', 'stock123')"
                             class="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 text-left transition-all cursor-pointer group">
                         <div class="flex items-center gap-1.5">
                             <span>📦</span>
-                            <span class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Stock Keeper</span>
+                            <span class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Stock Manager</span>
                         </div>
                         <div class="text-[10px] text-slate-500 font-mono truncate mt-0.5">stock001@usm.edu.ph</div>
                     </button>

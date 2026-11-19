@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>USM Pharmacy — Patient Portal</title>
+    <title>USM Pharmacy — Store</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -131,7 +131,7 @@
                     <div class="text-sm font-bold tracking-tight text-yellow-400 leading-tight">USM Pharmacy</div>
                     <div class="text-[11px] font-semibold text-emerald-300/90 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-                        Patient Portal
+                        Pharmacy Store
                     </div>
                 </div>
             </a>
@@ -187,7 +187,7 @@
                     @click="$dispatch('open-signout-modal')"
                     x-show="sidebarOpen"
                     class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-300 hover:bg-rose-900/40 hover:text-rose-200 transition-colors cursor-pointer"
-                    title="Sign out of Patient Portal">
+                    title="Sign out">
                 <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
@@ -219,7 +219,7 @@
                 <!-- Dynamic Page Heading -->
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                        Patient Portal
+                        Pharmacy Store
                     </span>
                     <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
                         <span x-show="view === 'dashboard'">Medical Dashboard</span>
@@ -870,7 +870,7 @@
         <div class="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden" style="min-height: 480px;">
             <div class="px-4 py-3 border-b border-gray-100 bg-green-50 flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2"/></svg>
-                <p class="text-xs font-semibold text-green-800">Ask about symptoms, medicines, or first aid</p>
+                <p class="text-xs font-semibold text-green-800">Ask about medicines, discounts, OPD clinic hours, or prescriptions</p>
             </div>
 
             <div id="chatMessagesBox" class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[420px]">
@@ -907,7 +907,7 @@
                     <input
                         type="text"
                         x-model="chatInput"
-                        placeholder="Ask about symptoms, medicines, or prescriptions..."
+                        placeholder="Ask about medicines, discounts, OPD clinic hours, or prescriptions..."
                         class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50"
                     />
                     <button type="submit" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl transition-colors shrink-0">
@@ -940,7 +940,7 @@ function patientPortalApp() {
         rxFilter: 'All',
         heroInput: '',
         chatMessages: [
-            { role: 'assistant', content: "Hello! I'm your USM Health Assistant. Ask me about symptoms, medicines, first aid, or your prescriptions." }
+            { role: 'assistant', content: "Hello! I'm your USM Hospital & Pharmacy Assistant. Ask me about medicine stock, prices, OPD clinic hours, discounts, or your prescriptions. How can I help you today?" }
         ],
         chatInput: '',
         activeCategory: 'All',
@@ -1099,7 +1099,7 @@ function patientPortalApp() {
             const msg = this.heroInput.trim();
             this.heroInput = '';
             this.chatMessages = [
-                { role: 'assistant', content: "Hello! I'm your USM Health Assistant. Ask me about symptoms, medicines, first aid, or your prescriptions." },
+                { role: 'assistant', content: "Hello! I'm your USM Hospital & Pharmacy Assistant. Ask me about medicine stock, prices, OPD clinic hours, discounts, or your prescriptions. How can I help you today?" },
                 { role: 'user', content: msg }
             ];
             this.setView('chat');
@@ -1129,15 +1129,72 @@ function patientPortalApp() {
 
         getBotResponse(input) {
             const q = input.toLowerCase();
-            if (q.includes("headache"))
-                return "For a headache:\n\n1. Rest in a quiet, dark room\n2. Stay hydrated\n3. Apply a cold compress\n4. Paracetamol 500mg or Ibuprofen 400mg are available at our pharmacy\n\nIf it persists beyond 24 hours, please see a doctor.";
-            if (q.includes("fever"))
-                return "For fever:\n\n1. Rest and stay hydrated\n2. Use a cool compress\n3. Paracetamol 500mg every 6 hours (in stock ✓)\n\nSeek care immediately if fever exceeds 39.4°C or lasts more than 3 days.";
-            if (q.includes("availab") || q.includes("stock") || q.includes("medicine"))
-                return "Currently in stock at USM Pharmacy:\n\n✓ Paracetamol 500mg\n✓ Amoxicillin 500mg\n✓ Metformin 500mg\n✓ Vitamin C 500mg\n✓ Salbutamol Nebule\n✓ IV Fluids (NS, D5W, LR)\n\nBrowse the full storefront for prices and availability.";
-            if (q.includes("prescription"))
-                return "You can view all your prescriptions under the Prescriptions tab. For refills, please consult your assigned physician at the USM clinic.";
-            return "I can help you with:\n\n• First aid advice for common conditions\n• Medicine availability checks\n• General health information\n• Understanding your prescriptions\n\nCould you give me more details?";
+            const symptomTerms = /(symptom|sick|illness|unwell|fever|lagnat|headache|sakit ng ulo|cough|ubo|cold|colds|sipon|flu|trangkaso|sore throat|throat|stomach|tiyan|diarrhea|pagtatae|nausea|vomit|suka|dizzy|nahihilo|wound|sugat|bleed|injury|cut|burn|pain|masakit|first aid|gamot sa|cure|treatment)/i;
+
+            if (symptomTerms.test(q)) {
+                return "I cannot provide medical advice, diagnosis, or symptom treatment recommendations.\n\nFor your health and safety, please proceed directly to the USM Hospital & University Infirmary / Outpatient Department (OPD) for a clinical evaluation with our doctors and nurses.\n\n📍 USM Infirmary & OPD Operating Hours:\n• OPD Consultation Hours: Monday – Friday, 8:00 AM – 5:00 PM\n• Emergency Room & Inpatient Wards: 24/7 Always Open\n• Location: USM Hospital & Infirmary Complex, Main Campus, Kabacan, Cotabato\n\nOnce our attending physician issues your official prescription, you can ask me to check if our pharmacy has your medicines in stock and calculate applicable discounts. Would you like me to check any prescribed medicine for you?";
+            }
+
+            // Specific Medicine Search
+            let matched = null;
+            for (const p of this.products) {
+                const name = p.name.toLowerCase();
+                const generic = (p.generic_name || '').toLowerCase();
+                if (q.includes(name) || (generic && q.includes(generic))) {
+                    matched = p;
+                    break;
+                }
+                const tokens = (name + ' ' + generic).split(/[\s,()%-]+/).filter(t => t.length >= 4);
+                for (const t of tokens) {
+                    if (q.includes(t)) {
+                        matched = p;
+                        break;
+                    }
+                }
+                if (matched) break;
+            }
+
+            if (matched) {
+                const price = Number(matched.unit_price || matched.price || 0).toFixed(2);
+                const stock = matched.available_stock || matched.stock || 0;
+                const unit = matched.unit || 'unit';
+
+                if (q.includes("magkano") || q.includes("price") || q.includes("how much") || q.includes("presyo") || q.includes("cost")) {
+                    return `Ang presyo ng ${matched.name} ay ₱${price} bawat ${unit}.`;
+                }
+
+                if (q.includes("stock") || q.includes("available") || q.includes("meron") || q.includes("ilan")) {
+                    return stock > 0
+                        ? `Mayroon tayong ${stock} ${unit}s ng ${matched.name} sa kasalukuyang active stock (₱${price}/${unit}).`
+                        : `Sa kasalukuyan, out of stock ang ${matched.name} sa pharmacy.`;
+                }
+
+                if (q.includes("reseta") || q.includes("prescription") || q.includes("rx") || q.includes("otc")) {
+                    return matched.rx
+                        ? `Ang ${matched.name} ay Prescription-Only (Rx) at nangangailangan ng reseta mula sa doktor.`
+                        : `Ang ${matched.name} ay Over-the-Counter (OTC) at maaaring mabili nang walang reseta.`;
+                }
+
+                return `${matched.name} (${matched.generic_name || matched.name}):\n• Presyo: ₱${price} / ${unit}\n• Stock: ${stock > 0 ? stock + ' ' + unit + 's (In Stock)' : 'Out of Stock'}\n• Dispensing: ${matched.rx ? 'Requires Doctor Prescription (Rx)' : 'Over-the-Counter (OTC)'}`;
+            }
+
+            if (q.includes("availab") || q.includes("stock") || q.includes("medicine") || q.includes("formulary")) {
+                return "Here is a quick overview of popular unexpired medicines currently in stock at the USM Pharmacy:\n\n• Paracetamol 500mg — In Stock (₱5.00/tab)\n• Amoxicillin 500mg — In Stock (₱12.00/cap)\n• Metformin 500mg — In Stock (₱8.00/tab)\n• Vitamin C 500mg — In Stock (₱7.00/tab)\n• Salbutamol Nebule — In Stock (₱25.00/neb)\n• IV Fluids (NS, D5W, LR) — In Stock (from ₱80.00/bag)\n\nYou can browse our complete formulary under the 'Medicines' tab. What specific medicine or brand can I check for you?";
+            }
+
+            if (q.includes("discount") || q.includes("senior") || q.includes("pwd") || q.includes("student")) {
+                return "USM Hospital Pharmacy applies the following discount benefits upon presentment of valid ID:\n\n• Senior Citizens (RA 9994): 20% discount on VAT-exempt purchases\n• PWD (RA 10754): 20% discount on VAT-exempt purchases\n• USM Students: 10% institutional health subsidy with valid Student ID\n\nThese discounts are calculated automatically at our POS dispensary counter. Would you like to check the discounted price for a specific medicine?";
+            }
+
+            if (q.includes("hour") || q.includes("schedule") || q.includes("opd") || q.includes("infirmary") || q.includes("open")) {
+                return "Here are the operating hours for the USM Hospital & Infirmary:\n\n• USM Infirmary / OPD Clinic: Monday – Friday, 8:00 AM – 5:00 PM (Outpatient doctor consultations and regular clinic care)\n• Emergency Room & Inpatient Wards: 24 Hours / 7 Days a week (24/7)\n• Outpatient Pharmacy: Monday – Friday, 8:00 AM – 5:00 PM\n• Location: USM Hospital Complex, Main Campus, Kabacan, Cotabato\n\nAre you planning a visit for a checkup, or need to verify medicine availability beforehand?";
+            }
+
+            if (q.includes("prescription") || q.includes("reseta") || q.includes("refill")) {
+                return "You can view and track all your active prescriptions directly in the 'Prescriptions' tab of your portal. Each prescription updates in real time as the pharmacy queue prepares and dispenses it using FEFO batch control.\n\nDo you need to check if a specific prescribed medicine is currently available in our pharmacy?";
+            }
+
+            return "I am your USM Hospital & Pharmacy administrative assistant. I can directly assist you with:\n\n• Medicine stock availability & pricing\n• USM Infirmary & OPD consultation hours (Mon–Fri, 8 AM–5 PM)\n• Student (10%) and Senior/PWD (20%) discounts\n• Viewing and tracking your active prescriptions\n\n(Note: If you are experiencing symptoms or need clinical care, please visit our OPD clinic doctors during consultation hours).\n\nWhat medicine or hospital service can I help you look up today?";
         },
 
         saveProfile() {

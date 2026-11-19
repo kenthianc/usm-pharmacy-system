@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>USM Hospital Pharmacy — Product Catalog</title>
     <meta name="description" content="Browse available medicines and supplies at USM Health Services Pharmacy with real-time stock and pricing.">
+    <!-- Optimized Asynchronous Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap"></noscript>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -398,11 +400,13 @@
             background: #ffffff;
             display: flex;
             flex-direction: column;
-            transition: box-shadow .2s, transform .2s;
+            transition: box-shadow .2s, transform .2s, border-color .2s;
+            cursor: pointer;
         }
         .product-card:hover {
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,.08);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,.1);
             transform: translateY(-2px);
+            border-color: var(--g6);
         }
         .product-card.out-of-stock {
             opacity: .65;
@@ -627,7 +631,7 @@
         .modal-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,.5);
+            background: rgba(0,0,0,.6);
             backdrop-filter: blur(4px);
             z-index: 50;
             display: none;
@@ -638,87 +642,176 @@
         .modal-card {
             background: #ffffff;
             border-radius: 1rem;
-            max-width: 480px;
+            max-width: 520px;
             width: 100%;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,.35);
             animation: modalPop .2s ease-out;
+            border: 1px solid #e2e8f0;
         }
         @keyframes modalPop {
             from { opacity: 0; transform: scale(.95); }
             to { opacity: 1; transform: scale(1); }
         }
         .modal-header {
-            background: linear-gradient(to right, var(--g8), var(--g7));
+            background: linear-gradient(135deg, var(--g9) 0%, var(--g8) 100%);
             color: #ffffff;
-            padding: 1.25rem;
+            padding: 1.15rem 1.25rem;
             border-bottom: 3px solid var(--y4);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         .modal-header h3 {
-            font-size: 1.125rem;
+            font-size: 1.0625rem;
             font-weight: 700;
             color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
         }
         .btn-close-modal {
-            background: none;
-            border: none;
-            color: #bbf7d0;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: .375rem;
+            color: #ffffff;
             cursor: pointer;
             font-size: 1.25rem;
             line-height: 1;
-            padding: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .15s;
         }
-        .btn-close-modal:hover { color: #ffffff; }
+        .btn-close-modal:hover { background: rgba(255,255,255,.25); }
         .modal-body {
             padding: 1.25rem;
             font-size: .875rem;
             color: #374151;
-            line-height: 1.6;
+            line-height: 1.5;
+            max-height: calc(85vh - 120px);
+            overflow-y: auto;
         }
         .modal-med-title {
-            font-size: 1.125rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+            font-weight: 800;
             color: #0f172a;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
+            line-height: 1.25;
         }
         .modal-med-brand {
-            font-size: .75rem;
+            font-size: .8125rem;
             color: #64748b;
-            margin-bottom: 1rem;
+            font-weight: 500;
+            margin-bottom: .75rem;
         }
-        .modal-meta-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .75rem;
+        .modal-stock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .375rem;
+            font-size: .75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            margin-bottom: .875rem;
+        }
+        .modal-stock-badge.in-stock {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        .modal-stock-badge.out-of-stock {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .modal-stock-badge .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .modal-pricing-card {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
+            border-radius: .75rem;
+            padding: .75rem .875rem;
+            margin-bottom: .875rem;
+        }
+        .modal-pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: .5rem;
+            text-align: center;
+        }
+        .price-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: .5rem;
-            padding: .75rem 1rem;
-            margin-bottom: 1rem;
+            padding: .5rem .25rem;
         }
-        .meta-field label {
-            font-size: 11px;
-            color: #64748b;
+        .price-box.highlight {
+            border-color: #86efac;
+            background: #f0fdf4;
+        }
+        .price-box-label {
+            font-size: 9px;
+            font-weight: 800;
             text-transform: uppercase;
-            font-weight: 600;
-            display: block;
+            color: #64748b;
+            letter-spacing: .02em;
+            margin-bottom: 2px;
         }
-        .meta-field span {
-            font-size: .9375rem;
+        .price-box.highlight .price-box-label {
+            color: #166534;
+        }
+        .price-box-val {
+            font-size: .875rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .price-box.highlight .price-box-val {
+            color: #15803d;
+        }
+        .price-box-sub {
+            font-size: 9px;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+        .modal-policy-box {
+            border-radius: .625rem;
+            padding: .75rem .875rem;
+            margin-bottom: .875rem;
+            font-size: .8125rem;
+            line-height: 1.45;
+        }
+        .modal-policy-box.rx-required {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+        .modal-policy-box.otc-available {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        .modal-policy-box .policy-header {
+            display: flex;
+            align-items: center;
+            gap: .375rem;
             font-weight: 700;
-            color: #1e293b;
+            font-size: .8125rem;
+            margin-bottom: 3px;
         }
-        .modal-notice {
-            background: #eff6ff;
-            border-left: 4px solid #3b82f6;
-            padding: .75rem;
-            border-radius: 0 .5rem .5rem 0;
-            font-size: .75rem;
-            color: #1e40af;
-            margin-bottom: 1rem;
+        .modal-info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: .625rem;
+            padding: .75rem .875rem;
+            font-size: .8125rem;
+            color: #475569;
         }
         .modal-footer {
             padding: .75rem 1.25rem 1.25rem;
@@ -874,17 +967,12 @@
             </div>
             <div>
                 <div class="nav-brand-name">USM Pharmacy</div>
-                <div class="nav-brand-sub">Patient Portal</div>
+                <div class="nav-brand-sub">Pharmacy Store</div>
             </div>
         </a>
         <nav class="nav-links">
             <a href="{{ route('home') }}" class="nav-link">Home</a>
-            <a href="{{ route('home') }}#chatbot" class="nav-link">AI Assistant</a>
-            @auth
-                <a href="{{ route('patient.prescriptions') }}" class="nav-link">My Prescriptions</a>
-            @else
-                <a href="{{ route('login') }}" class="nav-link">My Prescriptions</a>
-            @endauth
+            <a href="{{ route('medicines') }}" class="nav-link active">Product Catalog</a>
         </nav>
         <div class="nav-right">
             <a href="{{ route('medicines') }}" class="btn-store">
@@ -936,23 +1024,7 @@
     </div>
 </div>
 
-@guest
-    <div class="guest-banner">
-        <div class="guest-banner-inner">
-            <p class="guest-banner-text">
-                <strong>You are browsing as a guest.</strong> Sign in to inquire or request medicines.
-            </p>
-            <a href="{{ route('login') }}" class="btn-guest-signin">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                    <polyline points="10 17 15 12 10 7"/>
-                    <line x1="15" y1="12" x2="3" y2="12"/>
-                </svg>
-                Sign In
-            </a>
-        </div>
-    </div>
-@endguest
+
 
 {{-- MAIN LAYOUT --}}
 <div class="main-container">
@@ -1076,14 +1148,17 @@
                     class="product-card {{ $isOutOfStock ? 'out-of-stock' : '' }}"
                     data-id="{{ $med['id'] }}"
                     data-name="{{ strtolower($med['name']) }}"
-                    data-brand="{{ strtolower($brand) }}"
+                    data-display-name="{{ $med['name'] }}"
+                    data-brand="{{ $brand }}"
                     data-generic="{{ strtolower($med['generic_name'] ?? '') }}"
+                    data-generic-display="{{ $med['generic_name'] ?? '' }}"
                     data-category="{{ $category }}"
                     data-stock="{{ $stock }}"
                     data-price="{{ $unitPrice }}"
                     data-unit="{{ $unit }}"
                     data-desc="{{ $med['description'] ?? '' }}"
                     data-rx="{{ $rx ? '1' : '0' }}"
+                    onclick="openInquireModal({{ $med['id'] }})"
                 >
                     {{-- Image Area --}}
                     <div class="card-img-area">
@@ -1143,30 +1218,16 @@
                                 <p class="stock-alert">Only {{ $stock }} left</p>
                             @endif
 
-                            @guest
-                                <button
-                                    type="button"
-                                    class="btn-guest-inquire {{ $isOutOfStock ? 'disabled' : '' }}"
-                                    {{ $isOutOfStock ? 'disabled' : '' }}
-                                    onclick="openInquireModal({{ $med['id'] }})"
-                                >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                                        <polyline points="10 17 15 12 10 7"/>
-                                        <line x1="15" y1="12" x2="3" y2="12"/>
-                                    </svg>
-                                    {{ $isOutOfStock ? 'Unavailable' : 'Sign in to Inquire' }}
-                                </button>
-                            @else
-                                <button
-                                    type="button"
-                                    class="btn-inquire {{ $isOutOfStock ? 'disabled' : '' }}"
-                                    {{ $isOutOfStock ? 'disabled' : '' }}
-                                    onclick="openInquireModal({{ $med['id'] }})"
-                                >
-                                    {{ $isOutOfStock ? 'Unavailable' : 'Inquire at Pharmacy' }}
-                                </button>
-                            @endguest
+                            <button
+                                type="button"
+                                class="btn-inquire {{ $isOutOfStock ? 'disabled' : '' }}"
+                                onclick="event.stopPropagation(); openInquireModal({{ $med['id'] }})"
+                            >
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:-1px; margin-right:3px;">
+                                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                                {{ $isOutOfStock ? 'View Stock Details' : 'View Details' }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1187,41 +1248,68 @@
     </main>
 </div>
 
-{{-- INQUIRE MODAL --}}
+{{-- INQUIRE & DETAILS MODAL --}}
 <div class="modal-backdrop" id="inquireModal" onclick="closeModalOnBackdrop(event)">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>Medicine Details & Inquiries</h3>
+            <h3>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+                Medicine Details &amp; Availability
+            </h3>
             <button type="button" class="btn-close-modal" onclick="closeInquireModal()" title="Close">&times;</button>
         </div>
         <div class="modal-body">
             <h4 class="modal-med-title" id="modalMedName">Normal Saline 0.9% 1L</h4>
             <p class="modal-med-brand" id="modalMedBrand">Baxter &middot; IV Fluids</p>
+            <div id="modalStockBadge" class="modal-stock-badge in-stock">
+                <span class="badge-dot"></span> <span id="modalStockText">In Stock (300 bags available)</span>
+            </div>
 
-            <div class="modal-meta-grid">
-                <div class="meta-field">
-                    <label>Pharmacy Price</label>
-                    <span id="modalMedPrice">&#8369;85.00</span>
-                </div>
-                <div class="meta-field">
-                    <label>Current Stock</label>
-                    <span id="modalMedStock" style="color: var(--g7);">300 bags</span>
+            <div class="modal-pricing-card">
+                <div class="modal-pricing-grid">
+                    <div class="price-box">
+                        <div class="price-box-label">Standard Price</div>
+                        <div class="price-box-val" id="modalStandardPrice">&#8369;85.00</div>
+                        <div class="price-box-sub" id="modalUnitSub">per bag</div>
+                    </div>
+                    <div class="price-box highlight">
+                        <div class="price-box-label">Student Subsidy</div>
+                        <div class="price-box-val" id="modalStudentPrice">&#8369;76.50</div>
+                        <div class="price-box-sub">10% Health Subsidy</div>
+                    </div>
+                    <div class="price-box highlight">
+                        <div class="price-box-label">Senior / PWD</div>
+                        <div class="price-box-val" id="modalSeniorPrice">&#8369;68.00</div>
+                        <div class="price-box-sub">20% Statutory Discount</div>
+                    </div>
                 </div>
             </div>
 
-            <p id="modalMedDesc" style="margin-bottom: 1rem; color: #4b5563; font-size: .8125rem;">
+            <!-- Prescription Policy Alert Box -->
+            <div id="modalPolicyBox" class="modal-policy-box rx-required">
+                <div class="policy-header" id="modalPolicyHeader">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span id="modalPolicyTitle">Prescription Required (Rx Only)</span>
+                </div>
+                <p id="modalPolicyText">
+                    This medication requires a validated physical or electronic doctor's prescription from a licensed physician or the USM Hospital Outpatient Department (OPD) before dispensing.
+                </p>
+            </div>
+
+            <p id="modalMedDesc" style="margin-bottom: .875rem; color: #4b5563; font-size: .8125rem;">
                 Isotonic crystalloid solution for fluid and electrolyte replenishment.
             </p>
 
-            <div class="modal-notice" id="modalRxNotice">
-                <strong>&#9764; Prescription Policy:</strong> This medication requires an active prescription from a licensed physician or the USM University Clinic.
-            </div>
-
-            <div style="font-size: .8125rem; color: #64748b; background: #f8fafc; border-radius: .5rem; padding: .75rem; border: 1px solid #e2e8f0;">
-                <p style="font-weight: 600; color: #1e293b; margin-bottom: 2px;">Where to claim:</p>
-                <p>USM Health Services Pharmacy (Building A)</p>
-                <p>Hours: Mon &ndash; Fri, 8:00 AM &ndash; 5:00 PM</p>
-                <p style="margin-top: 4px; font-size: 11px; color: #94a3b8;">Please present your Student/Staff ID at the dispensing counter.</p>
+            <div class="modal-info-box">
+                <p style="font-weight: 700; color: #1e293b; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Hospital Dispensary Counter:
+                </p>
+                <p><strong>Location:</strong> USM Hospital Pharmacy (Ground Floor, Main Hospital Complex)</p>
+                <p><strong>Dispensing Hours:</strong> Monday &ndash; Friday, 8:00 AM &ndash; 5:00 PM (Emergency dispensing 24/7)</p>
+                <p style="margin-top: 4px; font-size: 11px; color: #64748b;">
+                    Present your USM Student ID, Employee ID, or Senior/PWD ID upon payment to apply discount.
+                </p>
             </div>
         </div>
         <div class="modal-footer">
@@ -1230,45 +1318,9 @@
     </div>
 </div>
 
-{{-- GUEST ACCESS REQUIRED MODAL --}}
-@guest
-<div class="modal-backdrop" id="guestAccessModal" onclick="closeGuestModalOnBackdrop(event)">
-    <div class="modal-card">
-        <div class="modal-header" style="background: linear-gradient(135deg, #14532d, #166534);">
-            <h3 style="color:#ffffff;display:flex;align-items:center;gap:.5rem">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#facc15" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                Sign In Required
-            </h3>
-            <button type="button" class="btn-close-modal" onclick="closeGuestModal()" style="color:#ffffff">&times;</button>
-        </div>
-        <div class="modal-body" style="text-align: center; padding: 2rem 1.5rem;">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background: #fef3c7; border: 2px solid #fde68a; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#b45309" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <h4 style="font-size: 1.125rem; font-weight: 800; color: #1e293b; margin-bottom: .5rem;" id="guestModalTitle">USM Account Required to Inquire</h4>
-            <p style="font-size: .875rem; color: #64748b; line-height: 1.6; max-width: 420px; margin: 0 auto 1.5rem;">
-                You are currently browsing as a guest. Please sign in with your verified USM Student or Staff account to submit inquiries, request prescriptions, or coordinate with on-duty pharmacists.
-            </p>
-            <div style="display: flex; flex-direction: column; gap: .75rem; max-width: 300px; margin: 0 auto;">
-                <a href="{{ route('login') }}" class="btn-guest-signin" style="justify-content: center; padding: .625rem 1.25rem; font-size: .875rem;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    Sign In with USM Account
-                </a>
-                <a href="{{ route('register') }}" class="btn-store-register" style="justify-content: center;">
-                    Create Free Patient Account
-                </a>
-            </div>
-        </div>
-        <div class="modal-footer" style="justify-content: center; background: #f8fafc;">
-            <button type="button" class="btn-modal-close" onclick="closeGuestModal()">Continue Browsing</button>
-        </div>
-    </div>
-</div>
-@endguest
-
 {{-- FOOTER --}}
 <footer>
-    <p>&copy; 2026 University of Southern Mindanao &mdash; Pharmacy Patient Portal. All rights reserved.</p>
+    <p>&copy; {{ date('Y') }} University of Southern Mindanao &mdash; Pharmacy Store. All rights reserved.</p>
 </footer>
 
 <script>
@@ -1363,42 +1415,60 @@
     const inquireModal = document.getElementById('inquireModal');
     const modalMedName = document.getElementById('modalMedName');
     const modalMedBrand = document.getElementById('modalMedBrand');
-    const modalMedPrice = document.getElementById('modalMedPrice');
-    const modalMedStock = document.getElementById('modalMedStock');
+    const modalStockBadge = document.getElementById('modalStockBadge');
+    const modalStockText = document.getElementById('modalStockText');
+    const modalStandardPrice = document.getElementById('modalStandardPrice');
+    const modalUnitSub = document.getElementById('modalUnitSub');
+    const modalStudentPrice = document.getElementById('modalStudentPrice');
+    const modalSeniorPrice = document.getElementById('modalSeniorPrice');
+    const modalPolicyBox = document.getElementById('modalPolicyBox');
+    const modalPolicyTitle = document.getElementById('modalPolicyTitle');
+    const modalPolicyText = document.getElementById('modalPolicyText');
     const modalMedDesc = document.getElementById('modalMedDesc');
-    const modalRxNotice = document.getElementById('modalRxNotice');
 
     function openInquireModal(id) {
         const card = cards.find(c => c.dataset.id == id);
         if (!card) return;
 
-        const name = card.querySelector('.card-title').textContent.trim();
-
-        if (isGuest) {
-            const guestTitle = document.getElementById('guestModalTitle');
-            if (guestTitle) {
-                guestTitle.textContent = `USM Account Required: ${name}`;
-            }
-            if (guestAccessModal) {
-                guestAccessModal.style.display = 'flex';
-            }
-            return;
-        }
-
-        const brandCat = card.querySelector('.card-brand-cat').textContent.trim();
-        const price = card.dataset.price ? `₱${parseFloat(card.dataset.price).toFixed(2)} / ${card.dataset.unit}` : '';
+        const name = card.dataset.displayName || card.querySelector('.card-title').textContent.trim();
+        const brand = card.dataset.brand || 'USM Hospital Formulary';
+        const generic = card.dataset.genericDisplay || '';
+        const category = card.dataset.category || 'General';
+        const price = parseFloat(card.dataset.price) || 0;
+        const unit = card.dataset.unit || 'pc';
         const stock = parseInt(card.dataset.stock, 10) || 0;
-        const desc = card.dataset.desc || 'Available at USM Health Services Pharmacy.';
+        const desc = card.dataset.desc || 'Quality-assured hospital formulary medication stocked at USM Health Services.';
         const rx = card.dataset.rx === '1';
 
         modalMedName.textContent = name;
-        modalMedBrand.textContent = brandCat;
-        modalMedPrice.textContent = price;
-        modalMedStock.textContent = stock > 0 ? `${stock} in stock` : 'Out of stock';
-        modalMedStock.style.color = stock > 0 ? 'var(--g7)' : '#ef4444';
-        modalMedDesc.textContent = desc;
-        modalRxNotice.style.display = rx ? 'block' : 'none';
+        modalMedBrand.textContent = generic ? `${brand} · ${category} · Generic: ${generic}` : `${brand} · ${category}`;
+        modalStandardPrice.textContent = `₱${price.toFixed(2)}`;
+        modalUnitSub.textContent = `per ${unit}`;
 
+        const studentDiscountPrice = Math.max(0, price * 0.90);
+        const seniorDiscountPrice = Math.max(0, price * 0.80);
+        modalStudentPrice.textContent = `₱${studentDiscountPrice.toFixed(2)}`;
+        modalSeniorPrice.textContent = `₱${seniorDiscountPrice.toFixed(2)}`;
+
+        if (stock > 0) {
+            modalStockBadge.className = 'modal-stock-badge in-stock';
+            modalStockText.textContent = `In Stock (${stock} ${unit}${stock > 1 ? 's' : ''} available)`;
+        } else {
+            modalStockBadge.className = 'modal-stock-badge out-of-stock';
+            modalStockText.textContent = 'Out of Stock (Awaiting Next Batch Delivery)';
+        }
+
+        if (rx) {
+            modalPolicyBox.className = 'modal-policy-box rx-required';
+            modalPolicyTitle.textContent = 'Prescription Required (Rx Only)';
+            modalPolicyText.textContent = 'This medication requires a validated physical or electronic doctor\'s prescription from a licensed physician or the USM Hospital Outpatient Department (OPD) before dispensing. Inpatient and ward prescriptions are routed automatically.';
+        } else {
+            modalPolicyBox.className = 'modal-policy-box otc-available';
+            modalPolicyTitle.textContent = 'Over-the-Counter (OTC Medication)';
+            modalPolicyText.textContent = 'No doctor\'s prescription required. This item is available for direct counter purchase and pickup at the USM Hospital Pharmacy dispensing counter.';
+        }
+
+        modalMedDesc.textContent = desc;
         inquireModal.style.display = 'flex';
     }
 
@@ -1412,25 +1482,10 @@
         }
     }
 
-    function closeGuestModal() {
-        if (guestAccessModal) {
-            guestAccessModal.style.display = 'none';
-        }
-    }
-
-    function closeGuestModalOnBackdrop(e) {
-        if (e.target === guestAccessModal) {
-            closeGuestModal();
-        }
-    }
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (inquireModal && inquireModal.style.display === 'flex') {
                 closeInquireModal();
-            }
-            if (guestAccessModal && guestAccessModal.style.display === 'flex') {
-                closeGuestModal();
             }
         }
     });

@@ -26,7 +26,7 @@ class StoreStaffUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', 'in:nurse,pharmacist,stock_manager,admin'],
+            'role' => ['required', 'string', 'in:admission,nurse,pharmacist,stock_manager,admin'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }

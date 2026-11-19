@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Patient extends Model
 {
@@ -54,6 +55,26 @@ class Patient extends Model
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class);
+    }
+
+    /**
+     * Get all admissions for the patient.
+     *
+     * @return HasMany<Admission, $this>
+     */
+    public function admissions(): HasMany
+    {
+        return $this->hasMany(Admission::class);
+    }
+
+    /**
+     * Get the current active admission for the patient.
+     *
+     * @return HasOne<Admission, $this>
+     */
+    public function currentAdmission(): HasOne
+    {
+        return $this->hasOne(Admission::class)->where('status', 'admitted')->latestOfMany();
     }
 
     /**

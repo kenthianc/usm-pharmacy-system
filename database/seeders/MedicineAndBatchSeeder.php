@@ -70,6 +70,26 @@ class MedicineAndBatchSeeder extends Seeder
                 ],
             ],
             [
+                'code' => 'AMX-CLV-625',
+                'barcode' => '4800016644030',
+                'name' => 'Co-Amoxiclav 625mg (Amoxyclav)',
+                'generic_name' => 'Amoxicillin + Potassium Clavulanate',
+                'category' => 'Antibiotic',
+                'unit' => 'tablet',
+                'unit_price' => 28.00,
+                'reorder_level' => 30,
+                'batches' => [
+                    [
+                        'batch_no' => 'BATCH-AMXCLV-2026A',
+                        'quantity_received' => 200,
+                        'quantity_remaining' => 150,
+                        'expiry_date' => Carbon::now()->addMonths(12)->toDateString(),
+                        'received_date' => Carbon::now()->subWeeks(2)->toDateString(),
+                        'supplier' => 'GSK / RiteMed',
+                    ],
+                ],
+            ],
+            [
                 'code' => 'MEF-500-CAP',
                 'barcode' => '4800016644036',
                 'name' => 'Mefenamic Acid 500mg',

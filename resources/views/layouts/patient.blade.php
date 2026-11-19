@@ -1,4 +1,4 @@
-@props(['active' => 'dashboard', 'title' => 'USM Pharmacy — Patient Portal'])
+@props(['active' => 'dashboard', 'title' => 'USM Pharmacy — Store'])
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -51,7 +51,7 @@
                     <div class="text-sm font-bold tracking-tight text-yellow-400 leading-tight">USM Pharmacy</div>
                     <div class="text-[11px] font-semibold text-emerald-300/90 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-                        Patient Portal
+                        Pharmacy Store
                     </div>
                 </div>
             </a>
@@ -153,7 +153,7 @@
                     @click="$dispatch('open-signout-modal')"
                     x-show="sidebarOpen"
                     class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-300 hover:bg-rose-900/40 hover:text-rose-200 transition-colors cursor-pointer"
-                    title="Sign out of Patient Portal">
+                    title="Sign out">
                 <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
@@ -189,7 +189,7 @@
                     @else
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                Patient Portal
+                                Pharmacy Store
                             </span>
                             <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
                                 @if($active === 'dashboard') Medical Dashboard
@@ -197,7 +197,7 @@
                                 @elseif($active === 'profile') My Medical Profile
                                 @elseif($active === 'storefront') University Dispensary
                                 @elseif($active === 'chat') AI Health Assistant
-                                @else Patient Portal
+                                @else Pharmacy Store
                                 @endif
                             </h1>
                         </div>
