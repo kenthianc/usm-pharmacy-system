@@ -138,7 +138,7 @@
         <!-- Left Bottom: Institutional Trust Statement -->
         <div class="relative z-10 pt-6 border-t border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-emerald-200/75">
             <p>USM Hospital Complex &bull; Kabacan, North Cotabato</p>
-            <span class="font-medium text-amber-300">Authorized Personnel &amp; Patients Only</span>
+            <span class="font-medium text-amber-300">Authorized Personnel Only</span>
         </div>
     </div>
 
@@ -171,7 +171,7 @@
                     Welcome back
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-500">
-                    Sign in to access your role-specific clinical or patient dashboard.
+                    Sign in to access your role-specific clinical or administrative dashboard.
                 </p>
             </div>
 
@@ -319,17 +319,12 @@
                     <!-- Admission Staff -->
                     <button type="button"
                             onclick="autofillLogin('admission001@usm.edu.ph', 'admission123')"
-                            class="col-span-2 p-2 rounded-xl bg-emerald-50/80 hover:bg-emerald-100/80 border border-emerald-300 text-left transition-all hover:shadow-xs group cursor-pointer flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-base">🏨</span>
-                            <div>
-                                <div class="text-xs font-bold text-emerald-950 group-hover:text-emerald-900">Admission Staff</div>
-                                <div class="text-[10px] text-emerald-800/80 font-mono">admission001@usm.edu.ph</div>
-                            </div>
+                            class="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 text-left transition-all cursor-pointer group">
+                        <div class="flex items-center gap-1.5">
+                            <span>🏨</span>
+                            <span class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Admission Staff</span>
                         </div>
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-600 text-white shadow-2xs">
-                            Admission &amp; Beds
-                        </span>
+                        <div class="text-[10px] text-slate-500 font-mono truncate mt-0.5">admission001@usm.edu.ph</div>
                     </button>
 
                     <!-- Nurse -->
@@ -363,17 +358,6 @@
                             <span class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Stock Manager</span>
                         </div>
                         <div class="text-[10px] text-slate-500 font-mono truncate mt-0.5">stock001@usm.edu.ph</div>
-                    </button>
-
-                    <!-- Patient -->
-                    <button type="button"
-                            onclick="autofillLogin('patient001@student.usm.edu.ph', 'patient123')"
-                            class="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 text-left transition-all cursor-pointer group">
-                        <div class="flex items-center gap-1.5">
-                            <span>🧑‍🎓</span>
-                            <span class="text-xs font-bold text-slate-800 group-hover:text-emerald-900">Patient</span>
-                        </div>
-                        <div class="text-[10px] text-slate-500 font-mono truncate mt-0.5">patient001@...</div>
                     </button>
                 </div>
             </div>
