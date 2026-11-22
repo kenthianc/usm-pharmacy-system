@@ -793,21 +793,22 @@
         <!-- RESTOCK / DELIVERY REQUEST MODAL (PRE-FILLED DECISION SUPPORT)     -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
         <div x-show="restockModalOpen"
+             x-cloak
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
              style="display: none;"
              @keydown.escape.window="closeRestockModal()">
 
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden"
+            <div class="relative w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl border border-slate-200 shadow-2xl flex flex-col my-auto overflow-hidden"
                  @click.outside="closeRestockModal()">
                 
-                <!-- Modal Header -->
-                <div class="px-6 py-4 bg-[#064e2b] text-white flex items-center justify-between">
+                <!-- Modal Header (Pinned) -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 bg-[#064e2b] text-white flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2.5">
                         <span class="w-8 h-8 rounded-xl bg-amber-400 text-green-950 flex items-center justify-center font-bold text-sm shadow-xs">
                             📦
@@ -824,89 +825,92 @@
                     </button>
                 </div>
 
-                <!-- Modal Body -->
-                <form method="POST" action="{{ route('inventory.deliveries.store') }}" class="p-6 space-y-4">
+                <!-- Modal Form (Scrollable body + Pinned Footer) -->
+                <form method="POST" action="{{ route('inventory.deliveries.store') }}" class="flex flex-col flex-1 min-h-0">
                     @csrf
-                    <input type="hidden" name="items[0][medicine_id]" :value="modalData.medicine_id">
+                    <!-- Scrollable Form Body -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                        <input type="hidden" name="items[0][medicine_id]" :value="modalData.medicine_id">
 
-                    <!-- Target Medicine Summary Card -->
-                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                        <!-- Target Medicine Summary Card -->
+                        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-extrabold text-slate-900 text-sm block" x-text="modalData.medicine_name"></span>
+                                <span class="font-mono text-[11px] text-emerald-800 font-semibold" x-text="modalData.code"></span>
+                                <span class="text-slate-400 text-[11px]" x-text="'· ' + modalData.category"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">Stock / Buffer</span>
+                                <span class="font-mono font-bold text-slate-900" x-text="modalData.current_stock + ' / ' + modalData.reorder_level"></span>
+                            </div>
+                        </div>
+
+                        <!-- Recommended Order Quantity (Editable) -->
                         <div>
-                            <span class="font-extrabold text-slate-900 text-sm block" x-text="modalData.medicine_name"></span>
-                            <span class="font-mono text-[11px] text-emerald-800 font-semibold" x-text="modalData.code"></span>
-                            <span class="text-slate-400 text-[11px]" x-text="'· ' + modalData.category"></span>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="modal_quantity" class="text-xs font-bold text-slate-700">
+                                    Recommended Reorder Quantity:
+                                </label>
+                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    Decision Engine Output
+                                </span>
+                            </div>
+                            <div class="relative">
+                                <input type="number"
+                                       id="modal_quantity"
+                                       name="items[0][quantity]"
+                                       x-model="modalData.recommended_qty"
+                                       min="1"
+                                       required
+                                       class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#064e2b] shadow-2xs">
+                                <span class="absolute right-3.5 top-2.5 text-xs text-slate-400 uppercase font-mono font-bold" x-text="modalData.unit_short || modalData.unit"></span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">Computed from <span class="font-mono font-semibold" x-text="modalData.daily_consumption + ' units/day'"></span> consumption velocity and <span class="font-semibold" x-text="leadTime + ' days'"></span> lead time plus buffer.</p>
                         </div>
-                        <div class="text-right">
-                            <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">Stock / Buffer</span>
-                            <span class="font-mono font-bold text-slate-900" x-text="modalData.current_stock + ' / ' + modalData.reorder_level"></span>
-                        </div>
-                    </div>
 
-                    <!-- Recommended Order Quantity (Editable) -->
-                    <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label for="modal_quantity" class="text-xs font-bold text-slate-700">
-                                Recommended Reorder Quantity:
-                            </label>
-                            <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                Decision Engine Output
-                            </span>
+                        <!-- Supplier & Expected Delivery Date -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="modal_supplier" class="text-xs font-semibold text-slate-700 block mb-1">
+                                    Supplier:
+                                </label>
+                                <input type="text"
+                                       id="modal_supplier"
+                                       name="supplier"
+                                       x-model="modalData.supplier"
+                                       placeholder="e.g. Unilab Corp."
+                                       class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+                            </div>
+                            <div>
+                                <label for="modal_delivery_date" class="text-xs font-semibold text-slate-700 block mb-1">
+                                    Expected Delivery Date:
+                                </label>
+                                <input type="date"
+                                       id="modal_delivery_date"
+                                       name="delivery_date"
+                                       x-model="modalData.delivery_date"
+                                       class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+                            </div>
                         </div>
-                        <div class="relative">
-                            <input type="number"
-                                   id="modal_quantity"
-                                   name="items[0][quantity]"
-                                   x-model="modalData.recommended_qty"
-                                   min="1"
-                                   required
-                                   class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#064e2b] shadow-2xs">
-                            <span class="absolute right-3.5 top-2.5 text-xs text-slate-400 uppercase font-mono font-bold" x-text="modalData.unit_short || modalData.unit"></span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 mt-1">Computed from <span class="font-mono font-semibold" x-text="modalData.daily_consumption + ' units/day'"></span> consumption velocity and <span class="font-semibold" x-text="leadTime + ' days'"></span> lead time plus buffer.</p>
-                    </div>
 
-                    <!-- Supplier & Expected Delivery Date -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Reference Number & Notes -->
                         <div>
-                            <label for="modal_supplier" class="text-xs font-semibold text-slate-700 block mb-1">
-                                Supplier:
+                            <label for="modal_notes" class="text-xs font-semibold text-slate-700 block mb-1">
+                                Procurement Notes / Justification:
                             </label>
-                            <input type="text"
-                                   id="modal_supplier"
-                                   name="supplier"
-                                   x-model="modalData.supplier"
-                                   placeholder="e.g. Unilab Corp."
-                                   class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600">
-                        </div>
-                        <div>
-                            <label for="modal_delivery_date" class="text-xs font-semibold text-slate-700 block mb-1">
-                                Expected Delivery Date:
-                            </label>
-                            <input type="date"
-                                   id="modal_delivery_date"
-                                   name="delivery_date"
-                                   x-model="modalData.delivery_date"
-                                   class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+                            <textarea id="modal_notes"
+                                      name="notes"
+                                      x-model="modalData.notes"
+                                      rows="2"
+                                      class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600"></textarea>
                         </div>
                     </div>
 
-                    <!-- Reference Number & Notes -->
-                    <div>
-                        <label for="modal_notes" class="text-xs font-semibold text-slate-700 block mb-1">
-                            Procurement Notes / Justification:
-                        </label>
-                        <textarea id="modal_notes"
-                                  name="notes"
-                                  x-model="modalData.notes"
-                                  rows="2"
-                                  class="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600"></textarea>
-                    </div>
-
-                    <!-- Modal Actions -->
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <!-- Modal Actions (Pinned Footer) -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
                         <button type="button"
                                 @click="closeRestockModal()"
-                                class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer">
+                                class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-200/70 transition cursor-pointer">
                             Cancel
                         </button>
                         <button type="submit"

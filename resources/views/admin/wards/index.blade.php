@@ -153,89 +153,145 @@
         </div>
 
         <!-- Provision New Ward Modal -->
-        <div x-show="showNewWardModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4" style="display: none;">
-            <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" @click.away="showNewWardModal = false">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-sm font-bold text-slate-800">Provision New Hospital Ward</h3>
-                    <button type="button" @click="showNewWardModal = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        <div x-show="showNewWardModal"
+             x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
+             style="display: none;"
+             @keydown.escape.window="showNewWardModal = false">
+
+            <div class="relative w-full max-w-md max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden"
+                 @click.away="showNewWardModal = false">
+
+                <!-- Pinned Header -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-[#064e2b] border border-emerald-200 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 leading-tight">Provision New Hospital Ward</h3>
+                            <p class="text-[11px] text-slate-400">Configure clinical unit and nursing assignment</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showNewWardModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg text-lg font-bold leading-none transition cursor-pointer">&times;</button>
                 </div>
 
-                <form method="POST" action="{{ route('admin.wards.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('admin.wards.store') }}" class="flex flex-col flex-1 min-h-0">
                     @csrf
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Ward Name *</label>
-                        <input type="text" name="ward_name" required placeholder="e.g. Surgical Ward West"
-                               class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
+                    <!-- Scrollable Form Body -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Ward Name *</label>
+                            <input type="text" name="ward_name" required placeholder="e.g. Surgical Ward West"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Ward Classification / Type *</label>
+                            <select name="ward_type" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                                <option value="inpatient">Inpatient (General)</option>
+                                <option value="emergency">Emergency / Triage</option>
+                                <option value="pediatric">Pediatric</option>
+                                <option value="maternity">Maternity & OB-GYN</option>
+                                <option value="isolation">Isolation / Respiratory</option>
+                                <option value="icu">Intensive Care Unit (ICU)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Assigned Nurse Station *</label>
+                            <input type="text" name="nurse_station_assigned" required placeholder="e.g. Station 2 - Surgical Wing"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Operational Status *</label>
+                            <select name="status" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="maintenance">Under Renovation / Maintenance</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Ward Classification / Type *</label>
-                        <select name="ward_type" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                            <option value="inpatient">Inpatient (General)</option>
-                            <option value="emergency">Emergency / Triage</option>
-                            <option value="pediatric">Pediatric</option>
-                            <option value="maternity">Maternity & OB-GYN</option>
-                            <option value="isolation">Isolation / Respiratory</option>
-                            <option value="icu">Intensive Care Unit (ICU)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Assigned Nurse Station *</label>
-                        <input type="text" name="nurse_station_assigned" required placeholder="e.g. Station 2 - Surgical Wing"
-                               class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Operational Status *</label>
-                        <select name="status" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="maintenance">Under Renovation / Maintenance</option>
-                        </select>
-                    </div>
-
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <button type="button" @click="showNewWardModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs">Save Ward</button>
+                    <!-- Pinned Footer -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                        <button type="button" @click="showNewWardModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 transition cursor-pointer">Cancel</button>
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#064e2b] hover:bg-[#053e22] text-white text-xs font-bold shadow-xs transition cursor-pointer">Save Ward</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Add Bed to Ward Modal -->
-        <div x-show="showNewBedModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4" style="display: none;">
-            <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4" @click.away="showNewBedModal = false">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-sm font-bold text-slate-800">Add Bed to <span x-text="selectedWardName"></span></h3>
-                    <button type="button" @click="showNewBedModal = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        <div x-show="showNewBedModal"
+             x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
+             style="display: none;"
+             @keydown.escape.window="showNewBedModal = false">
+
+            <div class="relative w-full max-w-md max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden"
+                 @click.away="showNewBedModal = false">
+
+                <!-- Pinned Header -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-800 border border-slate-300 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 leading-tight">Add Bed to <span x-text="selectedWardName"></span></h3>
+                            <p class="text-[11px] text-slate-400">Allot room and bed identifier</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showNewBedModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg text-lg font-bold leading-none transition cursor-pointer">&times;</button>
                 </div>
 
-                <form method="POST" :action="'{{ url('admin/wards') }}/' + selectedWardId + '/beds'" class="space-y-4">
+                <form method="POST" :action="'{{ url('admin/wards') }}/' + selectedWardId + '/beds'" class="flex flex-col flex-1 min-h-0">
                     @csrf
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Room Identifier *</label>
-                        <input type="text" name="room_number" required placeholder="e.g. Room 104 or Bay 3"
-                               class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
+                    <!-- Scrollable Form Body -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Room Identifier *</label>
+                            <input type="text" name="room_number" required placeholder="e.g. Room 104 or Bay 3"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Bed Number / Label *</label>
+                            <input type="text" name="bed_number" required placeholder="e.g. Bed A or Bed 01"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Initial Status *</label>
+                            <select name="occupancy_status" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                                <option value="available">Available (Ready for patients)</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Bed Number / Label *</label>
-                        <input type="text" name="bed_number" required placeholder="e.g. Bed A or Bed 01"
-                               class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Initial Status *</label>
-                        <select name="occupancy_status" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                            <option value="available">Available (Ready for patients)</option>
-                            <option value="maintenance">Maintenance</option>
-                        </select>
-                    </div>
-
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <button type="button" @click="showNewBedModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancel</button>
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-xs">Add Bed</button>
+                    <!-- Pinned Footer -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                        <button type="button" @click="showNewBedModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 transition cursor-pointer">Cancel</button>
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-xs transition cursor-pointer">Add Bed</button>
                     </div>
                 </form>
             </div>

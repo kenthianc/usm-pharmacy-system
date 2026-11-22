@@ -1,4 +1,4 @@
-@if(Auth::check() && Auth::user()->hasRole('admin'))
+@if (Auth::check() && Auth::user()->hasRole('admin'))
     <x-admin-layout>
         @isset($header)
             <x-slot name="header">
@@ -39,8 +39,9 @@
         {{ $slot }}
     </x-nurse-layout>
 @else
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <!DOCTYPE html>
+    <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -55,6 +56,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
+
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
@@ -76,8 +78,13 @@
                             <x-risk-summary-pill />
 
                             <!-- Current Date Badge -->
-                            <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-400 font-medium whitespace-nowrap select-none">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span
+                                class="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-400 font-medium whitespace-nowrap select-none">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
                                 <span>{{ now()->format('M d, Y') }}</span>
                             </span>
                         </div>
@@ -99,5 +106,6 @@
         <!-- Dual-Risk Prediction Engine Drawer Modal -->
         <x-dual-risk-engine-modal />
     </body>
-</html>
+
+    </html>
 @endif

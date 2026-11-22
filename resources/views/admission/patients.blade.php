@@ -142,95 +142,117 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4"
-             style="display: none;">
+             class="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
+             style="display: none;"
+             @keydown.escape.window="showRegisterModal = false">
 
-            <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4" @click.away="showRegisterModal = false">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-sm font-bold text-slate-800">Register New Patient</h3>
-                    <button type="button" @click="showRegisterModal = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+            <div class="relative w-full max-w-xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden"
+                 @click.away="showRegisterModal = false">
+
+                <!-- Pinned Header -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-[#064e2b] border border-emerald-200 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 leading-tight">Register New Patient</h3>
+                            <p class="text-[11px] text-slate-400">Create an institutional outpatient or clinical profile</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showRegisterModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg text-lg font-bold leading-none transition cursor-pointer">&times;</button>
                 </div>
 
-                <form method="POST" action="{{ route('admission.patients.store') }}" class="space-y-4">
+                <!-- Form with Scrollable Body & Pinned Footer -->
+                <form method="POST" action="{{ route('admission.patients.store') }}" class="flex flex-col flex-1 min-h-0">
                     @csrf
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
-                            <input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                    <!-- Scrollable Form Fields -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                                <input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Patient Classification *</label>
-                            <select name="patient_type" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                                <option value="student">USM Student</option>
-                                <option value="employee">USM Employee / Faculty</option>
-                                <option value="resident">Regular Resident</option>
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Patient Classification *</label>
+                                <select name="patient_type" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                                    <option value="student">USM Student</option>
+                                    <option value="employee">USM Employee / Faculty</option>
+                                    <option value="resident">Regular Resident</option>
+                                </select>
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Institutional / Resident ID *</label>
-                            <input type="text" name="id_number" required placeholder="e.g. USM-2026-0045"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Institutional / Resident ID *</label>
+                                <input type="text" name="id_number" required placeholder="e.g. USM-2026-0045"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number</label>
-                            <input type="text" name="contact_number" placeholder="09xxxxxxxxx"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number</label>
+                                <input type="text" name="contact_number" placeholder="09xxxxxxxxx"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Emergency Contact (Name & Phone)</label>
-                            <input type="text" name="emergency_contact" placeholder="e.g. Maria Dela Cruz (09123456789)"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Emergency Contact (Name &amp; Phone)</label>
+                                <input type="text" name="emergency_contact" placeholder="e.g. Maria Dela Cruz (09123456789)"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth</label>
-                            <input type="date" name="date_of_birth"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth</label>
+                                <input type="date" name="date_of_birth"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Sex</label>
-                            <select name="sex" class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                                <option value="">Select Sex</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Sex</label>
+                                <select name="sex" class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                                    <option value="">Select Sex</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
 
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Address</label>
-                            <input type="text" name="address" placeholder="e.g. Kabacan, Cotabato"
-                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
-                        </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Address</label>
+                                <input type="text" name="address" placeholder="e.g. Kabacan, Cotabato"
+                                       class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]">
+                            </div>
 
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-rose-700 mb-1">Known Allergies (Food / Drugs)</label>
-                            <input type="text" name="allergies" placeholder="e.g. Penicillin, Aspirin, Seafood (or None known)"
-                                   class="w-full text-xs rounded-xl border-rose-300 focus:ring-rose-600 focus:border-rose-600 bg-rose-50/30">
-                        </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-rose-700 mb-1">Known Allergies (Food / Drugs)</label>
+                                <input type="text" name="allergies" placeholder="e.g. Penicillin, Aspirin, Seafood (or None known)"
+                                       class="w-full text-xs rounded-xl border-rose-300 focus:ring-rose-600 focus:border-rose-600 bg-rose-50/30">
+                            </div>
 
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Past Medical History / Clinical Notes</label>
-                            <textarea name="medical_notes" rows="2" placeholder="e.g. Asthmatic since 2018, hypertensive"
-                                      class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600"></textarea>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Past Medical History / Clinical Notes</label>
+                                <textarea name="medical_notes" rows="2" placeholder="e.g. Asthmatic since 2018, hypertensive"
+                                          class="w-full text-xs rounded-xl border-slate-300 focus:ring-[#064e2b] focus:border-[#064e2b]"></textarea>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <!-- Pinned Footer -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
                         <button type="button" @click="showRegisterModal = false"
-                                class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">
+                                class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 transition cursor-pointer">
                             Cancel
                         </button>
                         <button type="submit"
-                                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs">
-                            Save Patient Record
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#064e2b] hover:bg-[#053e22] text-white text-xs font-bold shadow-xs transition transform active:scale-98 cursor-pointer">
+                            <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Save Patient Record</span>
                         </button>
                     </div>
                 </form>

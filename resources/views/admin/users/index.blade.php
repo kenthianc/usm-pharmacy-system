@@ -208,55 +208,70 @@
         <!-- Alpine.js Create Staff Modal -->
         <div x-show="showCreateModal" 
              x-cloak 
-             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
+             style="display: none;"
              @keydown.escape.window="showCreateModal = false">
-            <div @click.away="showCreateModal = false" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                        Create New Clinic Staff Account
+            <div @click.away="showCreateModal = false" class="relative w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden">
+                <!-- Pinned Header -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                    <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-[#064e2b] border border-emerald-200 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                        </div>
+                        <span>Create New Clinic Staff Account</span>
                     </h2>
-                    <button @click="showCreateModal = false" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+                    <button type="button" @click="showCreateModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg text-lg font-bold leading-none transition cursor-pointer">&times;</button>
                 </div>
 
-                <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('admin.users.store') }}" class="flex flex-col flex-1 min-h-0">
                     @csrf
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
-                        <input type="text" name="name" required placeholder="e.g. Maria Santos, RN" class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">USM Email Address</label>
-                        <input type="email" name="email" required placeholder="e.g. msantos@usm.edu.ph" class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assigned Role</label>
-                        <select name="role" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                            <option value="nurse">Nurse (Prescriptions & Patient Intake)</option>
-                            <option value="pharmacist">Pharmacist (POS & Dispensing)</option>
-                            <option value="stock_manager">Stock Manager (Deliveries & Batches)</option>
-                            <option value="admin">Administrator (Super-Admin Control)</option>
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Scrollable Form Body -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Initial Password</label>
-                            <input type="password" name="password" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                            <input type="text" name="name" required placeholder="e.g. Maria Santos, RN" class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
                         </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
-                            <input type="password" name="password_confirmation" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">USM Email Address</label>
+                            <input type="email" name="email" required placeholder="e.g. msantos@usm.edu.ph" class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assigned Role</label>
+                            <select name="role" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                                <option value="nurse">Nurse (Prescriptions & Patient Intake)</option>
+                                <option value="pharmacist">Pharmacist (POS & Dispensing)</option>
+                                <option value="stock_manager">Stock Manager (Deliveries & Batches)</option>
+                                <option value="admission">Admission Staff (Bed Board & Registry)</option>
+                                <option value="admin">Administrator (Super-Admin Control)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Initial Password</label>
+                                <input type="password" name="password" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
+                                <input type="password" name="password_confirmation" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <button type="button" @click="showCreateModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800">
+                    <!-- Pinned Footer -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                        <button type="button" @click="showCreateModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 rounded-xl transition cursor-pointer">
                             Cancel
                         </button>
-                        <button type="submit" class="px-5 py-2.5 bg-green-900 hover:bg-green-800 text-yellow-400 text-xs font-bold rounded-xl shadow-md transition">
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#064e2b] hover:bg-[#053e22] text-amber-300 text-xs font-bold rounded-xl shadow-md transition cursor-pointer">
                             Create Account
                         </button>
                     </div>
@@ -267,61 +282,76 @@
         <!-- Alpine.js Edit Staff Modal -->
         <div x-show="showEditModal" 
              x-cloak 
-             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center"
+             style="display: none;"
              @keydown.escape.window="showEditModal = false">
-            <div @click.away="showEditModal = false" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        Edit User Account
+            <div @click.away="showEditModal = false" class="relative w-full max-w-lg max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col my-auto overflow-hidden">
+                <!-- Pinned Header -->
+                <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+                    <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-slate-100 text-[#064e2b] border border-slate-300 flex items-center justify-center font-bold text-sm shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </div>
+                        <span>Edit User Account</span>
                     </h2>
-                    <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+                    <button type="button" @click="showEditModal = false" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg text-lg font-bold leading-none transition cursor-pointer">&times;</button>
                 </div>
 
-                <form :action="'{{ url('admin/users') }}/' + editUser.id" method="POST" class="space-y-4">
+                <form :action="'{{ url('admin/users') }}/' + editUser.id" method="POST" class="flex flex-col flex-1 min-h-0">
                     @csrf
                     @method('PUT')
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
-                        <input type="text" name="name" x-model="editUser.name" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
-                        <input type="email" name="email" x-model="editUser.email" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assigned Role</label>
-                        <select name="role" x-model="editUser.role" required class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
-                            <option value="nurse">Nurse</option>
-                            <option value="pharmacist">Pharmacist</option>
-                            <option value="stock_manager">Stock Manager</option>
-                            <option value="admin">Administrator</option>
-                            <option value="patient">Patient</option>
-                        </select>
-                    </div>
-
-                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
-                        <span class="font-bold">Password Reset (Optional):</span> Leave blank to keep current password unchanged.
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Scrollable Form Body -->
+                    <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">New Password</label>
-                            <input type="password" name="password" class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                            <input type="text" name="name" x-model="editUser.name" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
                         </div>
+
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm New Password</label>
-                            <input type="password" name="password_confirmation" class="w-full text-xs rounded-xl border-slate-300 focus:border-green-600 focus:ring-green-600">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+                            <input type="email" name="email" x-model="editUser.email" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Assigned Role</label>
+                            <select name="role" x-model="editUser.role" required class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                                <option value="nurse">Nurse</option>
+                                <option value="pharmacist">Pharmacist</option>
+                                <option value="stock_manager">Stock Manager</option>
+                                <option value="admission">Admission Staff</option>
+                                <option value="admin">Administrator</option>
+                                <option value="patient">Patient</option>
+                            </select>
+                        </div>
+
+                        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
+                            <span class="font-bold">Password Reset (Optional):</span> Leave blank to keep current password unchanged.
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">New Password</label>
+                                <input type="password" name="password" class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm New Password</label>
+                                <input type="password" name="password_confirmation" class="w-full text-xs rounded-xl border-slate-300 focus:border-[#064e2b] focus:ring-[#064e2b]">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-                        <button type="button" @click="showEditModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800">
+                    <!-- Pinned Footer -->
+                    <div class="px-5 py-3 sm:px-6 sm:py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+                        <button type="button" @click="showEditModal = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/70 rounded-xl transition cursor-pointer">
                             Cancel
                         </button>
-                        <button type="submit" class="px-5 py-2.5 bg-green-900 hover:bg-green-800 text-yellow-400 text-xs font-bold rounded-xl shadow-md transition">
+                        <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#064e2b] hover:bg-[#053e22] text-amber-300 text-xs font-bold rounded-xl shadow-md transition cursor-pointer">
                             Save Changes
                         </button>
                     </div>
