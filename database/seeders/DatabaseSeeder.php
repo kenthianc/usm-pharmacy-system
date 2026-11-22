@@ -111,6 +111,7 @@ class DatabaseSeeder extends Seeder
             PatientSeeder::class,
             MedicineAndBatchSeeder::class,
             HospitalWardAndBedSeeder::class,
+            ComprehensiveDemoDataSeeder::class,
         ]);
     }
 }
