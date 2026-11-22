@@ -59,7 +59,8 @@ test('nurse station command hub displays immediate above the fold clinical telem
         ->assertSee('Hospital Ward Beds')
         ->assertSee($patient->name)
         ->assertSee('Room Air')
-        ->assertSee('Urgent: Incoming Endorsement Awaiting Floor Reception');
+        ->assertSee('Urgent: Incoming Endorsement Awaiting Floor Reception')
+        ->assertDontSee('Laravel');
 });
 
 test('admission command center displays immediate live ward capacity and active roster without deep scrolling', function () {

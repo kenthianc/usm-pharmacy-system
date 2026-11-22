@@ -371,7 +371,11 @@
                         {{ $heading }}
                     @else
                         <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
-                            @if(request()->routeIs('dashboard')) Clinic Dashboard
+                            @if(request()->routeIs('nurse.dashboard') || request()->routeIs('dashboard')) Nurse Station Command Hub
+                            @elseif(request()->routeIs('nurse.endorsements*')) Patient Endorsements Queue
+                            @elseif(request()->routeIs('nurse.inpatients*')) Admitted Inpatients Roster
+                            @elseif(request()->routeIs('nurse.chart.summary')) Medication Summary
+                            @elseif(request()->routeIs('nurse.chart*')) Patient Clinical Chart
                             @elseif(request()->routeIs('prescriptions.create')) Encode Prescription
                             @elseif(request()->routeIs('prescriptions.show')) Prescription Details
                             @elseif(request()->routeIs('prescriptions.inventory')) Inventory Check
@@ -379,7 +383,7 @@
                             @elseif(request()->routeIs('prescriptions.*')) Prescription Module
                             @elseif(request()->routeIs('medicines')) Pharmacy Catalog
                             @elseif(request()->routeIs('profile.*')) Account Settings
-                            @else {{ config('app.name') }}
+                            @else Nurse Station Hub
                             @endif
                         </h1>
                     @endisset
