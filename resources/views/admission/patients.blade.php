@@ -65,8 +65,8 @@
                                 </td>
 
                                 <td class="py-3.5 px-4">
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase {{ $patient->patient_type === 'student' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-800 border border-amber-200' }}">
-                                        {{ $patient->patient_type }}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase {{ $patient->patient_type === 'student' ? 'bg-blue-50 text-blue-700 border border-blue-200' : ($patient->patient_type === 'employee' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200') }}">
+                                        {{ $patient->patient_type === 'student' ? 'USM Student' : ($patient->patient_type === 'employee' ? 'USM Employee' : 'Regular Resident') }}
                                     </span>
                                 </td>
 
@@ -162,15 +162,16 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Patient Type *</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Patient Classification *</label>
                             <select name="patient_type" required class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
                                 <option value="student">USM Student</option>
-                                <option value="resident">Cotabato Resident / Non-Student</option>
+                                <option value="employee">USM Employee / Faculty</option>
+                                <option value="resident">Regular Resident</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">ID Number *</label>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Institutional / Resident ID *</label>
                             <input type="text" name="id_number" required placeholder="e.g. USM-2026-0045"
                                    class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
                         </div>
@@ -178,6 +179,18 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number</label>
                             <input type="text" name="contact_number" placeholder="09xxxxxxxxx"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Emergency Contact (Name & Phone)</label>
+                            <input type="text" name="emergency_contact" placeholder="e.g. Maria Dela Cruz (09123456789)"
+                                   class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth</label>
+                            <input type="date" name="date_of_birth"
                                    class="w-full text-xs rounded-xl border-slate-300 focus:ring-emerald-600 focus:border-emerald-600">
                         </div>
 

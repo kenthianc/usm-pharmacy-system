@@ -19,9 +19,11 @@ class Patient extends Model
      */
     protected $fillable = [
         'user_id',
+        'name',
         'patient_type',
         'id_number',
         'contact_number',
+        'emergency_contact',
         'address',
         'date_of_birth',
         'sex',
@@ -82,6 +84,6 @@ class Patient extends Model
      */
     public function getNameAttribute(): string
     {
-        return $this->user?->name ?? 'Patient #'.$this->id_number;
+        return $this->attributes['name'] ?? $this->user?->name ?? 'Patient #'.$this->id_number;
     }
 }

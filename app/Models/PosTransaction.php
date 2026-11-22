@@ -30,6 +30,7 @@ class PosTransaction extends Model
         'order_type',
         'room_bed_number',
         'billing_status',
+        'collected_by',
     ];
 
     /**

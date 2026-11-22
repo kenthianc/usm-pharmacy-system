@@ -126,6 +126,8 @@ class NurseStationController extends Controller
             'endorsements.receivingNurse',
             'prescriptions.items.medicine',
             'prescriptions.encodedBy',
+            'prescriptions.posTransaction.items.medicine',
+            'prescriptions.posTransaction.items.batch',
         ]);
 
         $availableBeds = Bed::with('ward')
@@ -133,6 +135,29 @@ class NurseStationController extends Controller
             ->get();
 
         return view('nurse.chart', compact('admission', 'availableBeds'));
+    }
+
+    /**
+     * Generate printable Patient Medication Summary for billing reference upon discharge.
+     */
+    public function printMedicationSummary(Admission $admission): View
+    {
+        $admission->load([
+            'patient.user',
+            'bed.ward',
+            'admittedBy',
+            'prescriptions' => function ($q) {
+                $q->where('status', 'dispensed')
+                    ->with([
+                        'items.medicine',
+                        'posTransaction.items.medicine',
+                        'posTransaction.items.batch',
+                        'encodedBy',
+                    ]);
+            },
+        ]);
+
+        return view('nurse.medication-summary', compact('admission'));
     }
 
     /**

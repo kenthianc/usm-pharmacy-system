@@ -1216,10 +1216,10 @@
                                 </div>
                             </div>
 
-                            <!-- In-Patient Ledger Notice -->
+                            <!-- In-Patient Dispense Notice (For Billing Reference) -->
                             <div class="bg-blue-950/80 border border-blue-600/70 rounded-2xl p-3 text-center">
-                                <p class="text-[11px] font-black uppercase text-blue-200 tracking-wider">In-Patient Ward Order</p>
-                                <p class="text-[11px] text-blue-300 font-semibold mt-0.5">Dispensation immediately deducts FEFO inventory and charges to the patient hospital ledger.</p>
+                                <p class="text-[11px] font-black uppercase text-blue-200 tracking-wider">Inpatient Ward Dispensation</p>
+                                <p class="text-[11px] text-blue-300 font-semibold mt-0.5">Tagged as <strong class="text-white">Dispensed – For Billing Reference</strong>. Synchronizes to Nurse Station chart without counter cash exchange.</p>
                             </div>
 
                             <!-- Form submission to Laravel pos.dispense -->
@@ -1228,6 +1228,32 @@
                                 <input type="hidden" name="payment_method" value="hospital_bill">
                                 <input type="hidden" name="discount_type" :value="processDiscountType">
                                 <input type="hidden" name="discount_id_number" :value="processDiscountId">
+
+                                <!-- Record Collection Details -->
+                                <div class="my-3 text-left">
+                                    <label class="block text-[11px] font-bold text-emerald-300 mb-1">
+                                        Collector Details (Nurse or Watcher) *
+                                    </label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="text"
+                                               name="collected_by"
+                                               x-model="processCollector"
+                                               required
+                                               placeholder="e.g. Nurse Staff / Watcher Juan"
+                                               class="w-full bg-emerald-950/80 border border-emerald-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                                        <button type="button"
+                                                @click="processCollector = 'Nurse Station Staff'"
+                                                class="shrink-0 px-2.5 py-2 bg-emerald-800 hover:bg-emerald-700 text-[10px] font-bold text-white rounded-xl transition border border-emerald-600/60">
+                                            Nurse
+                                        </button>
+                                        <button type="button"
+                                                @click="processCollector = 'Patient Watcher / Family'"
+                                                class="shrink-0 px-2.5 py-2 bg-emerald-800 hover:bg-emerald-700 text-[10px] font-bold text-white rounded-xl transition border border-emerald-600/60">
+                                            Watcher
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <template x-for="item in processRx.items" :key="item.id">
                                     <template x-for="b in item.batches" :key="b.batch_id">
                                         <input type="hidden"
@@ -1242,7 +1268,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                             d="M5 13l4 4L19 7"></path>
                                     </svg>
-                                    <span>Dispense to Ward / Charge to Patient Ledger</span>
+                                    <span>Dispense Prescription (FEFO) &amp; Record Collection</span>
                                 </button>
                             </form>
                         </div>
@@ -1311,6 +1337,7 @@
                 processPayment: 'hospital_bill',
                 processDiscountType: 'regular',
                 processDiscountId: '',
+                processCollector: '',
 
                 initData() {
                     // If receipt ID passed in query parameter, auto-open receipt
@@ -1527,6 +1554,7 @@
 
                     // Default to hospital bill for in-patient prescriptions
                     this.processPayment = 'hospital_bill';
+                    this.processCollector = (rx && rx.nurse ? ('Nurse ' + rx.nurse) : 'Nurse Station Staff');
 
                     this.mode = 'processing';
                     this.completedTx = null;

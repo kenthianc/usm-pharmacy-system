@@ -109,9 +109,10 @@ class DispensingService
         User $cashier,
         string $paymentMethod,
         string $discountType = 'regular',
-        ?string $discountIdNumber = null
+        ?string $discountIdNumber = null,
+        ?string $collectedBy = null
     ): PosTransaction {
-        return DB::transaction(function () use ($prescription, $allocations, $cashier, $paymentMethod, $discountType, $discountIdNumber) {
+        return DB::transaction(function () use ($prescription, $allocations, $cashier, $paymentMethod, $discountType, $discountIdNumber, $collectedBy) {
             $grossAmount = 0;
             $isBilledToAccount = ($paymentMethod === 'hospital_bill');
             $isInpatient = ($isBilledToAccount || ($prescription->order_type ?? null) === 'inpatient');
@@ -131,6 +132,7 @@ class DispensingService
                 'order_type' => $prescription->order_type ?? 'inpatient',
                 'room_bed_number' => $prescription->room_bed_number,
                 'billing_status' => $billingStatus,
+                'collected_by' => $collectedBy,
             ]);
 
             foreach ($allocations as $medicineId => $batches) {
@@ -178,7 +180,9 @@ class DispensingService
                         'reference_type' => $isInpatient ? 'inpatient_dispensation' : 'prescription',
                         'reference_id' => $prescription->id,
                         'created_by' => $cashier->id,
-                        'notes' => $isInpatient ? 'Charged to Hospital Bill: '.($prescription->room_bed_number ?? 'In-Patient') : null,
+                        'notes' => $isInpatient
+                            ? 'Dispensed for Ward ('.($prescription->room_bed_number ?? 'In-Patient').'). Collected by: '.($collectedBy ?: 'Ward Staff')
+                            : null,
                     ]);
                 }
             }
@@ -210,11 +214,13 @@ class DispensingService
                 $prescription->update([
                     'status' => 'dispensed',
                     'billing_status' => 'billed_to_account',
+                    'collected_by' => $collectedBy,
                 ]);
             } else {
                 $prescription->update([
                     'status' => 'dispensed',
                     'billing_status' => 'paid',
+                    'collected_by' => $collectedBy,
                 ]);
             }
 

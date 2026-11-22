@@ -37,6 +37,16 @@
                     {{ $admission->bed?->full_location }}
                 </span>
                 <p class="text-[11px] text-slate-400 mt-1">Assigned Station: <strong>{{ $admission->bed?->ward?->nurse_station_assigned }}</strong></p>
+                <div class="mt-2">
+                    <a href="{{ route('nurse.chart.summary', $admission) }}"
+                       target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-xs transition">
+                        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span>Print Medication Summary</span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -185,6 +195,29 @@
                                         </div>
                                     @endforeach
                                 </div>
+
+                                @if($prescription->status === 'dispensed')
+                                    <div class="mt-2 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-emerald-700 font-bold flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                Dispensed (For Billing Reference)
+                                            </span>
+                                            @if($prescription->collected_by)
+                                                <span>&bull; Collected by: <strong class="text-slate-800">{{ $prescription->collected_by }}</strong></span>
+                                            @endif
+                                            @if($prescription->posTransaction)
+                                                <span>&bull; {{ $prescription->posTransaction->created_at->format('M d, h:i A') }}</span>
+                                            @endif
+                                        </div>
+
+                                        @if($prescription->posTransaction && $prescription->posTransaction->items->isNotEmpty())
+                                            <div class="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                Batches: {{ $prescription->posTransaction->items->map(fn($it) => ($it->batch?->batch_no ?? 'Batch').' ('.$it->quantity.')')->implode(', ') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         @empty
                             <div class="p-8 text-center text-xs text-slate-400">

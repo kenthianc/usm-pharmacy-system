@@ -103,6 +103,7 @@ Route::middleware(['auth', 'role:nurse'])->prefix('nurse')->name('nurse.')->grou
     Route::post('/endorsements/{endorsement}/acknowledge', [NurseStationController::class, 'acknowledgeEndorsement'])->name('endorsements.acknowledge');
     Route::get('/inpatients', [NurseStationController::class, 'inpatients'])->name('inpatients');
     Route::get('/chart/{admission}', [NurseStationController::class, 'showChart'])->name('chart');
+    Route::get('/chart/{admission}/medication-summary', [NurseStationController::class, 'printMedicationSummary'])->name('chart.summary');
     Route::post('/chart/{admission}/vitals', [NurseStationController::class, 'updateVitals'])->name('chart.vitals');
     Route::post('/chart/{admission}/transfer', [NurseStationController::class, 'transferBed'])->name('admissions.transfer');
     Route::post('/chart/{admission}/discharge', [NurseStationController::class, 'discharge'])->name('admissions.discharge');

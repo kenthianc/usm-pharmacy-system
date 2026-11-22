@@ -190,7 +190,8 @@ class PosController extends Controller
                 $request->user(),
                 $request->validated('payment_method'),
                 $request->validated('discount_type', 'regular') ?? 'regular',
-                $request->validated('discount_id_number')
+                $request->validated('discount_id_number'),
+                $request->validated('collected_by')
             );
 
             if ($request->wantsJson() || $request->ajax()) {

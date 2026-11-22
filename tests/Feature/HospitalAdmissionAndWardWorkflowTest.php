@@ -86,7 +86,30 @@ test('admission staff can register a new patient', function () {
 
     $response->assertRedirect(route('admission.patients'));
 
-    expect(Patient::where('id_number', 'USM-2026-9999')->exists())->toBeTrue();
+    $newPatient = Patient::where('id_number', 'USM-2026-9999')->first();
+    expect($newPatient)->not->toBeNull()
+        ->and($newPatient->name)->toBe('Maria Santos')
+        ->and($newPatient->patient_type)->toBe('student');
+
+    // Register employee with emergency contact
+    $empResponse = post(route('admission.patients.store'), [
+        'name' => 'Prof. Juan Santos',
+        'patient_type' => 'employee',
+        'id_number' => 'EMP-2026-101',
+        'contact_number' => '09181112233',
+        'emergency_contact' => 'Maria Santos (Spouse) - 09171234567',
+        'sex' => 'male',
+        'address' => 'USM Faculty Housing',
+        'allergies' => 'None known',
+        'medical_notes' => 'Routine faculty medical checkup',
+    ]);
+
+    $empResponse->assertRedirect(route('admission.patients'));
+    $empPatient = Patient::where('id_number', 'EMP-2026-101')->first();
+    expect($empPatient)->not->toBeNull()
+        ->and($empPatient->name)->toBe('Prof. Juan Santos')
+        ->and($empPatient->patient_type)->toBe('employee')
+        ->and($empPatient->emergency_contact)->toContain('Maria Santos');
 });
 
 test('admission staff can allocate an available bed and dispatch digital endorsement to nurse station', function () {
@@ -214,6 +237,37 @@ test('nurse can view inpatient clinical chart and update vitals', function () {
     $freshAdmission = $admission->fresh();
     expect($freshAdmission->baseline_vitals['bp'])->toBe('118/75')
         ->and($freshAdmission->baseline_vitals['temp'])->toBe('36.6');
+});
+
+test('nurse can view and print patient medication summary for hospital billing reference', function () {
+    actingAs($this->nurse);
+
+    $patient = Patient::create([
+        'name' => 'Eduardo Mendoza',
+        'patient_type' => 'student',
+        'id_number' => 'USM-2026-7777',
+        'medical_notes' => 'Clinical monitoring',
+    ]);
+
+    $admission = Admission::create([
+        'patient_id' => $patient->id,
+        'bed_id' => $this->bed->id,
+        'admitted_by' => $this->admissionStaff->id,
+        'patient_classification' => 'Observation',
+        'respiratory_status' => 'Room Air',
+        'chief_complaint' => 'Clinical consultation',
+        'baseline_vitals' => ['bp' => '120/80'],
+        'admission_date' => Carbon::now(),
+        'status' => 'admitted',
+    ]);
+
+    // Access medication summary view
+    get(route('nurse.chart.summary', $admission))
+        ->assertOk()
+        ->assertSee('Patient Medication Summary (For Billing Reference)', false)
+        ->assertSee('Document Reference', false)
+        ->assertSee('Fulfilled Inpatient Dispensary Records', false)
+        ->assertSee('Eduardo Mendoza');
 });
 
 test('admin can provision new wards and toggle bed maintenance', function () {

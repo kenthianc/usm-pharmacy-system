@@ -122,9 +122,10 @@ class AdmissionController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'patient_type' => ['required', 'string', 'in:student,resident'],
+            'patient_type' => ['required', 'string', 'in:student,employee,resident'],
             'id_number' => ['required', 'string', 'max:50', 'unique:patients,id_number'],
             'contact_number' => ['nullable', 'string', 'max:20'],
+            'emergency_contact' => ['nullable', 'string', 'max:255'],
             'date_of_birth' => ['nullable', 'date'],
             'sex' => ['nullable', 'string', 'in:male,female,other'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -133,9 +134,11 @@ class AdmissionController extends Controller
         ]);
 
         $patient = Patient::create([
+            'name' => $validated['name'],
             'patient_type' => $validated['patient_type'],
             'id_number' => $validated['id_number'],
             'contact_number' => $validated['contact_number'] ?? null,
+            'emergency_contact' => $validated['emergency_contact'] ?? null,
             'date_of_birth' => $validated['date_of_birth'] ?? null,
             'sex' => $validated['sex'] ?? null,
             'address' => $validated['address'] ?? null,

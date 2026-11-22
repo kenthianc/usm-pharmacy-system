@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Prescription extends Model
 {
@@ -26,6 +27,7 @@ class Prescription extends Model
         'room_bed_number',
         'status',
         'billing_status',
+        'collected_by',
     ];
 
     /**
@@ -60,6 +62,16 @@ class Prescription extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class);
+    }
+
+    /**
+     * Get the POS transaction record when dispensed.
+     *
+     * @return HasOne<PosTransaction, $this>
+     */
+    public function posTransaction(): HasOne
+    {
+        return $this->hasOne(PosTransaction::class);
     }
 
     /**

@@ -24,6 +24,7 @@ class DispensePrescriptionRequest extends FormRequest
     {
         return [
             'payment_method' => ['required', 'string', 'in:cash,card,insurance,hospital_bill'],
+            'collected_by' => ['nullable', 'string', 'max:255'],
             'discount_type' => ['nullable', 'string', 'in:regular,senior,pwd,student'],
             'discount_id_number' => ['nullable', 'string', 'max:50', 'required_if:discount_type,senior,pwd'],
             'allocations' => ['required', 'array'],
