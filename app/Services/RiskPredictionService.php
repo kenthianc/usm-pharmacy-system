@@ -399,12 +399,40 @@ class RiskPredictionService
                 $riskCount = 0;
             }
 
+            $unitLower = strtolower($entry['unit']);
+            $unitShort = match ($unitLower) {
+                'tablet', 'tablets' => 'tabs',
+                'capsule', 'capsules' => 'caps',
+                'bottle', 'bottles' => 'bottles',
+                'sachet', 'sachets' => 'sachets',
+                'vial', 'vials' => 'vials',
+                default => $entry['unit'],
+            };
+
+            $targetThreshold = ($entry['dc'] * $leadTimeDays) + (int) $med->reorder_level;
+            $deficit = max(0, $targetThreshold - $entry['available_stock']);
+            $recommendedReorderQty = $deficit > 0 ? max(10, (int) ceil($deficit / 10) * 10) : 0;
+
+            if ($stockout['score'] >= 70 || $stockout['category'] === 'high') {
+                $recommendedAction = "Order {$recommendedReorderQty} {$unitShort} now";
+                $urgencyBadge = 'bg-rose-50 text-rose-700 border border-rose-200 font-bold';
+                $urgencyLabel = 'High Risk';
+            } elseif ($stockout['score'] >= 40 || $stockout['category'] === 'moderate') {
+                $recommendedAction = "Plan reorder ({$recommendedReorderQty} {$unitShort})";
+                $urgencyBadge = 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold';
+                $urgencyLabel = 'Moderate Risk';
+            } else {
+                $recommendedAction = 'Maintain buffer';
+                $urgencyBadge = 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium';
+                $urgencyLabel = 'Low Risk';
+            }
+
             if ($entry['available_stock'] === 0) {
                 $dosrLabel = '0d (Depleted)';
-                $stockoutNarrative = 'Out of stock — reorder needed';
+                $stockoutNarrative = 'Out of stock — immediate reorder recommended';
             } elseif ($entry['dc'] <= 0.0) {
                 $dosrLabel = 'Stagnant (0 run rate)';
-                $stockoutNarrative = "Below buffer ({$med->reorder_level} {$entry['unit']}), no 30d velocity";
+                $stockoutNarrative = "Below buffer ({$med->reorder_level} {$entry['unit']}), no observed velocity";
             } else {
                 $dosrLabel = round($entry['days_until_depleted'], 1).'d';
                 if ($entry['supply_deficit_days'] > 0) {
@@ -415,6 +443,7 @@ class RiskPredictionService
                     $stockoutNarrative = "Adequate stock (~{$dosrLabel} supply)";
                 }
             }
+            $crLabel = number_format($entry['dc'], 1).'/d';
 
             $stockoutInsights[] = [
                 'medicine_id' => $med->id,
@@ -424,13 +453,16 @@ class RiskPredictionService
                 'generic_name' => $med->generic_name,
                 'category' => $med->category,
                 'unit' => $entry['unit'],
+                'unit_short' => $unitShort,
                 'current_stock' => $entry['available_stock'],
                 'buffer_stock' => (int) $med->reorder_level,
                 'reorder_level' => (int) $med->reorder_level,
                 'reorder_point' => (float) $stockout['reorder_point'],
                 'daily_consumption' => round($entry['dc'], 2),
+                'cr_label' => $crLabel,
                 'lead_time_days' => $leadTimeDays,
                 'days_until_depleted' => $entry['days_until_depleted'],
+                'doh_label' => $dosrLabel,
                 'dosr_label' => $dosrLabel,
                 'supply_deficit_days' => $entry['supply_deficit_days'],
                 'score' => $stockout['score'],
@@ -439,11 +471,15 @@ class RiskPredictionService
                 'level_name' => "Level {$level}",
                 'level_display' => $levelDisplay,
                 'score_chip' => $scoreChip,
+                'urgency_badge' => $urgencyBadge,
+                'urgency_label' => $urgencyLabel,
+                'recommended_reorder_qty' => $recommendedReorderQty,
+                'recommended_action' => $recommendedAction,
                 'is_dual_risk' => $isDualRisk,
                 'risk_count' => $riskCount,
                 'label' => $stockout['label'],
                 'badge_class' => $badgeClass,
-                'action' => $stockout['action'],
+                'action' => $recommendedAction,
                 'narrative' => $stockoutNarrative,
             ];
         }
@@ -480,6 +516,36 @@ class RiskPredictionService
 
             $shelfLifeLabel = $entry['te'] <= 0 ? '0d (Expired)' : $entry['te'].'d left';
 
+            $unitLower = strtolower($med->unit ?? 'unit');
+            $unitShort = match ($unitLower) {
+                'tablet', 'tablets' => 'tabs',
+                'capsule', 'capsules' => 'caps',
+                'bottle', 'bottles' => 'bottles',
+                'sachet', 'sachets' => 'sachets',
+                'vial', 'vials' => 'vials',
+                default => $med->unit ?? 'units',
+            };
+
+            $dte = $entry['te'];
+            $erScore = $expiry['score'];
+            if ($dte <= 0) {
+                $fefoAction = 'Quarantine & Review Supplier Return';
+                $urgencyBadge = 'bg-rose-50 text-rose-700 border border-rose-200 font-bold';
+                $urgencyLabel = 'Expired';
+            } elseif ($erScore >= 70 || $expiry['category'] === 'high') {
+                $fefoAction = $dte <= 15 ? 'Review for Supplier Return' : 'Prioritize FEFO / Inter-ward rotation';
+                $urgencyBadge = 'bg-rose-50 text-rose-700 border border-rose-200 font-bold';
+                $urgencyLabel = 'High Risk';
+            } elseif ($erScore >= 40 || $expiry['category'] === 'moderate') {
+                $fefoAction = 'Monitor FEFO queue';
+                $urgencyBadge = 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold';
+                $urgencyLabel = 'Moderate Risk';
+            } else {
+                $fefoAction = 'Standard FEFO dispensing';
+                $urgencyBadge = 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium';
+                $urgencyLabel = 'Low Risk';
+            }
+
             if ($entry['te'] <= 0) {
                 $expiryNarrative = "Expired ({$entry['remaining']} {$med->unit}) — quarantine";
             } elseif ($expiry['projected_loss_units'] > 0) {
@@ -496,6 +562,7 @@ class RiskPredictionService
                 'medicine_name' => trim(str_replace('(Out of Stock Demo)', '', $med->name)),
                 'supplier' => $batch->supplier ?? 'Primary Supplier',
                 'unit' => $med->unit ?? 'units',
+                'unit_short' => $unitShort,
                 'remaining_stock' => $entry['remaining'],
                 'expiry_date' => $batch->expiry_date->format('M d, Y'),
                 'days_until_expiry' => $entry['te'],
@@ -505,17 +572,23 @@ class RiskPredictionService
                 'projected_loss_units' => $expiry['projected_loss_units'],
                 'unit_cost' => $entry['unit_cost'],
                 'financial_loss' => $entry['financial_loss'],
+                'at_risk_qty' => $expiry['projected_loss_units'],
+                'at_risk_val' => $entry['financial_loss'],
+                'at_risk_display' => number_format($expiry['projected_loss_units']).' '.$unitShort.' (₱'.number_format($entry['financial_loss'], 2).')',
                 'score' => $expiry['score'],
                 'risk_category' => $expiry['category'],
                 'level' => $level,
                 'level_name' => "Level {$level}",
                 'level_display' => $levelDisplay,
                 'score_chip' => $scoreChip,
+                'urgency_badge' => $urgencyBadge,
+                'urgency_label' => $urgencyLabel,
+                'recommended_action' => $fefoAction,
                 'is_dual_risk' => $isDualRisk,
                 'risk_count' => $riskCount,
                 'label' => $expiry['label'],
                 'badge_class' => $badgeClass,
-                'action' => $expiry['action'],
+                'action' => $fefoAction,
                 'narrative' => $expiryNarrative,
             ];
         }
@@ -525,6 +598,18 @@ class RiskPredictionService
         usort($expiryInsights, fn ($a, $b) => $b['score'] <=> $a['score']);
 
         $totalAlertsCount = count($stockoutInsights) + count($expiryInsights);
+
+        // Formulate actionable Decision Support Summary
+        $formattedLoss = number_format($totalLossAtRisk, 2);
+        if ($highStockout > 0 && $highExpiry > 0) {
+            $decisionSummary = "Priority Actions: Restock {$highStockout} critical item".($highStockout > 1 ? 's' : '')." immediately; prioritize FEFO rotation for {$highExpiry} batch".($highExpiry > 1 ? 'es' : '')." to prevent up to ₱{$formattedLoss} in projected wastage.";
+        } elseif ($highStockout > 0) {
+            $decisionSummary = "Priority Actions: Restock {$highStockout} critical item".($highStockout > 1 ? 's' : '').' immediately; batch expiration horizons remain within safe dispensing thresholds.';
+        } elseif ($highExpiry > 0) {
+            $decisionSummary = "Priority Actions: Stock levels adequate; prioritize FEFO rotation for {$highExpiry} batch".($highExpiry > 1 ? 'es' : '')." to prevent up to ₱{$formattedLoss} in projected wastage.";
+        } else {
+            $decisionSummary = 'Priority Actions: All stock levels and batch expiration horizons are within nominal thresholds. No immediate reorders required.';
+        }
 
         // Aggregate Global Risk calculation
         // Requirements:
@@ -587,7 +672,11 @@ class RiskPredictionService
                 'lead_time_days' => $leadTimeDays,
                 'velocity_window_days' => self::DEFAULT_WINDOW_DAYS,
                 'evaluated_at' => Carbon::now()->format('M d, Y h:i A'),
+                'sync_status' => 'Sync: Real-time (Stock Movement) • Daily EOD',
+                'decision_summary' => $decisionSummary,
             ],
+            'decision_summary' => $decisionSummary,
+            'sync_status' => 'Sync: Real-time (Stock Movement) • Daily EOD',
             'global_risk' => $globalRisk,
             'stockout_insights' => $stockoutInsights,
             'expiry_insights' => $expiryInsights,

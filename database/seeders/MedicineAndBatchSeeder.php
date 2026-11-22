@@ -30,6 +30,7 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'tablet',
                 'unit_price' => 5.00,
                 'reorder_level' => 50,
+                'daily_consumption_rate' => 15.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-PCM-2026A',
@@ -58,11 +59,12 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'capsule',
                 'unit_price' => 12.00,
                 'reorder_level' => 30,
+                'daily_consumption_rate' => 8.2,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-AMX-2026A',
                         'quantity_received' => 300,
-                        'quantity_remaining' => 180,
+                        'quantity_remaining' => 8,
                         'expiry_date' => Carbon::now()->addMonths(6)->toDateString(),
                         'received_date' => Carbon::now()->subMonths(2)->toDateString(),
                         'supplier' => 'Rhea Generics',
@@ -78,12 +80,13 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'tablet',
                 'unit_price' => 28.00,
                 'reorder_level' => 30,
+                'daily_consumption_rate' => 1.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-AMXCLV-2026A',
                         'quantity_received' => 200,
                         'quantity_remaining' => 150,
-                        'expiry_date' => Carbon::now()->addMonths(12)->toDateString(),
+                        'expiry_date' => Carbon::now()->addDays(10)->toDateString(),
                         'received_date' => Carbon::now()->subWeeks(2)->toDateString(),
                         'supplier' => 'GSK / RiteMed',
                     ],
@@ -98,11 +101,12 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'capsule',
                 'unit_price' => 8.50,
                 'reorder_level' => 30,
+                'daily_consumption_rate' => 4.5,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-MEF-2026A',
                         'quantity_received' => 250,
-                        'quantity_remaining' => 190,
+                        'quantity_remaining' => 35,
                         'expiry_date' => Carbon::now()->addMonths(12)->toDateString(),
                         'received_date' => Carbon::now()->subWeeks(3)->toDateString(),
                         'supplier' => 'RiteMed',
@@ -116,8 +120,9 @@ class MedicineAndBatchSeeder extends Seeder
                 'generic_name' => 'Cetirizine Dihydrochloride',
                 'category' => 'Antihistamine',
                 'unit' => 'tablet',
-                'unit_price' => 6.00,
+                'unit_price' => 11.00,
                 'reorder_level' => 40,
+                'daily_consumption_rate' => 2.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-CET-2026A',
@@ -125,6 +130,14 @@ class MedicineAndBatchSeeder extends Seeder
                         'quantity_remaining' => 140,
                         'expiry_date' => Carbon::now()->addMonths(14)->toDateString(),
                         'received_date' => Carbon::now()->subMonth()->toDateString(),
+                        'supplier' => 'RiteMed',
+                    ],
+                    [
+                        'batch_no' => 'BATCH-CET-2026EXP',
+                        'quantity_received' => 100,
+                        'quantity_remaining' => 85,
+                        'expiry_date' => Carbon::now()->addDays(25)->toDateString(),
+                        'received_date' => Carbon::now()->subMonths(6)->toDateString(),
                         'supplier' => 'RiteMed',
                     ],
                 ],
@@ -138,6 +151,7 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'capsule',
                 'unit_price' => 15.00,
                 'reorder_level' => 25,
+                'daily_consumption_rate' => 2.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-OMP-2026A',
@@ -145,6 +159,14 @@ class MedicineAndBatchSeeder extends Seeder
                         'quantity_remaining' => 85,
                         'expiry_date' => Carbon::now()->addMonths(10)->toDateString(),
                         'received_date' => Carbon::now()->subMonths(2)->toDateString(),
+                        'supplier' => 'Pascual Laboratories',
+                    ],
+                    [
+                        'batch_no' => 'BATCH-OMP-2026EXP',
+                        'quantity_received' => 350,
+                        'quantity_remaining' => 320,
+                        'expiry_date' => Carbon::now()->addDays(10)->toDateString(),
+                        'received_date' => Carbon::now()->subMonths(8)->toDateString(),
                         'supplier' => 'Pascual Laboratories',
                     ],
                 ],
@@ -158,6 +180,7 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'bottle',
                 'unit_price' => 85.00,
                 'reorder_level' => 15,
+                'daily_consumption_rate' => 1.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-SLB-2026A',
@@ -169,9 +192,9 @@ class MedicineAndBatchSeeder extends Seeder
                     ],
                     [
                         'batch_no' => 'BATCH-SLB-2026EXP',
-                        'quantity_received' => 30,
-                        'quantity_remaining' => 18,
-                        'expiry_date' => Carbon::now()->addDays(14)->toDateString(),
+                        'quantity_received' => 100,
+                        'quantity_remaining' => 95,
+                        'expiry_date' => Carbon::now()->addDays(10)->toDateString(),
                         'received_date' => Carbon::now()->subMonths(11)->toDateString(),
                         'supplier' => 'GSK Philippines',
                     ],
@@ -186,6 +209,7 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'sachet',
                 'unit_price' => 10.00,
                 'reorder_level' => 50,
+                'daily_consumption_rate' => 3.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-ORS-2026A',
@@ -206,6 +230,7 @@ class MedicineAndBatchSeeder extends Seeder
                 'unit' => 'tablet',
                 'unit_price' => 45.00,
                 'reorder_level' => 20,
+                'daily_consumption_rate' => 12.0,
                 'batches' => [
                     [
                         'batch_no' => 'BATCH-AZI-2026A',
