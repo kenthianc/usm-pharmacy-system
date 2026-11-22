@@ -288,19 +288,6 @@
                 </button>
             </form>
 
-            <!-- Patient Registration Link -->
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                <div>
-                    <span class="font-medium text-slate-600">New patient or student?</span>
-                    <p class="text-[11px] text-slate-400">Create an outpatient medical profile</p>
-                </div>
-                <a href="{{ route('register') }}"
-                   class="px-3.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold rounded-lg transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1">
-                    <span>Register Now</span>
-                    <span aria-hidden="true">&rarr;</span>
-                </a>
-            </div>
-
             <!-- ── 1-CLICK DEMO CREDENTIALS AUTOFILL ── -->
             <div class="pt-4 border-t border-slate-200/80 space-y-2.5">
                 <div class="flex items-center justify-between">
