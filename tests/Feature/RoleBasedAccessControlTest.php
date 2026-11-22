@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AuditLog;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Spatie\Permission\Models\Role;
@@ -37,6 +38,7 @@ test('medical secretary role does not exist and only nurse and admin access pres
             'stock_manager',
             'patient',
             'admin',
+            'admission',
         ]);
 });
 
@@ -115,7 +117,7 @@ test('navigation bar displays links according to user role', function () {
     $this->actingAs($admin)
         ->get('/dashboard')
         ->assertSee('Prescriptions')
-        ->assertSee('Pharmacy / POS')
+        ->assertSee('Inventory')
         ->assertSee('admin')
         ->assertSee("confirm('Are you sure you want to log out?')", escape: false);
 
@@ -137,4 +139,33 @@ test('navigation bar displays links according to user role', function () {
         ->get('/dashboard')
         ->assertDontSee('Prescriptions')
         ->assertSee('Pharmacy / POS');
+
+    $stockRole = Role::findByName('stock_manager');
+    $stockManager = User::factory()->create(['role_id' => $stockRole->id]);
+    $stockManager->assignRole($stockRole);
+
+    $this->actingAs($stockManager)
+        ->get('/dashboard')
+        ->assertSee('Inventory Portal')
+        ->assertSee('Inventory Formulary')
+        ->assertSee('Delivery & Logs')
+        ->assertSee('Dual-Risk Engine')
+        ->assertSee('Stockout Risk');
+});
+
+test('login records security audit log and redirects to role dashboard', function () {
+    $nurseRole = Role::findByName('nurse');
+    $nurse = User::factory()->create([
+        'email' => 'nurse_audit@usm.edu.ph',
+        'role_id' => $nurseRole->id,
+        'is_active' => true,
+    ]);
+    $nurse->assignRole($nurseRole);
+
+    $this->post('/login', [
+        'email' => 'nurse_audit@usm.edu.ph',
+        'password' => 'password',
+    ])->assertRedirect(route('nurse.dashboard'));
+
+    expect(AuditLog::where('action', 'user_login')->where('metadata->user_id', $nurse->id)->exists())->toBeTrue();
 });

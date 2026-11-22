@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Medicine;
+use App\Models\Patient;
 use App\Models\StockBatch;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -286,6 +287,148 @@ test('it displays dual-risk engine results immediately on the main dashboard', f
         ->assertSee('Inventory Risk &amp; Demand Forecasting', false)
         ->assertSee('Stockout Threats')
         ->assertSee('Batches Near Expiry')
-        ->assertSee('Amoxicillin Trihydrate 500mg')
+        ->assertSee($medicine->item_code)
         ->assertSee('Detailed Risk Analysis');
+});
+
+test('it categorizes risk into levels and identifies dual risk items', function () {
+    // Medicine with both stockout threat and an expiring batch
+    $medicine = Medicine::factory()->create([
+        'reorder_level' => 50,
+        'unit_price' => 25.00,
+    ]);
+
+    // Batch 1 is expiring with remaining stock that won't be fully consumed
+    $batch = StockBatch::factory()->create([
+        'medicine_id' => $medicine->id,
+        'batch_no' => 'DUAL-RISK-01',
+        'quantity_received' => 20,
+        'quantity_remaining' => 2,
+        'status' => 'received',
+        'expiry_date' => Carbon::now()->addDays(2)->toDateString(),
+    ]);
+
+    // Add some stock movement to establish consumption velocity
+    StockMovement::factory()->create([
+        'medicine_id' => $medicine->id,
+        'batch_id' => $batch->id,
+        'type' => 'out',
+        'quantity' => 15,
+        'created_at' => Carbon::now()->subDays(3),
+    ]);
+
+    $insights = $this->riskService->getDualEngineInsights(leadTimeDays: 7);
+
+    expect($insights['telemetry'])->toHaveKeys(['high_stockout_count', 'high_expiry_count', 'total_financial_loss_at_risk'])
+        ->and($insights['stockout_insights'])->not->toBeEmpty();
+
+    $stockoutItem = collect($insights['stockout_insights'])->firstWhere('medicine_id', $medicine->id);
+    expect($stockoutItem)->not->toBeNull()
+        ->and($stockoutItem)->toHaveKey('level')
+        ->and($stockoutItem)->toHaveKey('is_dual_risk');
+
+    actingAs($this->stockManager)
+        ->get(route('inventory.risk-engine'))
+        ->assertOk()
+        ->assertSee('Risk Summary')
+        ->assertSee('Risk Forecasting')
+        ->assertSee($medicine->item_code);
+});
+
+test('pharmacists have read-only visibility into risk analytics and are alerted without mutation permissions', function () {
+    $pharmacist = User::factory()->create();
+    $pharmacistRole = Role::findByName('pharmacist');
+    $pharmacist->update(['role_id' => $pharmacistRole->id]);
+    $pharmacist->assignRole($pharmacistRole);
+
+    $medicine = Medicine::factory()->create([
+        'code' => 'TEST-PHARM-01',
+        'reorder_level' => 100,
+    ]);
+
+    StockBatch::factory()->create([
+        'medicine_id' => $medicine->id,
+        'batch_no' => 'BATCH-PHARM-ALERT',
+        'quantity_received' => 10,
+        'quantity_remaining' => 2,
+        'status' => 'received',
+        'expiry_date' => Carbon::now()->addDays(5)->toDateString(),
+    ]);
+
+    // 1. Pharmacist can view the Risk Engine analytics hub
+    actingAs($pharmacist)
+        ->get(route('inventory.risk-engine'))
+        ->assertOk()
+        ->assertSee('Dispensary Clinical Telemetry &amp; Alert Mode', false)
+        ->assertSee('Telemetry Mode')
+        ->assertSee('TEST-PHARM-01')
+        ->assertDontSee('Recalculate Analysis');
+
+    // 2. Pharmacist CANNOT trigger risk recalculation
+    actingAs($pharmacist)
+        ->post(route('inventory.risk-engine.recalculate'), ['lead_time' => 7])
+        ->assertForbidden();
+
+    // 3. Pharmacist CANNOT access warehouse management routes
+    actingAs($pharmacist)
+        ->get(route('inventory.index'))
+        ->assertForbidden();
+
+    actingAs($pharmacist)
+        ->get(route('inventory.deliveries.create'))
+        ->assertForbidden();
+
+    // 4. Pharmacist can view the POS terminal with active Dual-Risk alerts
+    actingAs($pharmacist)
+        ->get(route('pos.index'))
+        ->assertOk()
+        ->assertSee('Risk Summary');
+});
+
+test('risk summary pill is consistently visible at the top for pharmacist, stock_manager, and admin, but hidden for nurse and patient', function () {
+    $pharmacist = User::factory()->create();
+    $pharmacist->assignRole(Role::findByName('pharmacist'));
+
+    $stockManager = User::factory()->create();
+    $stockManager->assignRole(Role::findByName('stock_manager'));
+
+    $admin = User::factory()->create();
+    $admin->assignRole(Role::findByName('admin'));
+
+    $nurse = User::factory()->create();
+    $nurse->assignRole(Role::findByName('nurse'));
+
+    $patient = User::factory()->create();
+    $patient->assignRole(Role::findByName('patient'));
+    Patient::factory()->create(['user_id' => $patient->id]);
+
+    // 1. Pharmacist sees Risk Summary at top
+    actingAs($pharmacist)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Risk Summary');
+
+    // 2. Stock Manager sees Risk Summary at top
+    actingAs($stockManager)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Risk Summary');
+
+    // 3. Admin sees Risk Summary at top
+    actingAs($admin)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Risk Summary');
+
+    // 4. Nurse does NOT see Risk Summary at top
+    actingAs($nurse)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Risk Summary');
+
+    // 5. Patient does NOT see Risk Summary at top
+    actingAs($patient)
+        ->get(route('patient.dashboard'))
+        ->assertOk()
+        ->assertDontSee('Risk Summary');
 });

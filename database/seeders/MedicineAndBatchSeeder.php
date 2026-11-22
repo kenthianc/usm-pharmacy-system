@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Medicine;
 use App\Models\StockBatch;
+use App\Models\StockMovement;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -64,6 +66,26 @@ class MedicineAndBatchSeeder extends Seeder
                         'expiry_date' => Carbon::now()->addMonths(6)->toDateString(),
                         'received_date' => Carbon::now()->subMonths(2)->toDateString(),
                         'supplier' => 'Rhea Generics',
+                    ],
+                ],
+            ],
+            [
+                'code' => 'AMX-CLV-625',
+                'barcode' => '4800016644030',
+                'name' => 'Co-Amoxiclav 625mg (Amoxyclav)',
+                'generic_name' => 'Amoxicillin + Potassium Clavulanate',
+                'category' => 'Antibiotic',
+                'unit' => 'tablet',
+                'unit_price' => 28.00,
+                'reorder_level' => 30,
+                'batches' => [
+                    [
+                        'batch_no' => 'BATCH-AMXCLV-2026A',
+                        'quantity_received' => 200,
+                        'quantity_remaining' => 150,
+                        'expiry_date' => Carbon::now()->addMonths(12)->toDateString(),
+                        'received_date' => Carbon::now()->subWeeks(2)->toDateString(),
+                        'supplier' => 'GSK / RiteMed',
                     ],
                 ],
             ],
@@ -145,6 +167,14 @@ class MedicineAndBatchSeeder extends Seeder
                         'received_date' => Carbon::now()->subMonth()->toDateString(),
                         'supplier' => 'GSK Philippines',
                     ],
+                    [
+                        'batch_no' => 'BATCH-SLB-2026EXP',
+                        'quantity_received' => 30,
+                        'quantity_remaining' => 18,
+                        'expiry_date' => Carbon::now()->addDays(14)->toDateString(),
+                        'received_date' => Carbon::now()->subMonths(11)->toDateString(),
+                        'supplier' => 'GSK Philippines',
+                    ],
                 ],
             ],
             [
@@ -189,6 +219,10 @@ class MedicineAndBatchSeeder extends Seeder
             ],
         ];
 
+        $stockUserId = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['stock_manager', 'admin', 'pharmacist']))->value('id')
+            ?? User::value('id')
+            ?? 1;
+
         foreach ($catalog as $item) {
             $batches = $item['batches'];
             unset($item['batches']);
@@ -199,13 +233,40 @@ class MedicineAndBatchSeeder extends Seeder
             );
 
             foreach ($batches as $batch) {
-                StockBatch::updateOrCreate(
+                $batchModel = StockBatch::updateOrCreate(
                     [
                         'medicine_id' => $medicine->id,
                         'batch_no' => $batch['batch_no'],
                     ],
                     $batch
                 );
+
+                // Seed realistic stock movements if units were dispensed
+                $dispensed = $batchModel->quantity_received - $batchModel->quantity_remaining;
+                if ($dispensed > 0 && StockMovement::where('batch_id', $batchModel->id)->where('type', 'out')->count() === 0) {
+                    $chunks = 4;
+                    $chunkQty = (int) floor($dispensed / $chunks);
+                    $remainder = $dispensed % $chunks;
+
+                    for ($i = 0; $i < $chunks; $i++) {
+                        $qty = $chunkQty + ($i === $chunks - 1 ? $remainder : 0);
+                        if ($qty <= 0) {
+                            continue;
+                        }
+
+                        $daysAgo = ($chunks - $i) * 5;
+                        StockMovement::create([
+                            'medicine_id' => $medicine->id,
+                            'batch_id' => $batchModel->id,
+                            'type' => 'out',
+                            'quantity' => $qty,
+                            'reference_type' => 'Prescription Dispense',
+                            'created_by' => $stockUserId,
+                            'created_at' => Carbon::now()->subDays($daysAgo),
+                            'updated_at' => Carbon::now()->subDays($daysAgo),
+                        ]);
+                    }
+                }
             }
         }
     }

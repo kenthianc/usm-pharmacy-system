@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>USM Pharmacy — Patient Portal</title>
+    <title>USM Pharmacy — Store</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -99,78 +99,151 @@
     ];
 @endphp
 
-<div x-data="patientPortalApp()" x-init="init()" class="min-h-screen bg-gray-50 flex flex-col">
+<div x-data="patientPortalApp()" x-init="init()" class="h-screen flex flex-col lg:flex-row overflow-hidden bg-slate-100">
 
-    <!-- ── Sticky Navbar ── -->
-    <header class="sticky top-0 z-40 bg-green-800 border-b-4 border-yellow-500 shadow-md">
-        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
-            <div class="flex items-center gap-3">
-                <a href="javascript:void(0)" @click="setView('dashboard')" class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center p-1 border border-white/20">
-                        <svg viewBox="0 0 32 32" class="w-6 h-6 text-yellow-400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M16 3L4 8v8c0 6.627 5.373 12 12 12s12-5.373 12-12V8L16 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            <path d="M11 16l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+    <!-- Mobile Sidebar Backdrop -->
+    <div x-show="mobileSidebar"
+         x-transition:enter="transition-opacity ease-linear duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-linear duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-40 bg-black/60 lg:hidden"
+         @click="mobileSidebar = false"
+         style="display: none;">
+    </div>
+
+    <!-- ── Left Sidebar ── -->
+    <aside :class="{'translate-x-0': mobileSidebar, '-translate-x-full': !mobileSidebar, 'w-64': sidebarOpen, 'w-20': !sidebarOpen}"
+           class="fixed inset-y-0 left-0 z-50 flex flex-col bg-[#064e2b] text-white transition-all duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-[#043c20] shadow-xl h-screen shrink-0">
+
+        <!-- Logo & Branding -->
+        <div class="flex items-center justify-between h-16 px-4 border-b border-[#0b5c35] bg-[#064e2b] shrink-0">
+            <a href="javascript:void(0)" @click="setView('dashboard')" class="flex items-center gap-3 overflow-hidden">
+                <div class="w-9 h-9 rounded-lg bg-yellow-500 text-green-950 flex items-center justify-center font-bold text-lg shadow-sm border border-yellow-300 shrink-0">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 text-green-950" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 3L4 8v8c0 6.627 5.373 12 12 12s12-5.373 12-12V8L16 3z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                        <path d="M11 16l3 3 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="transition-opacity duration-200" x-show="sidebarOpen" x-transition>
+                    <div class="text-sm font-bold tracking-tight text-yellow-400 leading-tight">USM Pharmacy</div>
+                    <div class="text-[11px] font-semibold text-emerald-300/90 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                        Pharmacy Store
                     </div>
-                    <div class="hidden sm:block">
-                        <p class="font-bold text-yellow-400 text-sm leading-tight">USM Pharmacy</p>
-                        <p class="text-[10px] text-green-300">Patient Portal</p>
+                </div>
+            </a>
+
+            <!-- Mobile Close Button -->
+            <button @click="mobileSidebar = false" class="lg:hidden text-emerald-300 hover:text-white p-1 rounded-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+            <div>
+                <div x-show="sidebarOpen" class="px-3 text-[10px] font-extrabold uppercase tracking-wider text-yellow-400/80 mb-2">
+                    Patient Care
+                </div>
+
+                <div class="space-y-1">
+                    <template x-for="tab in navItems" :key="tab.view">
+                        <button
+                            @click="setView(tab.view); mobileSidebar = false"
+                            :class="(view === tab.view || (view === 'prescription-detail' && tab.view === 'prescriptions'))
+                                ? 'bg-yellow-500 text-green-950 shadow-sm font-bold'
+                                : 'text-emerald-100 hover:bg-white/10 hover:text-white'"
+                            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left"
+                            :title="!sidebarOpen ? tab.label : ''"
+                        >
+                            <span x-html="tab.icon" class="w-5 h-5 flex items-center justify-center shrink-0"></span>
+                            <span x-show="sidebarOpen" x-text="tab.label" class="truncate"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Bottom User Profile & Sign Out Block -->
+        <div class="p-3 border-t border-[#0b5c35] bg-[#064e2b] shrink-0 space-y-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-yellow-500 text-green-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                    {{ strtoupper(substr(Auth::user()->name ?? 'PT', 0, 2)) }}
+                </div>
+                <div class="min-w-0 flex-1" x-show="sidebarOpen">
+                    <div class="text-xs font-bold text-white truncate">{{ Auth::user()->name ?? 'Patient' }}</div>
+                    <div class="text-[10px] text-yellow-300 font-semibold truncate">
+                        {{ $patient->id_number ?? 'Student / Outpatient' }}
                     </div>
-                </a>
+                </div>
             </div>
 
-            <nav class="hidden md:flex items-center gap-1">
-                <template x-for="tab in navItems" :key="tab.view">
-                    <button
-                        @click="setView(tab.view)"
-                        :class="(view === tab.view || (view === 'prescription-detail' && tab.view === 'prescriptions'))
-                            ? 'bg-yellow-400 text-green-900'
-                            : 'text-green-100 hover:bg-green-700'"
-                        class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors"
-                    >
-                        <span x-html="tab.icon"></span>
-                        <span x-text="tab.label"></span>
-                    </button>
-                </template>
-            </nav>
+            <button type="button"
+                    @click="$dispatch('open-signout-modal')"
+                    x-show="sidebarOpen"
+                    class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-300 hover:bg-rose-900/40 hover:text-rose-200 transition-colors cursor-pointer"
+                    title="Sign out">
+                <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
 
+    <!-- ── Main Content Area ── -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+
+        <!-- Top Header Bar -->
+        <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
             <div class="flex items-center gap-3">
-                <form method="POST" action="{{ route('logout') }}" class="inline" onsubmit="return confirm('Are you sure you want to log out?');">
-                    @csrf
-                    <button type="submit" class="flex items-center gap-1.5 text-green-300 hover:text-red-300 text-xs transition-colors font-medium">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span>Sign out</span>
-                    </button>
-                </form>
-
-                <!-- Mobile burger toggle -->
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-green-200 hover:text-white p-1">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <!-- Mobile Open Toggle -->
+                <button @click="mobileSidebar = true" class="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
-            </div>
-        </div>
 
-        <!-- Mobile Drawer -->
-        <div x-show="mobileMenuOpen" class="md:hidden bg-green-900 border-t border-green-700 px-4 py-3 space-y-1">
-            <template x-for="tab in navItems" :key="tab.view">
-                <button
-                    @click="setView(tab.view); mobileMenuOpen = false"
-                    :class="(view === tab.view || (view === 'prescription-detail' && tab.view === 'prescriptions'))
-                        ? 'bg-yellow-400 text-green-900'
-                        : 'text-green-100 hover:bg-green-800'"
-                    class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-left"
-                >
-                    <span x-html="tab.icon"></span>
-                    <span x-text="tab.label"></span>
+                <!-- Desktop Collapse Toggle -->
+                <button @click="sidebarOpen = !sidebarOpen" class="hidden lg:flex p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
                 </button>
-            </template>
-        </div>
-    </header>
+
+                <!-- Dynamic Page Heading -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                        Pharmacy Store
+                    </span>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
+                        <span x-show="view === 'dashboard'">Medical Dashboard</span>
+                        <span x-show="view === 'prescriptions' || view === 'prescription-detail'">Prescription Records</span>
+                        <span x-show="view === 'storefront'">University Pharmacy Store</span>
+                        <span x-show="view === 'chat'">AI Health Assistant</span>
+                        <span x-show="view === 'profile'">My Medical Profile</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Top Date Badge -->
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>{{ now()->format('M d, Y') }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50/70">
 
     <!-- ══════════════════════════════════════════
         DASHBOARD VIEW
@@ -797,7 +870,7 @@
         <div class="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden" style="min-height: 480px;">
             <div class="px-4 py-3 border-b border-gray-100 bg-green-50 flex items-center gap-2">
                 <svg class="w-3.5 h-3.5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke-width="2"/></svg>
-                <p class="text-xs font-semibold text-green-800">Ask about symptoms, medicines, or first aid</p>
+                <p class="text-xs font-semibold text-green-800">Ask about medicines, discounts, OPD clinic hours, or prescriptions</p>
             </div>
 
             <div id="chatMessagesBox" class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[420px]">
@@ -834,7 +907,7 @@
                     <input
                         type="text"
                         x-model="chatInput"
-                        placeholder="Ask about symptoms, medicines, or prescriptions..."
+                        placeholder="Ask about medicines, discounts, OPD clinic hours, or prescriptions..."
                         class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50"
                     />
                     <button type="submit" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl transition-colors shrink-0">
@@ -845,12 +918,20 @@
         </div>
     </div>
 
+        </main>
+    </div>
+
 </div>
+
+<!-- Global Sign Out Confirmation Modal UI -->
+<x-signout-modal />
 
 <script>
 function patientPortalApp() {
     return {
         view: 'dashboard',
+        sidebarOpen: true,
+        mobileSidebar: false,
         mobileMenuOpen: false,
         patient: @json($patientData),
         prescriptions: @json($formattedPrescriptions),
@@ -859,7 +940,7 @@ function patientPortalApp() {
         rxFilter: 'All',
         heroInput: '',
         chatMessages: [
-            { role: 'assistant', content: "Hello! I'm your USM Health Assistant. Ask me about symptoms, medicines, first aid, or your prescriptions." }
+            { role: 'assistant', content: "Hello! I'm your USM Hospital & Pharmacy Assistant. Ask me about medicine stock, prices, OPD clinic hours, discounts, or your prescriptions. How can I help you today?" }
         ],
         chatInput: '',
         activeCategory: 'All',
@@ -1018,7 +1099,7 @@ function patientPortalApp() {
             const msg = this.heroInput.trim();
             this.heroInput = '';
             this.chatMessages = [
-                { role: 'assistant', content: "Hello! I'm your USM Health Assistant. Ask me about symptoms, medicines, first aid, or your prescriptions." },
+                { role: 'assistant', content: "Hello! I'm your USM Hospital & Pharmacy Assistant. Ask me about medicine stock, prices, OPD clinic hours, discounts, or your prescriptions. How can I help you today?" },
                 { role: 'user', content: msg }
             ];
             this.setView('chat');
@@ -1048,15 +1129,72 @@ function patientPortalApp() {
 
         getBotResponse(input) {
             const q = input.toLowerCase();
-            if (q.includes("headache"))
-                return "For a headache:\n\n1. Rest in a quiet, dark room\n2. Stay hydrated\n3. Apply a cold compress\n4. Paracetamol 500mg or Ibuprofen 400mg are available at our pharmacy\n\nIf it persists beyond 24 hours, please see a doctor.";
-            if (q.includes("fever"))
-                return "For fever:\n\n1. Rest and stay hydrated\n2. Use a cool compress\n3. Paracetamol 500mg every 6 hours (in stock ✓)\n\nSeek care immediately if fever exceeds 39.4°C or lasts more than 3 days.";
-            if (q.includes("availab") || q.includes("stock") || q.includes("medicine"))
-                return "Currently in stock at USM Pharmacy:\n\n✓ Paracetamol 500mg\n✓ Amoxicillin 500mg\n✓ Metformin 500mg\n✓ Vitamin C 500mg\n✓ Salbutamol Nebule\n✓ IV Fluids (NS, D5W, LR)\n\nBrowse the full storefront for prices and availability.";
-            if (q.includes("prescription"))
-                return "You can view all your prescriptions under the Prescriptions tab. For refills, please consult your assigned physician at the USM clinic.";
-            return "I can help you with:\n\n• First aid advice for common conditions\n• Medicine availability checks\n• General health information\n• Understanding your prescriptions\n\nCould you give me more details?";
+            const symptomTerms = /(symptom|sick|illness|unwell|fever|lagnat|headache|sakit ng ulo|cough|ubo|cold|colds|sipon|flu|trangkaso|sore throat|throat|stomach|tiyan|diarrhea|pagtatae|nausea|vomit|suka|dizzy|nahihilo|wound|sugat|bleed|injury|cut|burn|pain|masakit|first aid|gamot sa|cure|treatment)/i;
+
+            if (symptomTerms.test(q)) {
+                return "I cannot provide medical advice, diagnosis, or symptom treatment recommendations.\n\nFor your health and safety, please proceed directly to the USM Hospital & University Infirmary / Outpatient Department (OPD) for a clinical evaluation with our doctors and nurses.\n\n📍 USM Infirmary & OPD Operating Hours:\n• OPD Consultation Hours: Monday – Friday, 8:00 AM – 5:00 PM\n• Emergency Room & Inpatient Wards: 24/7 Always Open\n• Location: USM Hospital & Infirmary Complex, Main Campus, Kabacan, Cotabato\n\nOnce our attending physician issues your official prescription, you can ask me to check if our pharmacy has your medicines in stock and calculate applicable discounts. Would you like me to check any prescribed medicine for you?";
+            }
+
+            // Specific Medicine Search
+            let matched = null;
+            for (const p of this.products) {
+                const name = p.name.toLowerCase();
+                const generic = (p.generic_name || '').toLowerCase();
+                if (q.includes(name) || (generic && q.includes(generic))) {
+                    matched = p;
+                    break;
+                }
+                const tokens = (name + ' ' + generic).split(/[\s,()%-]+/).filter(t => t.length >= 4);
+                for (const t of tokens) {
+                    if (q.includes(t)) {
+                        matched = p;
+                        break;
+                    }
+                }
+                if (matched) break;
+            }
+
+            if (matched) {
+                const price = Number(matched.unit_price || matched.price || 0).toFixed(2);
+                const stock = matched.available_stock || matched.stock || 0;
+                const unit = matched.unit || 'unit';
+
+                if (q.includes("magkano") || q.includes("price") || q.includes("how much") || q.includes("presyo") || q.includes("cost")) {
+                    return `Ang presyo ng ${matched.name} ay ₱${price} bawat ${unit}.`;
+                }
+
+                if (q.includes("stock") || q.includes("available") || q.includes("meron") || q.includes("ilan")) {
+                    return stock > 0
+                        ? `Mayroon tayong ${stock} ${unit}s ng ${matched.name} sa kasalukuyang active stock (₱${price}/${unit}).`
+                        : `Sa kasalukuyan, out of stock ang ${matched.name} sa pharmacy.`;
+                }
+
+                if (q.includes("reseta") || q.includes("prescription") || q.includes("rx") || q.includes("otc")) {
+                    return matched.rx
+                        ? `Ang ${matched.name} ay Prescription-Only (Rx) at nangangailangan ng reseta mula sa doktor.`
+                        : `Ang ${matched.name} ay Over-the-Counter (OTC) at maaaring mabili nang walang reseta.`;
+                }
+
+                return `${matched.name} (${matched.generic_name || matched.name}):\n• Presyo: ₱${price} / ${unit}\n• Stock: ${stock > 0 ? stock + ' ' + unit + 's (In Stock)' : 'Out of Stock'}\n• Dispensing: ${matched.rx ? 'Requires Doctor Prescription (Rx)' : 'Over-the-Counter (OTC)'}`;
+            }
+
+            if (q.includes("availab") || q.includes("stock") || q.includes("medicine") || q.includes("formulary")) {
+                return "Here is a quick overview of popular unexpired medicines currently in stock at the USM Pharmacy:\n\n• Paracetamol 500mg — In Stock (₱5.00/tab)\n• Amoxicillin 500mg — In Stock (₱12.00/cap)\n• Metformin 500mg — In Stock (₱8.00/tab)\n• Vitamin C 500mg — In Stock (₱7.00/tab)\n• Salbutamol Nebule — In Stock (₱25.00/neb)\n• IV Fluids (NS, D5W, LR) — In Stock (from ₱80.00/bag)\n\nYou can browse our complete formulary under the 'Medicines' tab. What specific medicine or brand can I check for you?";
+            }
+
+            if (q.includes("discount") || q.includes("senior") || q.includes("pwd") || q.includes("student")) {
+                return "USM Hospital Pharmacy applies the following discount benefits upon presentment of valid ID:\n\n• Senior Citizens (RA 9994): 20% discount on VAT-exempt purchases\n• PWD (RA 10754): 20% discount on VAT-exempt purchases\n• USM Students: 10% institutional health subsidy with valid Student ID\n\nThese discounts are calculated automatically at our POS dispensary counter. Would you like to check the discounted price for a specific medicine?";
+            }
+
+            if (q.includes("hour") || q.includes("schedule") || q.includes("opd") || q.includes("infirmary") || q.includes("open")) {
+                return "Here are the operating hours for the USM Hospital & Infirmary:\n\n• USM Infirmary / OPD Clinic: Monday – Friday, 8:00 AM – 5:00 PM (Outpatient doctor consultations and regular clinic care)\n• Emergency Room & Inpatient Wards: 24 Hours / 7 Days a week (24/7)\n• Outpatient Pharmacy: Monday – Friday, 8:00 AM – 5:00 PM\n• Location: USM Hospital Complex, Main Campus, Kabacan, Cotabato\n\nAre you planning a visit for a checkup, or need to verify medicine availability beforehand?";
+            }
+
+            if (q.includes("prescription") || q.includes("reseta") || q.includes("refill")) {
+                return "You can view and track all your active prescriptions directly in the 'Prescriptions' tab of your portal. Each prescription updates in real time as the pharmacy queue prepares and dispenses it using FEFO batch control.\n\nDo you need to check if a specific prescribed medicine is currently available in our pharmacy?";
+            }
+
+            return "I am your USM Hospital & Pharmacy administrative assistant. I can directly assist you with:\n\n• Medicine stock availability & pricing\n• USM Infirmary & OPD consultation hours (Mon–Fri, 8 AM–5 PM)\n• Student (10%) and Senior/PWD (20%) discounts\n• Viewing and tracking your active prescriptions\n\n(Note: If you are experiencing symptoms or need clinical care, please visit our OPD clinic doctors during consultation hours).\n\nWhat medicine or hospital service can I help you look up today?";
         },
 
         saveProfile() {

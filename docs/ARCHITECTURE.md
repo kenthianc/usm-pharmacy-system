@@ -116,23 +116,58 @@ Manages the medicine catalogue, batch receiving, delivery tracking, stock dispos
 
 ---
 
-### Module 5 — Dual Risk Prediction Engine (Member 3, not started)
+### Module 5 — Dual Risk Prediction Engine (Member 3, Done)
 
-Will consume `stock_movements`, `stock_batches`, and `medicines.reorder_level` to predict stockouts and expiry risk. No code exists yet.
+Consumes `stock_movements`, `stock_batches`, and `medicines.reorder_level` to predict stockout and batch expiry risks using mathematical algorithms.
 
-**Expected:** a service class (e.g., `RiskPredictionService`), scheduled Artisan command, and a dashboard widget.
+| File | Role |
+|---|---|
+| `app/Services/RiskPredictionService.php` | Calculates Daily Consumption Rate ($D_c$), Stockout Risk ($S_r$), and Batch Expiry Risk ($E_r$) |
+| `app/Http/Controllers/InventoryController.php` | Actions for `riskEngineHub` (`/inventory/risk-engine`) and `recalculateRiskEngine` |
+| `resources/views/inventory/risk-engine.blade.php` | Interactive risk telemetry dashboard, quadrant distribution, and financial exposure |
+| `resources/views/components/risk-summary-pill.blade.php` | Global risk status indicator rendered across all staff layouts |
+| `tests/Feature/DualRiskPredictionEngineTest.php` | Feature test suite verifying risk formulas, triage classifications, and telemetry |
 
 ---
 
-### Module 6 — Patient Portal (Member 1, not started)
+### Module 6 — Patient Portal (Member 1, Done)
 
-Will let patients log in and view their prescription history and transaction receipts. No routes or views exist yet.
+Allows patients to securely access and monitor their personal medical records and prescriptions.
+
+| File | Role |
+|---|---|
+| `app/Http/Controllers/PatientPortalController.php` | Dashboard, prescription history, and medical profile actions |
+| `resources/views/layouts/patient.blade.php` | Dedicated `<x-patient-layout>` layout component |
+| `resources/views/patient/dashboard.blade.php` | Patient dashboard displaying active prescriptions, dosage schedules, and health advisories |
+| `routes/web.php` (prefix `/patient`) | Guarded by `role:patient` |
 
 ---
 
-### Module 7 — AI Chatbot (Member 3, not started)
+### Module 7 — Public Storefront & AI Chatbot (Member 1 & 3, Done)
 
-Contextual assistant for pharmacy staff and patients. No code exists yet. Depends on risk engine data being available.
+Public-facing infirmary catalog and automated triage assistant.
+
+| File | Role |
+|---|---|
+| `app/Http/Controllers/WelcomeController.php` | Landing page (`/`) and formulary storefront (`/medicines`) |
+| `resources/views/welcome.blade.php` | Institutional landing page featuring the embedded AI Health Assistant |
+| `resources/views/medicines.blade.php` | Public formulary catalog with live category filtering, stock availability tags, and inquiry modal |
+| `tests/Feature/StorefrontTest.php` | Feature tests for storefront and public search |
+
+---
+
+### Module 8 — Hospital Administration & Governance (Done)
+
+Centralized administrative portal for user provisioning, security auditing, and clinic parameter management.
+
+| File | Role |
+|---|---|
+| `app/Http/Controllers/Admin/AdminDashboardController.php` | Executive KPI overview and operational telemetry |
+| `app/Http/Controllers/Admin/AdminUserController.php` | Hospital staff account provisioning, editing, and active status toggling |
+| `app/Http/Controllers/Admin/AdminAuditController.php` | Searchable system audit log viewer (`audit_logs`) |
+| `app/Http/Controllers/Admin/AdminSettingController.php` | Institutional parameter configuration (`clinic_settings`) |
+| `resources/views/components/admin-layout.blade.php` | Administrative workstation layout (`<x-admin-layout>`) |
+| `tests/Feature/AdminPortalTest.php` | Feature test suite for admin RBAC, user management, and settings |
 
 ---
 

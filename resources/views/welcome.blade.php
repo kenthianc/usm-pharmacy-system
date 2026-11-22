@@ -3,11 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>USM Pharmacy System - Your Health, Answered</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>USM Hospital Management System with Dual Risk Prediction</title>
     <meta name="description" content="AI-powered pharmacy portal for USM students and staff.">
+    <!-- Optimized Asynchronous Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap"></noscript>
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         :root{--g9:#14532d;--g8:#166534;--g7:#15803d;--g6:#16a34a;--g1:#dcfce7;--g0:#f0fdf4;--y5:#eab308;--y4:#facc15;--y1:#fef9c3;--f:'Inter',system-ui,sans-serif}
@@ -82,9 +85,13 @@
         .msg-avatar.ai{background:var(--g1)}
         .msg-avatar.user{background:var(--y4)}
         .msg-avatar svg{width:14px;height:14px}
-        .msg-bubble{max-width:82%;padding:.75rem 1rem;font-size:.875rem;line-height:1.65;white-space:pre-line}
-        .msg-bubble.ai{background:#f3f4f6;color:#1f2937;border-radius:16px 16px 16px 4px}
-        .msg-bubble.user{background:var(--g7);color:#fff;border-radius:16px 16px 4px 16px}
+        .msg-bubble{max-width:82%;padding:.75rem 1rem;font-size:.875rem;line-height:1.65}
+        .msg-bubble.ai{background:#f3f4f6;color:#1f2937;border-radius:16px 16px 16px 4px;white-space:normal}
+        .msg-bubble.user{background:var(--g7);color:#fff;border-radius:16px 16px 4px 16px;white-space:normal;word-break:break-word}
+        .opd-referral-card{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:.75rem 1rem;margin:.75rem 0;text-align:left}
+        .opd-referral-title{font-size:.8125rem;font-weight:800;color:#166534;display:flex;align-items:center;gap:.375rem;margin-bottom:.375rem}
+        .opd-schedule-list{font-size:.8125rem;color:#1f2937;margin:.25rem 0;padding-left:1.25rem;line-height:1.55}
+        .ai-followup-prompt{margin-top:.75rem;padding-top:.625rem;border-top:1px dashed #d1d5db;font-size:.8125rem;color:#1f2937;font-weight:600;line-height:1.5}
         .thinking-bar{display:inline-flex;align-items:center;gap:.5rem;background:#f3f4f6;padding:.625rem 1rem;border-radius:14px;font-size:.8125rem;color:#6b7280;font-weight:500}
         .dots{display:inline-flex;gap:4px;align-items:center}
         .dots span{width:6px;height:6px;border-radius:50%;background:var(--g6);animation:bounce 1.4s ease-in-out infinite}
@@ -149,18 +156,13 @@
                 </svg>
             </div>
             <div>
-                <div class="nav-brand-name">USM Pharmacy</div>
-                <div class="nav-brand-sub">Patient Portal</div>
+                <div class="nav-brand-name">USM Hospital</div>
+                <div class="nav-brand-sub">Clinical &amp; Pharmacy Care</div>
             </div>
         </a>
         <nav class="nav-links">
             <a href="{{ route('home') }}" class="nav-link active">Home</a>
-            <a href="#chatbot" class="nav-link">AI Assistant</a>
-            @auth
-                <a href="{{ route('patient.prescriptions') }}" class="nav-link">My Prescriptions</a>
-            @else
-                <a href="{{ route('login') }}" class="nav-link">My Prescriptions</a>
-            @endauth
+            <a href="{{ route('medicines') }}" class="nav-link">Product Catalog</a>
         </nav>
         <div class="nav-right">
             <a href="{{ route('medicines') }}" class="btn-store">
@@ -190,7 +192,7 @@
             Powered by USM Health AI
         </div>
         <h1 class="hero-title">Your health, <em>answered</em><br>in every visit.</h1>
-        <p class="hero-subtitle">Ask about symptoms, browse pharmacy products, check your prescriptions &mdash; all in one place built for USM students and staff.</p>
+        <p class="hero-subtitle">Check real-time medicine availability, verify discounts, and explore clinical hospital services &mdash; all in one unified portal for the USM community.</p>
         <div class="hero-ctas">
             <a href="#chatbot" class="btn-hero-dark">Talk to AI Assistant</a>
             <a href="{{ route('medicines') }}" class="btn-hero-yellow">
@@ -206,11 +208,11 @@
                 <div class="chat-header">
                     <div class="chat-header-left">
                         <span class="online-dot"></span>
-                        <span class="chat-title">USM Pharmacy AI Assistant</span>
+                        <span class="chat-title">USM Hospital AI Assistant</span>
                         @guest
                             <span class="guest-counter-badge" id="guestCounterBadge">
                                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span id="guestCountText">15/15 messages left</span>
+                                <span id="guestCountText">50/50 messages left</span>
                             </span>
                         @else
                             <span class="guest-counter-badge authed">
@@ -235,7 +237,7 @@
                     <div class="chatbot-logo">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
-                    <input type="text" id="heroInput" placeholder="Ask USM Health anything..." autocomplete="off">
+                    <input type="text" id="heroInput" placeholder="Ask about medicines, discounts, OPD clinic hours, or hospital care..." autocomplete="off">
                     <button type="button" class="chatbot-send-btn" onclick="sendMsg()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                     </button>
@@ -255,13 +257,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Check availability
     </button>
-    <button type="button" class="chip" onclick="fillAndSend('I have a cut on my finger, what first aid steps should I follow?')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-        First aid help
+    <button type="button" class="chip" onclick="fillAndSend('What are the USM Infirmary and OPD clinic hours?')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Infirmary &amp; OPD Hours
     </button>
-    <button type="button" class="chip" onclick="fillAndSend('How does the prescription and dispensing process work at USM Pharmacy?')">
+    <button type="button" class="chip" onclick="fillAndSend('What discounts apply for students, senior citizens, and PWD?')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        My prescriptions
+        Discounts &amp; Prescriptions
     </button>
 </div>
 
@@ -273,8 +275,8 @@
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7H3a7 7 0 017-7h1V5.73A2 2 0 0110 4a2 2 0 012-2z"/></svg></div>
-                <h3 class="feat-title">AI Health Assistant</h3>
-                <p class="feat-desc">Ask anything about symptoms, medicines, or first aid &mdash; get instant, reliable answers powered by USM Health AI.</p>
+                <h3 class="feat-title">AI Hospital &amp; Pharmacy Assistant</h3>
+                <p class="feat-desc">Instant real-time medicine stock inquiries, pricing, discounts, hospital admission guidelines, and USM Infirmary / OPD clinic schedules.</p>
             </div>
             <div class="feature-card">
                 <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
@@ -312,9 +314,9 @@
         <p class="cta-sub">Check real-time stock, prices, and availability of all medicines at USM Pharmacy &mdash; no need to visit in person first.</p>
         <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
             @guest
-                <a href="{{ route('register') }}" class="btn-cta">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Register now
+                <a href="{{ route('login') }}" class="btn-cta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    Sign in to Portal
                 </a>
             @else
                 <a href="{{ route('patient.dashboard') }}" class="btn-cta">
@@ -331,7 +333,7 @@
     </div>
 </section>
 
-<footer>&copy; {{ date('Y') }} University of Southern Mindanao &mdash; Pharmacy Patient Portal. All rights reserved.</footer>
+<footer>&copy; {{ date('Y') }} University of Southern Mindanao &mdash; Pharmacy Store. All rights reserved.</footer>
 
 <script>
 const medicines = @json($medicines);
@@ -347,18 +349,18 @@ const BI = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="
 const UI = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
 const isGuest = @json(auth()->guest());
-const MAX_GUEST_MSGS = 15;
+const MAX_GUEST_MSGS = 50;
 let guestMsgCount = isGuest ? parseInt(localStorage.getItem('usm_guest_msg_count') || '0', 10) : 0;
 
 function updateGuestUI() {
     if (!isGuest) return;
     const remaining = Math.max(0, MAX_GUEST_MSGS - guestMsgCount);
     const countEl = document.getElementById('guestCountText');
-    if (countEl) countEl.textContent = `${remaining}/15 messages left`;
+    if (countEl) countEl.textContent = `${remaining}/50 messages left`;
 
     if (guestMsgCount >= MAX_GUEST_MSGS) {
         heroInput.disabled = true;
-        heroInput.placeholder = "Guest limit reached (15/15). Log in to continue...";
+        heroInput.placeholder = "Guest limit reached (50/50). Log in to continue...";
         const sendBtn = document.querySelector('.chatbot-send-btn');
         if (sendBtn) {
             sendBtn.disabled = true;
@@ -377,9 +379,9 @@ function showGuestLimitNotice() {
     row.innerHTML = `
         <div class="msg-avatar ai">${BI}</div>
         <div class="guest-limit-box" style="flex:1">
-            <div class="guest-limit-title">&#9888;&#65039; Guest Preview Limit Reached (15/15 Messages)</div>
+            <div class="guest-limit-title">&#9888;&#65039; Guest Inquiries Limit Reached (50/50 Messages)</div>
             <p class="guest-limit-desc">
-                You have reached your 15-message complimentary guest preview. Please log in with your USM student or staff account for unlimited AI consultations, inventory lookups, and prescription tracking.
+                You have reached your 50 complimentary guest inquiries. Please log in with your USM student or staff account for unlimited AI consultations, inventory lookups, and clinical assistance.
             </p>
             <div class="guest-limit-actions">
                 <a href="{{ route('login') }}" class="guest-limit-btn">Log In to Continue &rarr;</a>
@@ -408,41 +410,229 @@ function showThinking() {
 function hideThinking() { document.getElementById('thinkRow')?.remove(); }
 function buildResponse(query) {
     const lq = query.toLowerCase();
-    for (const m of medicines) {
-        const n = m.name.toLowerCase().split(' ')[0];
-        const g = (m.generic_name || '').toLowerCase().split(' ')[0];
-        if (lq.includes(n) || (g && lq.includes(g))) {
-            const badge = m.available_stock === 0 ? `<span class="med-out">Out of Stock</span>`
-                : m.available_stock <= 30 ? `<span class="med-low">Low Stock (${m.available_stock} ${m.unit}s)</span>`
-                : `<span class="med-in">In Stock (${m.available_stock} ${m.unit}s)</span>`;
-            const price = `<span class="med-price">&#8369;${Number(m.unit_price).toFixed(2)} / ${m.unit}</span>`;
-            return { html: `Current info for <strong>${m.name}</strong>:<br><br><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${badge} ${price}</div>&bull; <strong>Unit:</strong> ${m.unit}<br><br><a href="{{ route('medicines') }}" class="ai-btn">View in Store &rarr;</a><div class="ai-note">&#9877;&#65039; Prescription items require a valid doctor&apos;s order.</div>`,
-                followUps: [`Do I need a prescription for ${m.name}?`, 'What other medicines are in stock?', 'Pharmacy opening hours'] };
+
+    // 1. Clinical Symptom / Illness / Medical Advice Detection -> Strictly refer to USM Infirmary & OPD
+    const symptomTerms = /\b(symptom|symptoms|sick|illness|unwell|fever|lagnat|nilalagnat|headache|migraine|cough|ubo|inubo|cold|colds|sipon|sinisipon|flu|trangkaso|sore throat|throat|lalamunan|phlegm|plema|stomach|tiyan|abdominal|diarrhea|pagtatae|tae|nausea|nauseous|vomit|pagsusuka|suka|dizzy|dizziness|nahihilo|hilo|wound|sugat|bleed|bleeding|dugo|injury|cut|burn|paso|fracture|sprain|pilay|allergy|allergies|rash|rashes|kati|pangangati|asthma|hika|chest pain|first aid|gamot sa|anong gamot|cure for|treatment for|diagnos)\b|sakit ng ulo|masakit/i;
+    if (symptomTerms.test(lq)) {
+        return {
+            html: `Hindi ako maaaring magbigay ng medical advice, diagnosis, o magrekomenda ng gamot para sa mga nararanasang sintomas o karamdaman.<br><br>Para sa iyong kaligtasan at tamang gamutan, mangyaring magtungo sa <strong>USM Hospital &amp; University Infirmary / Outpatient Department (OPD)</strong> para sa opisyal na konsultasyon sa ating mga doktor at nars:<br><br><div class="opd-referral-card"><div class="opd-referral-title"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><strong>USM Hospital &amp; Infirmary Consultation Hours</strong></div><ul class="opd-schedule-list"><li><strong>Infirmary &amp; OPD Clinic Hours:</strong> Monday &ndash; Friday, 8:00 AM &ndash; 5:00 PM</li><li><strong>Emergency Room &amp; Inpatient Wards:</strong> 24 Hours / 7 Days a Week (Open 24/7)</li><li><strong>Location:</strong> USM Hospital &amp; Infirmary Complex, Main Campus, Kabacan, Cotabato</li></ul></div><div class="ai-followup-prompt">Kapag na-evaluate ka na ng doktor at nabigyan ng opisyal na reseta, maaari kitang tulungang i-check ang availability at presyo ng iyong gamot sa ating Pharmacy Store. May iba ka pa bang katanungan tungkol sa aming clinic hours o available medicines?</div>`,
+            followUps: ['What medicines are currently in stock?', 'What are the OPD clinic hours?', 'What discounts apply (Student/Senior)?']
+        };
+    }
+
+    // 2. Specific Medicine Name & Alias Matching
+    const aliasMap = {
+        'amoxyclav': 'Co-Amoxiclav',
+        'amoxiclav': 'Co-Amoxiclav',
+        'co-amoxiclav': 'Co-Amoxiclav',
+        'augmentin': 'Co-Amoxiclav',
+        'natravox': 'Co-Amoxiclav',
+        'paracetamol': 'Paracetamol',
+        'biogesic': 'Paracetamol',
+        'tempra': 'Paracetamol',
+        'calpol': 'Paracetamol',
+        'acetaminophen': 'Paracetamol',
+        'amoxicillin': 'Amoxicillin',
+        'himox': 'Amoxicillin',
+        'mefenamic': 'Mefenamic Acid',
+        'ponstan': 'Mefenamic Acid',
+        'dolfenal': 'Mefenamic Acid',
+        'gardan': 'Mefenamic Acid',
+        'cetirizine': 'Cetirizine',
+        'zyrtec': 'Cetirizine',
+        'allerkid': 'Cetirizine',
+        'salbutamol': 'Salbutamol',
+        'ventolin': 'Salbutamol',
+        'asmalin': 'Salbutamol',
+        'ceftriaxone': 'Ceftriaxone',
+        'rocephin': 'Ceftriaxone',
+        'ampicillin': 'Ampicillin',
+        'saline': 'Normal Saline',
+        'nss': 'Normal Saline',
+        'plain nss': 'Normal Saline',
+        'd5w': 'D5W',
+        'dextrose': 'D5W',
+        'ringer': "Lactated Ringer's",
+        'plrs': "Lactated Ringer's",
+        'd5nm': 'D5NM'
+    };
+
+    let matched = null;
+
+    // Check alias mapping first
+    for (const [alias, canonical] of Object.entries(aliasMap)) {
+        if (lq.includes(alias)) {
+            matched = medicines.find(m => {
+                const mn = m.name.toLowerCase();
+                const mg = (m.generic_name || '').toLowerCase();
+                return mn.includes(canonical.toLowerCase()) || mg.includes(canonical.toLowerCase()) || mn.includes(alias) || mg.includes(alias);
+            });
+            if (matched) break;
         }
     }
-    if (/what medicines|available|catalogue|catalog|list of med|in stock/.test(lq)) {
+
+    // Fallback scan through medicine catalog
+    if (!matched) {
+        for (const m of medicines) {
+            const name = m.name.toLowerCase();
+            const generic = (m.generic_name || '').toLowerCase();
+            const brand = (m.brand || '').toLowerCase();
+
+            if (lq.includes(name) || (generic && lq.includes(generic)) || (brand && lq.includes(brand))) {
+                matched = m;
+                break;
+            }
+
+            const tokens = (name + ' ' + generic).split(/[\s,()%-]+/).filter(t => t.length >= 4);
+            for (const token of tokens) {
+                if (lq.includes(token)) {
+                    matched = m;
+                    break;
+                }
+            }
+            if (matched) break;
+        }
+    }
+
+    if (matched) {
+        const stock = Number(matched.available_stock || 0);
+        const unit = matched.unit || 'unit';
+        const numPrice = Number(matched.unit_price || 0);
+        const price = numPrice.toFixed(2);
+        const studentPrice = (numPrice * 0.90).toFixed(2);
+        const seniorPrice = (numPrice * 0.80).toFixed(2);
+        const isRx = Boolean(matched.rx);
+        const rxPolicy = isRx
+            ? 'Prescription-Only (Rx) at kailangan ng opisyal na reseta mula sa doktor.'
+            : 'Over-The-Counter (OTC) at maaaring mabili nang walang reseta.';
+
+        // Specific Intent 1: PRICE ONLY (checked before general "ano ang" since "magkano" ends in "ano")
+        if (/\b(magkano|price|how much|presyo|halaga|cost)\b/i.test(lq)) {
+            return {
+                html: `Ang presyo ng <strong>${matched.name}</strong> ay <strong>&#8369;${price}</strong> bawat ${unit} sa ating Pharmacy Store.<br><br>Mayroon din tayong applicable discounts:<br>&bull; <strong>USM Students (10% subsidy):</strong> &#8369;${studentPrice}<br>&bull; <strong>Senior Citizens &amp; PWD (20% discount):</strong> &#8369;${seniorPrice}<br><br><div class="ai-note">&#9877;&#65039; Kasalukuyang may <strong>${stock} ${unit}s in stock</strong>.</div><div class="ai-followup-prompt">Nais mo bang malaman ang prescription requirements o clinic hours para sa konsultasyon?</div>`,
+                followUps: [`May stock ba ang ${matched.name}?`, `Kailangan ba ng reseta ang ${matched.name}?`, 'What discounts apply?']
+            };
+        }
+
+        // Specific Intent 2: PRESCRIPTION ONLY (checked before stock to avoid "kailangan" matching "ilan")
+        if (/\b(reseta|prescription|rx|otc)\b|kailangan ba ng reseta|need.*reseta|may reseta/i.test(lq)) {
+            const rxAdvice = isRx
+                ? `Kinakailangan ang opisyal na reseta mula sa lisensyadong doktor bago ito mai-release sa ating counter. Kung wala ka pang reseta, maaari kang magpakonsulta sa ating OPD clinic (Mon&ndash;Fri, 8 AM&ndash;5 PM).`
+                : `Maaari itong mabili sa counter nang walang dalang reseta.`;
+
+            return {
+                html: `Ang <strong>${matched.name}</strong> ay <strong>${rxPolicy}</strong><br><br>${rxAdvice}<br><br><div class="ai-note">&#9877;&#65039; Available ito sa ating Pharmacy Store sa halagang &#8369;${price} bawat ${unit} (${stock} ${unit}s in stock).</div><div class="ai-followup-prompt">Nais mo bang itanong ang ating discounts o OPD clinic schedule?</div>`,
+                followUps: [`Magkano ang ${matched.name}?`, `May stock ba ang ${matched.name}?`, 'What are the OPD clinic hours?']
+            };
+        }
+
+        // Specific Intent 3: "Gamot diba / Gamot ba / Ano ang [X]"
+        if (/\b(gamot diba|gamot ba|gamot nga ba|ano ang|what is)\b|gamot ba ito|gamot ba yan/i.test(lq)) {
+            const stockInfo = stock > 0
+                ? `Mayroon tayong stock sa ating Pharmacy Store (${stock} ${unit}s) sa halagang &#8369;${price} bawat ${unit}.`
+                : `Sa kasalukuyan ay out of stock ito sa ating Pharmacy Store.`;
+
+            return {
+                html: `Oo, ang <strong>${matched.name}</strong> (${matched.generic_name || matched.name}) ay isang gamot (${matched.category || 'Pharmaceutical'}). Ito ay <strong>${rxPolicy}</strong><br><br>Sa ating Pharmacy Store:<br>&bull; <strong>Presyo:</strong> &#8369;${price} bawat ${unit} (Student: &#8369;${studentPrice} | Senior/PWD: &#8369;${seniorPrice})<br>&bull; <strong>Stock:</strong> ${stockInfo}<br><br><div class="ai-followup-prompt">May nais ka pa bang malaman tungkol dito tulad ng reseta requirements o consultation hours sa OPD?</div>`,
+                followUps: [`Magkano ang ${matched.name}?`, `May stock ba ang ${matched.name}?`, 'What are the OPD clinic hours?']
+            };
+        }
+
+        // Specific Intent 4: STOCK / AVAILABILITY ONLY
+        if (/\b(stock|available|meron|mayroon|out of stock|quantity)\b|\bmay\s+.+\s+ba\b|\bilan\b/i.test(lq)) {
+            if (stock > 0) {
+                return {
+                    html: `Oo, mayroon tayong <strong>${stock} ${unit}s</strong> ng <strong>${matched.name}</strong> na available sa kasalukuyang inventory ng ating Pharmacy Store sa halagang &#8369;${price} bawat ${unit}.<br><br>Tandaan na ito ay <strong>${rxPolicy}</strong><br><br><div class="ai-followup-prompt">Nais mo bang malaman ang applicable discounts o ang schedule ng ating OPD clinic para sa konsultasyon?</div>`,
+                    followUps: [`Magkano ang ${matched.name}?`, `Kailangan ba ng reseta ang ${matched.name}?`, 'What are the OPD clinic hours?']
+                };
+            }
+            return {
+                html: `Sa kasalukuyan, <strong>out of stock</strong> ang <strong>${matched.name}</strong> sa ating Pharmacy Store.<br><br>Maaari kang magtanong sa ating OPD doctors para sa alternatibong gamot o mag-check sa ibang partner pharmacies.<div class="ai-followup-prompt">Gusto mo bang makita ang iba pang mga gamot na available ngayon sa store?</div>`,
+                followUps: ['What other medicines are in stock?', 'What are the OPD clinic hours?', 'What discounts apply?']
+            };
+        }
+
+        // General medicine card
+        const badge = stock === 0
+            ? `<span class="med-out">Out of Stock</span>`
+            : stock <= 30
+                ? `<span class="med-low">Low Stock (${stock} ${unit}s)</span>`
+                : `<span class="med-in">In Stock (${stock} ${unit}s)</span>`;
+
+        return {
+            html: `<strong>${matched.name}</strong> (${matched.generic_name || matched.name}):<br><br><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${badge} <span class="med-price">&#8369;${price} / ${unit}</span></div>&bull; <strong>Dispensing:</strong> ${matched.rx ? 'Requires Doctor&apos;s Prescription (Rx)' : 'Over-the-Counter (OTC)'}<br>&bull; <strong>Category:</strong> ${matched.category || 'General Formulary'}<br>&bull; <strong>Discounts:</strong> Student &#8369;${studentPrice} &middot; Senior/PWD &#8369;${seniorPrice}<br><br><a href="{{ route('medicines') }}" class="ai-btn">View in Store &rarr;</a><div class="ai-followup-prompt">May nais ka pa bang itanong tungkol sa gamot na ito o sa ating mga serbisyo?</div>`,
+            followUps: [`Magkano ang ${matched.name}?`, `May stock ba ang ${matched.name}?`, 'What discounts apply?']
+        };
+    }
+
+    // 3. Known Philippine Medicines Knowledge Base (for medicines not carried in store)
+    const knownMeds = {
+        'azithromycin': { name: 'Azithromycin', category: 'Antibiotic', rx: true },
+        'ciprofloxacin': { name: 'Ciprofloxacin', category: 'Antibiotic', rx: true },
+        'ibuprofen': { name: 'Ibuprofen', category: 'NSAID / Pain Relief', rx: false },
+        'losartan': { name: 'Losartan Potassium', category: 'Antihypertensive', rx: true },
+        'metformin': { name: 'Metformin', category: 'Antidiabetic', rx: true },
+        'omeprazole': { name: 'Omeprazole', category: 'Antacid / PPI', rx: true },
+        'carbocisteine': { name: 'Carbocisteine', category: 'Mucolytic', rx: false },
+        'loperamide': { name: 'Loperamide', category: 'Antidiarrheal', rx: false }
+    };
+
+    for (const [key, km] of Object.entries(knownMeds)) {
+        if (lq.includes(key)) {
+            const rxText = km.rx ? 'Prescription-Only (Rx)' : 'Over-The-Counter (OTC)';
+            return {
+                html: `Oo, ang <strong>${km.name}</strong> ay isang ${km.category} na gamot (${rxText}).<br><br>Sa kasalukuyan, <strong>wala itong active stock sa USM Pharmacy Store</strong>. Maaari kayong sumangguni sa ating OPD doctors para sa alternatibong reseta o magtanong sa mga botika sa labas ng campus.<div class="ai-followup-prompt">May iba ka pa bang gamot na nais i-check sa ating inventory?</div>`,
+                followUps: ['What medicines are in stock?', 'What are the OPD clinic hours?', 'What discounts apply?']
+            };
+        }
+    }
+
+    // 4. Stock Overview / Availability Query
+    if (/\b(what medicines|available|catalogue|catalog|list of med|in stock|overview|formulary)\b/i.test(lq)) {
         const top = medicines.filter(m => m.available_stock > 0).slice(0, 6).map(m => `&bull; <strong>${m.name}</strong> &mdash; <span class="med-in">In Stock</span> &middot; &#8369;${Number(m.unit_price).toFixed(2)}/${m.unit}`).join('<br>');
-        return { html: `<strong>USM Pharmacy &mdash; Stock Overview:</strong><br><br>${top || 'No medicines listed.'}<br><br><a href="{{ route('medicines') }}" class="ai-btn">View Full Store &rarr;</a><div class="ai-note">&#9877;&#65039; Stock updated in real-time.</div>`, followUps: ['Check Paracetamol stock', 'How do prescriptions work?', 'Pharmacy hours'] };
+        return {
+            html: `Narito ang ilan sa mga available na gamot sa ating USM Pharmacy Store:<br><br>${top || 'No active medicines listed at this moment.'}<br><br><a href="{{ route('medicines') }}" class="ai-btn">View Full Store &rarr;</a><div class="ai-note">&#9877;&#65039; Lahat ng nakatala ay unexpired at updated in real-time.</div><div class="ai-followup-prompt">Nais mo bang magtanong tungkol sa specific na gamot o sa ating statutory discounts?</div>`,
+            followUps: ['Check Paracetamol 500mg stock', 'What are the OPD clinic hours?', 'What discounts apply (Student/PWD)?']
+        };
     }
-    if (/headache|fever|lagnat|sakit ng ulo|body ache/.test(lq)) {
-        return { html: `For fever and headache, <strong>Paracetamol 500mg</strong> is the first-line recommendation:<br><br>&bull; <strong>Dose:</strong> 1 tablet every 4&ndash;6 hours (max 8/day)<br>&bull; <strong>USM Status:</strong> <span class="med-in">In Stock</span><br><br><a href="{{ route('medicines') }}" class="ai-btn">Check Store &rarr;</a><div class="ai-note">&#9888;&#65039; If fever exceeds 38.5&deg;C or lasts 48+ hours, visit USM Health Services.</div>`, followUps: ['Is Cetirizine in stock?', 'Medicines for cough', 'Pharmacy hours'] };
+
+    // 5. Statutory & Student Discounts
+    if (/\b(discount|senior|pwd|student|sc|discounts|subsidy|bawas)\b/i.test(lq)) {
+        return {
+            html: `Ang USM Pharmacy Store ay nagkakaloob ng mga sumusunod na statutory at university discounts:<br><br>&bull; <strong>USM Students:</strong> 10% institutional health subsidy gamit ang validated Student ID.<br>&bull; <strong>Senior Citizens (RA 9994):</strong> 20% discount sa VAT-exempt amount gamit ang OSCA ID.<br>&bull; <strong>Persons with Disability (RA 10754):</strong> 20% discount sa VAT-exempt amount gamit ang PWD ID.<br><br><div class="ai-note">&#9877;&#65039; Awtomatiko itong kinakalkula at nai-print sa itemized POS receipt sa counter.</div><div class="ai-followup-prompt">Gusto mo bang ipa-calculate ang discounted price para sa isang specific na gamot?</div>`,
+            followUps: ['Check Paracetamol 500mg stock', 'What are the OPD clinic hours?', 'What medicines are in stock?']
+        };
     }
-    if (/cough|sipon|cold|ubo/.test(lq)) {
-        return { html: `For cough and colds:<br><br>&bull; <strong>Salbutamol Syrup</strong> &mdash; bronchospasm and wheezing<br>&bull; <strong>Cetirizine 10mg</strong> &mdash; allergy-triggered cough<br><br><a href="{{ route('medicines') }}" class="ai-btn">View Store &rarr;</a><div class="ai-note">&#9877;&#65039; If symptoms persist with discoloured phlegm, see a campus physician.</div>`, followUps: ['What medicines are in stock?', 'Pharmacy hours'] };
+
+    // 6. Clinical Admission & Hospital Workflow
+    if (/\b(admission|admit|ward|bed|hospital workflow|nurse station)\b/i.test(lq)) {
+        return {
+            html: `Ang USM Hospital ay may integrated, paperless clinical workflow across departments:<br><br>1. <strong>Admission &amp; Triage:</strong> Nire-record ang baseline clinical vitals (BP, SpO2, Pulse, Temp, RR), respiratory status, at ina-assign ang available bed sa ward.<br>2. <strong>Nurse Station Handoff:</strong> Tumatanggap ang mga nars ng digital endorsements gamit ang 1-click Acknowledge button at nagma-manage ng clinical charts.<br>3. <strong>Prescriptions &amp; Pharmacy:</strong> Dumidiretso ang inpatient prescriptions sa Pharmacy POS kung saan ginagamit ang strict FEFO (First-Expired, First-Out) batch dispensing.<br><br><div class="ai-note">&#9877;&#65039; Real-time na konektado ang lahat ng ward at istasyon.</div><div class="ai-followup-prompt">May nais ka bang malaman tungkol sa aming ward accommodations o OPD clinic hours?</div>`,
+            followUps: ['What are the OPD clinic hours?', 'What medicines are in stock?', 'What discounts apply?']
+        };
     }
-    if (/cut|wound|sugat|bleed|first aid/.test(lq)) {
-        return { html: `For minor cuts and wounds:<br><br>1. Wash hands thoroughly<br>2. Rinse wound with clean water<br>3. Apply gentle pressure to stop bleeding<br>4. Apply Betadine and cover with sterile bandage<br><br><span class="med-in">Betadine &amp; gauze available at USM Pharmacy</span><br><br><a href="{{ route('medicines') }}" class="ai-btn">View Wound Care Supplies &rarr;</a><div class="ai-note">&#9877;&#65039; Seek care if the cut is deep or shows signs of infection.</div>`, followUps: ['Betadine stock and price', 'What else is available?', 'Pharmacy hours'] };
+
+    // 7. Hospital & OPD Clinic Hours and Location
+    if (/\b(hours|hour|oras|open|schedule|location|where|opd|infirmary)\b/i.test(lq)) {
+        return {
+            html: `Iskedyul at Lokasyon ng USM Hospital &amp; University Infirmary:<br><br><div class="opd-referral-card"><div class="opd-referral-title"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><strong>USM Hospital &amp; Infirmary Operating Schedule</strong></div><ul class="opd-schedule-list"><li><strong>Infirmary &amp; OPD Consultation:</strong> Monday &ndash; Friday, 8:00 AM &ndash; 5:00 PM (Doctor consultations, physical checkups, outpatient prescriptions)</li><li><strong>Emergency Room &amp; Inpatient Wards:</strong> 24 Hours / 7 Days a Week (Open 24/7)</li><li><strong>Outpatient Pharmacy Store:</strong> Monday &ndash; Friday, 8:00 AM &ndash; 5:00 PM</li><li><strong>Location:</strong> USM Hospital &amp; Infirmary Complex, Main Campus, Kabacan, Cotabato</li></ul></div><div class="ai-followup-prompt">Nais mo bang i-check muna kung may stock tayo ng gamot na kailangan mo bago pumunta sa infirmary?</div>`,
+            followUps: ['What medicines are in stock?', 'What discounts apply?', 'Check Paracetamol stock']
+        };
     }
-    if (/prescription|reseta|dispens/.test(lq)) {
-        return { html: `<strong>USM Pharmacy Prescription System:</strong><br><br>1. <strong>Doctor Consultation:</strong> Prescription encoded into the system<br>2. <strong>Routing:</strong> Routed in real time to USM Pharmacy queue<br>3. <strong>Tracking:</strong> Pending &rarr; At Pharmacy &rarr; Dispensed<br><br><a href="{{ route('login') }}" class="ai-btn">Log in to View Prescriptions &rarr;</a>`, followUps: ['How do I register?', 'What medicines are in stock?', 'Pharmacy hours'] };
+
+    // 8. Greetings
+    if (/\b(hello|hi|kumusta|hey|good morning|good afternoon|good evening|magandang)\b/i.test(lq)) {
+        return {
+            html: `Hello! &#128075; Ako ang <strong>USM Hospital &amp; Pharmacy Store Assistant</strong>.<br><br>Maaari kitang tulungan sa:<br>&bull; Real-time medicine stock availability &amp; presyo sa store<br>&bull; USM Infirmary &amp; OPD clinic consultation hours (Mon&ndash;Fri, 8:00 AM &ndash; 5:00 PM)<br>&bull; Statutory discounts (Senior/PWD 20%, USM Student 10%)<br>&bull; Hospital admission procedures, ward telemetry, at prescription routing<br><br><div class="ai-note">&#9888;&#65039; <em>Paalala: Hindi ako nagbibigay ng diagnosis para sa mga sintomas. Para sa checkup, mangyaring magpakonsulta sa ating OPD doctors.</em></div><div class="ai-followup-prompt">Anong gamot o serbisyo sa ospital ang nais mong itanong ngayon?</div>`,
+            followUps: ['What medicines are currently in stock?', 'What are the OPD clinic hours?', 'What discounts apply (Student/PWD)?']
+        };
     }
-    if (/hours|oras|open|schedule|location|where/.test(lq)) {
-        return { html: `<strong>USM Health Services Pharmacy:</strong><br><br>&bull; <strong>Schedule:</strong> Mon &ndash; Fri, 8:00 AM &ndash; 5:00 PM<br>&bull; <strong>Location:</strong> USM Health Services Building, Main Campus<br>&bull; <strong>Emergency:</strong> Proceed to nearest hospital for after-hours emergencies.`, followUps: ['What medicines are available?', 'How do prescriptions work?'] };
-    }
-    if (/hello|hi|kumusta|hey/.test(lq)) {
-        return { html: `Hello! &#128075; I&apos;m the <strong>USM Pharmacy AI Assistant</strong>. I can help you:<br><br>&bull; Check real-time medicine stock &amp; pricing<br>&bull; Recommend medicines for common symptoms<br>&bull; Explain the prescription process<br><br>How can I help?`, followUps: ['Check Paracetamol stock', 'Medicines for cough', 'How do prescriptions work?'] };
-    }
-    return { html: `I searched for &ldquo;<strong>${escHtml(query)}</strong>&rdquo; in the USM Pharmacy catalogue.<br><br>Try asking about a specific symptom (fever, cough, headache) or browse the store directly.<br><br><a href="{{ route('medicines') }}" class="ai-btn">Browse Medicine Store &rarr;</a><div class="ai-note">&#9877;&#65039; You can also consult the pharmacist at the USM Health Services counter.</div>`, followUps: ['Check Paracetamol stock', 'Medicines for fever', 'Prescription info'] };
+
+    // 9. Fallback / Unrecognized query (clean, polite, helpful)
+    return {
+        html: `Hindi ko nahanap ang gamot o serbisyo na iyan sa formulary ng ating Pharmacy Store.<br><br>Maaari kang magtanong sa akin tungkol sa:<br>&bull; Availability at presyo ng specific na gamot (hal. <em>&ldquo;May amoxyclav ba?&rdquo;</em>, <em>&ldquo;Magkano ang Paracetamol?&rdquo;</em>)<br>&bull; OPD clinic consultation hours at infirmary schedule<br>&bull; Student (10%) at Senior/PWD (20%) discounts sa store<br><br><a href="{{ route('medicines') }}" class="ai-btn">Browse Medicine Store &rarr;</a><div class="ai-followup-prompt">Anong gamot o serbisyo sa ospital ang nais mong itanong?</div>`,
+        followUps: ['What medicines are in stock?', 'What are the OPD clinic hours?', 'What discounts apply?']
+    };
 }
 function sendMsg() {
     const text = heroInput.value.trim();
@@ -462,18 +652,47 @@ function sendMsg() {
         updateGuestUI();
     }
 
-    setTimeout(() => {
-        hideThinking();
-        const { html, followUps } = buildResponse(text);
-        const row = document.createElement('div'); row.className = 'msg-row';
-        row.innerHTML = `<div class="msg-avatar ai">${BI}</div><div><div class="msg-bubble ai">${html}</div>${followUps && followUps.length ? `<div class="fu-chips">${followUps.map(f => `<button type="button" class="fu-chip" onclick="fillAndSend('${f.replace(/'/g,"\\'")}')"> ${f}</button>`).join('')}</div>` : ''}</div>`;
-        chatMsgs.appendChild(row);
-        scrollBottom();
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-        if (isGuest && guestMsgCount >= MAX_GUEST_MSGS) {
-            setTimeout(showGuestLimitNotice, 800);
+    // Attempt backend Gemini / Chatbot API with seamless local fallback
+    fetch('{{ route("chatbot.message") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken || ''
+        },
+        body: JSON.stringify({ message: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        hideThinking();
+        if (data && data.reply) {
+            renderAiReply(data.reply.replace(/\n/g, '<br>'), data.follow_ups || []);
+        } else {
+            fallbackLocal(text);
         }
-    }, 600);
+    })
+    .catch(() => {
+        hideThinking();
+        fallbackLocal(text);
+    });
+}
+
+function fallbackLocal(text) {
+    const { html, followUps } = buildResponse(text);
+    renderAiReply(html, followUps);
+}
+
+function renderAiReply(html, followUps) {
+    const row = document.createElement('div'); row.className = 'msg-row';
+    row.innerHTML = `<div class="msg-avatar ai">${BI}</div><div><div class="msg-bubble ai">${html}</div>${followUps && followUps.length ? `<div class="fu-chips">${followUps.map(f => `<button type="button" class="fu-chip" onclick="fillAndSend('${f.replace(/'/g,"\\'")}')"> ${f}</button>`).join('')}</div>` : ''}</div>`;
+    chatMsgs.appendChild(row);
+    scrollBottom();
+
+    if (isGuest && guestMsgCount >= MAX_GUEST_MSGS) {
+        setTimeout(showGuestLimitNotice, 800);
+    }
 }
 </script>
 </body>

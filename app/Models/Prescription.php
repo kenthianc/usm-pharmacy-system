@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Prescription extends Model
 {
@@ -19,10 +20,25 @@ class Prescription extends Model
      */
     protected $fillable = [
         'patient_id',
+        'admission_id',
         'encoded_by',
         'doctor_name',
+        'order_type',
+        'room_bed_number',
         'status',
+        'billing_status',
+        'collected_by',
     ];
+
+    /**
+     * Get the admission that the prescription belongs to (if inpatient).
+     *
+     * @return BelongsTo<Admission, $this>
+     */
+    public function admission(): BelongsTo
+    {
+        return $this->belongsTo(Admission::class);
+    }
 
     /**
      * Get the patient that the prescription belongs to.
@@ -46,6 +62,16 @@ class Prescription extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PrescriptionItem::class);
+    }
+
+    /**
+     * Get the POS transaction record when dispensed.
+     *
+     * @return HasOne<PosTransaction, $this>
+     */
+    public function posTransaction(): HasOne
+    {
+        return $this->hasOne(PosTransaction::class);
     }
 
     /**
@@ -79,6 +105,16 @@ class Prescription extends Model
     }
 
     /**
+     * Scope a query to only include prepared prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopePrepared(Builder $query): Builder
+    {
+        return $query->where('status', 'prepared');
+    }
+
+    /**
      * Scope a query to only include cancelled prescriptions.
      *
      * @param  Builder<static>  $query
@@ -86,6 +122,36 @@ class Prescription extends Model
     public function scopeCancelled(Builder $query): Builder
     {
         return $query->where('status', 'cancelled');
+    }
+
+    /**
+     * Scope a query to only include in-patient prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeInpatient(Builder $query): Builder
+    {
+        return $query->where('order_type', 'inpatient');
+    }
+
+    /**
+     * Scope a query to only include out-patient prescriptions.
+     *
+     * @param  Builder<static>  $query
+     */
+    public function scopeOutpatient(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('order_type')->orWhere('order_type', 'outpatient');
+        });
+    }
+
+    /**
+     * Get the hospitalization bill associated with the prescription.
+     */
+    public function patientBill()
+    {
+        return $this->hasOne(PatientBill::class);
     }
 
     /**

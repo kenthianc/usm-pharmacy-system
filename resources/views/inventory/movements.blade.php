@@ -1,34 +1,31 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2.5">
-                    <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-base shadow-sm">
-                        📋
-                    </span>
+        <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm shadow-xs shrink-0">
+                📋
+            </span>
+            <div class="min-w-0">
+                <h1 class="text-base sm:text-lg font-bold text-slate-800 leading-tight truncate">
                     {{ __('Stock Movements & Delivery Logs') }}
-                </h2>
-                <p class="text-xs text-gray-500 mt-1">Multi-medicine delivery restocking, pending delivery inspections, and immutable inventory movement audit trail.</p>
-            </div>
-            <div class="flex items-center gap-2">
-                @can('create', App\Models\Delivery::class)
-                    <a href="{{ route('inventory.deliveries.create') }}"
-                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span>Request Delivery</span>
-                    </a>
-                @endcan
-                <a href="{{ route('inventory.index') }}" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition">
-                    Back to Inventory
-                </a>
+                </h1>
+                <p class="text-[11px] text-slate-500 hidden sm:block truncate mt-0.5">Multi-medicine restock shipments and inventory movement audit trail.</p>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <x-slot name="actions">
+        @can('create', App\Models\Delivery::class)
+            <a href="{{ route('inventory.deliveries.create') }}"
+               class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs transition shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Request Delivery</span>
+            </a>
+        @endcan
+    </x-slot>
+
+    <div class="space-y-4">
 
             @if (session('success'))
                 <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between shadow-xs">
@@ -217,27 +214,32 @@
                                     <td class="px-6 py-4 text-right whitespace-nowrap align-top">
                                         @can('confirm', $del)
                                             @if ($del->isPending())
-                                                <div class="inline-flex flex-col sm:flex-row items-end sm:items-center gap-1.5">
-                                                    <!-- Confirm Delivery Button -->
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    <!-- Confirm Delivery Action -->
                                                     <form method="POST" action="{{ route('inventory.deliveries.confirm', $del) }}">
                                                         @csrf
                                                         <button type="submit"
+                                                                title="Confirm receipt of delivery {{ $del->reference_no }}"
+                                                                aria-label="Confirm receipt of delivery {{ $del->reference_no }}"
                                                                 onclick="return confirm('Confirm physical receipt of delivery {{ $del->reference_no }}?\n\nThis will automatically add all {{ $del->items->count() }} medicine(s) ({{ $del->total_quantity }} units) into active pharmacy stock.')"
-                                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
-                                                            <svg class="w-3.5 h-3.5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition cursor-pointer">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                                             </svg>
-                                                            <span>Confirm Delivery</span>
                                                         </button>
                                                     </form>
 
-                                                    <!-- Cancel Delivery Button -->
+                                                    <!-- Cancel Delivery Action -->
                                                     <form method="POST" action="{{ route('inventory.deliveries.cancel', $del) }}">
                                                         @csrf
                                                         <button type="submit"
+                                                                title="Cancel delivery request {{ $del->reference_no }}"
+                                                                aria-label="Cancel delivery request {{ $del->reference_no }}"
                                                                 onclick="return confirm('Cancel delivery request {{ $del->reference_no }}?\n\nNo stock will be added.')"
-                                                                class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs transition cursor-pointer">
-                                                            Cancel
+                                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-400 hover:text-rose-600 shadow-2xs transition cursor-pointer">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                            </svg>
                                                         </button>
                                                     </form>
                                                 </div>
@@ -411,5 +413,4 @@
             </div>
 
         </div>
-    </div>
 </x-app-layout>
