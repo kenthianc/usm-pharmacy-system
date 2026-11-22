@@ -45,9 +45,11 @@
         <!-- 2. Wards & Beds Accordion / Cards List -->
         <div class="space-y-6">
             @forelse($wards as $ward)
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-                    <!-- Ward Header -->
-                    <div class="px-5 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div x-data="{ open: true }" class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                    <!-- Ward Header (Click to Toggle) -->
+                    <div @click="open = !open"
+                         class="px-5 py-4 bg-slate-50/80 hover:bg-slate-100/90 transition-colors border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none"
+                         :class="{ 'border-b-0': !open }">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-emerald-800 text-amber-300 font-bold flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,18 +74,24 @@
                                 {{ $ward->beds->count() }} beds ({{ $ward->beds->where('occupancy_status', 'available')->count() }} free)
                             </span>
                             <button type="button"
-                                    @click="selectedWardId = {{ $ward->id }}; selectedWardName = '{{ addslashes($ward->ward_name) }}'; showNewBedModal = true"
+                                    @click.stop="selectedWardId = {{ $ward->id }}; selectedWardName = '{{ addslashes($ward->ward_name) }}'; showNewBedModal = true"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
                                 <span>Add Bed</span>
                             </button>
+                            <div class="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 transition-transform duration-200 ml-1"
+                                 :class="open ? 'rotate-180 bg-slate-100' : ''">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Beds Table -->
-                    <div class="overflow-x-auto">
+                    <!-- Beds Table (Collapsible) -->
+                    <div x-show="open" class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-600">
                             <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-100">
                                 <tr>

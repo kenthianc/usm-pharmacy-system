@@ -56,6 +56,7 @@ class AdmissionController extends Controller
     {
         $statusFilter = $request->query('status');
         $wardFilter = $request->query('ward_id');
+        $typeFilter = $request->query('ward_type');
 
         $wardsQuery = Ward::with(['beds' => function ($q) use ($statusFilter) {
             if ($statusFilter && in_array($statusFilter, ['available', 'occupied', 'maintenance'])) {
@@ -68,8 +69,17 @@ class AdmissionController extends Controller
             $wardsQuery->where('id', $wardFilter);
         }
 
+        if ($typeFilter) {
+            $wardsQuery->where('ward_type', $typeFilter);
+        }
+
         $wards = $wardsQuery->get();
         $allWards = Ward::where('status', 'active')->get();
+        $wardTypes = Ward::where('status', 'active')
+            ->distinct()
+            ->pluck('ward_type')
+            ->filter()
+            ->values();
 
         $summary = [
             'total' => Bed::count(),
@@ -78,7 +88,7 @@ class AdmissionController extends Controller
             'maintenance' => Bed::where('occupancy_status', 'maintenance')->count(),
         ];
 
-        return view('admission.beds', compact('wards', 'allWards', 'summary', 'statusFilter', 'wardFilter'));
+        return view('admission.beds', compact('wards', 'allWards', 'wardTypes', 'summary', 'statusFilter', 'wardFilter', 'typeFilter'));
     }
 
     /**
