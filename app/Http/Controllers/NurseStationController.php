@@ -39,11 +39,31 @@ class NurseStationController extends Controller
 
         $wards = Ward::with(['beds'])->where('status', 'active')->get();
 
+        $rxCounts = [
+            'pending' => Prescription::pending()->count(),
+            'routed' => Prescription::routed()->count(),
+            'dispensed' => Prescription::dispensed()->count(),
+            'cancelled' => Prescription::cancelled()->count(),
+        ];
+
+        $totalBeds = Bed::count();
+        $occupiedBeds = Bed::where('occupancy_status', 'occupied')->count();
+        $availableBeds = Bed::where('occupancy_status', 'available')->count();
+
+        $bedTelemetry = [
+            'total' => $totalBeds,
+            'occupied' => $occupiedBeds,
+            'available' => $availableBeds,
+            'occupancy_rate' => $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0,
+        ];
+
         return view('nurse.dashboard', compact(
             'pendingEndorsements',
             'activeInpatients',
             'recentPrescriptions',
-            'wards'
+            'wards',
+            'rxCounts',
+            'bedTelemetry'
         ));
     }
 

@@ -51,6 +51,10 @@
                     @endrole
 
                     @hasanyrole('nurse|admin')
+                        <a href="{{ route('nurse.dashboard') }}"
+                           class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('nurse.*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
+                            {{ __('Nurse Station') }}
+                        </a>
                         <a href="{{ route('prescriptions.index') }}"
                            class="inline-flex items-center px-3.5 py-2 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('prescriptions.*') ? 'bg-yellow-500 text-green-950 font-bold shadow-sm' : 'text-green-200 hover:bg-green-800 hover:text-white' }}">
                             <span>{{ __('Prescriptions') }}</span>

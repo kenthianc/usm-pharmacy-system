@@ -15,10 +15,14 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WelcomeController;
+use App\Models\Admission;
 use App\Models\Medicine;
+use App\Models\PatientEndorsement;
+use App\Models\PosTransaction;
 use App\Models\Prescription;
 use App\Models\StockBatch;
 use App\Models\StockMovement;
+use App\Models\Ward;
 use App\Services\RiskPredictionService;
 use Illuminate\Support\Facades\Route;
 
@@ -67,7 +71,34 @@ Route::get('/dashboard', function () {
 
     $riskEngine = app(RiskPredictionService::class)->getDualEngineInsights(7);
 
-    return view('dashboard', compact('counts', 'recentPrescriptions', 'inventory', 'inventoryCounts', 'recentMovements', 'riskEngine'));
+    $pendingEndorsements = PatientEndorsement::with(['admission.patient.user', 'admission.bed.ward', 'endorsedBy'])
+        ->where('acknowledgment_status', 'pending')
+        ->latest()
+        ->get();
+
+    $activeInpatients = Admission::with(['patient.user', 'bed.ward', 'prescriptions'])
+        ->where('status', 'admitted')
+        ->latest('admission_date')
+        ->get();
+
+    $wards = Ward::with(['beds'])->where('status', 'active')->get();
+
+    $posTodaySales = (float) PosTransaction::whereDate('created_at', now()->toDateString())->sum('total_amount');
+    $posTodayCount = PosTransaction::whereDate('created_at', now()->toDateString())->count();
+
+    return view('dashboard', compact(
+        'counts',
+        'recentPrescriptions',
+        'inventory',
+        'inventoryCounts',
+        'recentMovements',
+        'riskEngine',
+        'pendingEndorsements',
+        'activeInpatients',
+        'wards',
+        'posTodaySales',
+        'posTodayCount'
+    ));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

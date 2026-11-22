@@ -20,6 +20,28 @@
             </div>
         @endif
 
+        <!-- Incoming Patient Endorsement Alert (if any) -->
+        @if(isset($pendingEndorsements) && $pendingEndorsements->count() > 0)
+            <div class="bg-amber-500 rounded-2xl p-4 text-white shadow-md flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xs font-black uppercase tracking-wide text-amber-100">Incoming Patient Endorsement Alert</h2>
+                        <p class="text-xs text-white font-medium">You have <strong class="underline font-bold">{{ $pendingEndorsements->count() }} patient endorsement(s)</strong> waiting for floor reception from Admission.</p>
+                    </div>
+                </div>
+
+                <a href="{{ route('nurse.endorsements') }}"
+                   class="px-3.5 py-1.5 rounded-xl bg-white text-amber-900 text-xs font-black hover:bg-amber-50 shadow-xs transition">
+                    Review &amp; Acknowledge &rarr;
+                </a>
+            </div>
+        @endif
+
         <!-- Quick Action Banner -->
         <div class="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 rounded-2xl p-6 text-white shadow-lg shadow-emerald-950/20 relative overflow-hidden">
             <div class="absolute -right-6 -bottom-6 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
@@ -313,9 +335,67 @@
     </x-slot>
 
     <div class="space-y-4">
-            @php
-                $canManageInventory = auth()->user()->hasAnyRole(['stock_manager', 'admin']);
-            @endphp
+        @php
+            $canManageInventory = auth()->user()->hasAnyRole(['stock_manager', 'admin']);
+        @endphp
+
+        <!-- ── ROLE-SPECIFIC CRITICAL ACTION BANNERS (ABOVE-THE-FOLD) ───────── -->
+        @if(auth()->user()->hasRole('pharmacist'))
+            <div class="rounded-2xl p-4 bg-gradient-to-r from-[#064e2b] via-[#0b5c35] to-[#043c20] text-white shadow-md border-b-2 border-amber-400">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 mb-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            Hospital Dispensary Operations
+                        </div>
+                        <h3 class="text-sm font-extrabold text-white">Prescription Fulfillment &amp; Point of Sale Terminal</h3>
+                        <p class="text-xs text-emerald-100/90 mt-0.5">
+                            <strong class="text-amber-300 font-bold underline">{{ $counts['routed'] ?? 0 }} prescription(s)</strong> queued for dispensing &bull; ₱{{ number_format($posTodaySales ?? 0, 2) }} total sales collected today ({{ $posTodayCount ?? 0 }} transactions).
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ route('pos.index') }}"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-green-950 font-black text-xs shadow-md transition transform active:scale-98">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            <span>Open POS Terminal &amp; Dispensary</span>
+                        </a>
+                        <a href="{{ route('pos.reports') }}"
+                           class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition">
+                            <span>POS Reports</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @elseif(auth()->user()->hasAnyRole(['stock_manager', 'admin']))
+            <div class="rounded-2xl p-4 bg-gradient-to-r from-[#064e2b] via-[#0a5832] to-[#043c20] text-white shadow-md border-b-2 border-amber-400 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            DECISION SUPPORT
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-emerald-200 border border-white/15">
+                            Sync: Real-time (Stock Movement) &bull; Daily EOD
+                        </span>
+                    </div>
+                    <p class="text-xs font-bold text-white leading-relaxed">
+                        Priority Actions: Restock <span class="text-amber-300 font-extrabold">{{ $riskEngine['telemetry']['high_stockout_count'] ?? 0 }} critical item(s)</span> immediately; prioritize FEFO rotation for <span class="text-amber-300 font-extrabold">{{ $riskEngine['telemetry']['high_expiry_count'] ?? 0 }} batch(es)</span> to prevent up to <span class="text-amber-300 font-extrabold font-mono">₱{{ number_format($riskEngine['telemetry']['total_financial_loss_at_risk'] ?? 0, 2) }}</span> in projected wastage.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('inventory.deliveries.create') }}"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-green-950 font-black text-xs shadow-xs transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        <span>+ Restock Order</span>
+                    </a>
+                    <a href="{{ route('inventory.risk-engine') }}"
+                       class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition">
+                        <span>Risk Engine</span>
+                        &rarr;
+                    </a>
+                </div>
+            </div>
+        @endif
 
             <!-- 5 KPI Overview Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">

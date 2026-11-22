@@ -2,12 +2,12 @@
     <div class="space-y-6">
         
         <!-- Top Header & Banner -->
-        <div class="rounded-2xl p-6 sm:p-8 shadow-xl border-b-4 border-yellow-500 relative overflow-hidden"
+        <div class="rounded-2xl p-5 sm:p-6 shadow-xl border-b-4 border-yellow-500 relative overflow-hidden"
              style="background: linear-gradient(135deg, #064e2b 0%, #0b5c35 50%, #043c20 100%); color: #ffffff;">
             <div class="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none"></div>
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                 <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-3 shadow-xs"
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 shadow-xs"
                          style="background: rgba(234, 179, 8, 0.2); border: 1px solid rgba(234, 179, 8, 0.4); color: #fef08a;">
                         <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
                         Executive Governance &amp; Compliance
@@ -136,6 +136,33 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- Clinical Ward & Inpatient Bed Occupancy Strip -->
+        <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Hospital Clinical Ward &amp; Bed Telemetry</h3>
+                    <p class="text-[11px] text-slate-500">Live bed capacity and patient census across all campus wards.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-semibold flex-wrap">
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <strong>{{ $bedCounts['available'] ?? 0 }}</strong> Beds Available
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                    <strong>{{ $bedCounts['occupied'] ?? 0 }}</strong> Occupied
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-800 border border-purple-200">
+                    <strong>{{ $bedCounts['occupancy_rate'] ?? 0 }}%</strong> Occupancy Rate
+                </span>
+                <a href="{{ route('admin.wards.index') }}" class="text-xs font-bold text-green-800 hover:underline">
+                    Manage Wards &rarr;
+                </a>
+            </div>
         </div>
 
         <!-- Two Column Split: Audit Trail vs Warehouse Transparency -->

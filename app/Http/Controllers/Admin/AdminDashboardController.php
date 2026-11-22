@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Bed;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\PosTransaction;
@@ -89,6 +90,17 @@ class AdminDashboardController extends Controller
             ->take(6)
             ->get();
 
+        // Hospital Clinical Bed Telemetry
+        $totalBeds = Bed::count();
+        $occupiedBeds = Bed::where('occupancy_status', 'occupied')->count();
+        $availableBeds = Bed::where('occupancy_status', 'available')->count();
+        $bedCounts = [
+            'total' => $totalBeds,
+            'occupied' => $occupiedBeds,
+            'available' => $availableBeds,
+            'occupancy_rate' => $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0,
+        ];
+
         return view('admin.dashboard', compact(
             'staffCounts',
             'inventoryCounts',
@@ -96,7 +108,8 @@ class AdminDashboardController extends Controller
             'posStats',
             'totalLoss',
             'recentAuditLogs',
-            'recentMovements'
+            'recentMovements',
+            'bedCounts'
         ));
     }
 }

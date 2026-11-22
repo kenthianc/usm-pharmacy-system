@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Ward;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class HospitalWardAndBedSeeder extends Seeder
 {
@@ -22,8 +23,38 @@ class HospitalWardAndBedSeeder extends Seeder
             ?? User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))->first()
             ?? User::first();
 
+        if (! $admissionStaff) {
+            $admissionRole = Role::where('name', 'admission')->first();
+            $admissionStaff = User::firstOrCreate(
+                ['email' => 'system_admission@usm.edu.ph'],
+                [
+                    'name' => 'System Admission',
+                    'password' => bcrypt('password'),
+                    'role_id' => $admissionRole?->id,
+                ]
+            );
+            if ($admissionRole) {
+                $admissionStaff->assignRole($admissionRole);
+            }
+        }
+
         $nurse = User::whereHas('roles', fn ($q) => $q->where('name', 'nurse'))->first()
             ?? $admissionStaff;
+
+        if (! $nurse) {
+            $nurseRole = Role::where('name', 'nurse')->first();
+            $nurse = User::firstOrCreate(
+                ['email' => 'system_nurse@usm.edu.ph'],
+                [
+                    'name' => 'System Nurse',
+                    'password' => bcrypt('password'),
+                    'role_id' => $nurseRole?->id,
+                ]
+            );
+            if ($nurseRole) {
+                $nurse->assignRole($nurseRole);
+            }
+        }
 
         $wardsData = [
             [
